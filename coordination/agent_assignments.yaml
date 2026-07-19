@@ -1,0 +1,19 @@
+# Agent assignment registry — orchestrator is the sole normal writer.
+# One entry per ACTIVE goal. Completed assignments move to `history`.
+#
+# Schema per assignment:
+#   goal_id, agent_role, objective, github_issue, branch, worktree, status,
+#   dependencies, owned_paths, read_only_paths, shared_interfaces,
+#   started_at, last_updated_at, latest_commit, verification_required,
+#   red_team_required, notes
+
+active: {}
+
+history: []
+
+# Path-ownership ground rules (MASTER_PROMPT §3.4/§3.5):
+# - Orchestrator-only: MASTER_PROMPT.md, goals.md, progress.md, decisions.md,
+#   assumptions_register.md, evidence_matrix.md, input_manifest.md,
+#   coordination/**, README.md, pyproject.toml, .github/workflows/**
+# - No two active goals may own overlapping write paths without a documented
+#   integration plan recorded here AND in the affected issues.

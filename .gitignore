@@ -1,0 +1,52 @@
+# ── Proprietary source inputs (NEVER commit) ────────────────────────────────
+inputs/papers/*
+!inputs/papers/README.md
+inputs/data_templates/*
+!inputs/data_templates/README.md
+
+# ── Data layers (generated / raw / proprietary) ──────────────────────────────
+data/
+!data/.gitkeep
+artifacts/
+models/
+reports/generated/
+
+# ── Secrets & credentials ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+secrets*
+
+# ── Worktrees (agent isolation, never tracked) ───────────────────────────────
+.worktrees/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.python-version
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
+
+# ── Claude Code machine-local settings ───────────────────────────────────────
+.claude/settings.local.json
+
+# ── OS / editor noise ─────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

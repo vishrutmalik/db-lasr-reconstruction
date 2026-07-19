@@ -8,14 +8,14 @@ active:
     github_issue: 7
     branch: agent/paper-researcher/G007-p1-nlasr2012-evidence
     worktree: .worktrees/G007-paper-researcher
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #41)
     dependencies: [G005]
     owned_paths: ["docs/evidence/p1_nlasr_2012/**"]
     read_only_paths: ["inputs/papers/20120605_Rise of the Machines.pdf (main checkout, git-ignored)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
     shared_interfaces: ["evidence_rows.md format (evidence_matrix.md columns)"]
     started_at: 2026-07-19
     last_updated_at: 2026-07-19
-    latest_commit: 933cac9 (3 commits pushed; agent still active)
+    latest_commit: 933cac9 (final, 3 commits, worktree clean)
     verification_required: true
     red_team_required: false
     notes: PDF text via pypdf; page rendering unavailable; UNREADABLE_EXHIBIT convention.

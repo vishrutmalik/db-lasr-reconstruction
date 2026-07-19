@@ -19,23 +19,6 @@ active:
     verification_required: true
     red_team_required: false
     notes: Figure 7 image-only; boosting params import-from-P1 flagged.
-  G010:
-    agent_role: paper-researcher
-    objective: Evidence extraction from P4 (Return of the Machines, 2020-04-23, 25pp)
-    github_issue: 10
-    branch: agent/paper-researcher/G010-p4-nlasr2020-evidence
-    worktree: .worktrees/G010-paper-researcher
-    status: IN_VERIFICATION (PR #44)
-    dependencies: [G005]
-    owned_paths: ["docs/evidence/p4_nlasr_2020/**"]
-    read_only_paths: ["inputs/papers/20200423_Return of the Machines.pdf (main checkout)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
-    shared_interfaces: ["evidence_rows.md format"]
-    started_at: 2026-07-19
-    last_updated_at: 2026-07-19
-    latest_commit: b2e2098 (final, pushed, worktree clean)
-    verification_required: true
-    red_team_required: false
-    notes: New 2019 weak learner (OLS line fit, monotonic gate); dual weekly/4-week clock.
   G012:
     agent_role: data-researcher
     objective: Exhaustive workbook schema extraction + data dictionary + PIT assessment
@@ -55,6 +38,13 @@ active:
     notes: A-001 now positively evidenced (Data!N2:O3 latest_filing only).
 
 history:
+  - goal_id: G010
+    agent_role: paper-researcher
+    branch: agent/paper-researcher/G010-p4-nlasr2020-evidence (deleted after merge)
+    final_commit: b2e2098 (evidence) + df452e1 (verification)
+    pr: 44
+    verification: PASS (docs/verification/G010.md, 20/20 spot-checks, 0 blocking)
+    worktree: removed (untracked _pages cache discarded)
   - goal_id: G009
     agent_role: paper-researcher
     branch: agent/paper-researcher/G009-p3-lasr2014-evidence (deleted after merge)

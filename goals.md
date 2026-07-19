@@ -19,7 +19,7 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G005 | Agent definitions + core skills ✎ | orchestrator | G001 | MERGED | [#5](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/5) | n/a (bootstrap) |
 | G006 | Full skills library (20 skills) | implementer | G005 | BLOCKED | [#6](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/6) | |
 | G007 | Paper 1 (N-LASR 2012) evidence extraction ✎ | paper-researcher | G005 | MERGED | [#7](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/7) | [#41](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/41) |
-| G008 | Paper 2 (N-LASR2 2013) evidence extraction ✎ | paper-researcher | G005 | IN_VERIFICATION | [#8](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/8) | [#42](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/42) |
+| G008 | Paper 2 (N-LASR2 2013) evidence extraction ✎ | paper-researcher | G005 | FAILED_VERIFICATION | [#8](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/8) | [#42](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/42) |
 | G009 | Paper 3 (LASR 2014) evidence extraction ✎ | paper-researcher | G005 | MERGED | [#9](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/9) | [#43](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/43) |
 | G010 | Paper 4 (N-LASR 2020) evidence extraction ✎ | paper-researcher | G005 | MERGED | [#10](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/10) | [#44](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/44) |
 | G011 | Cross-paper contradiction register + 7 model-version specs | quant-reviewer | G007–G010 | BLOCKED | [#11](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/11) | |

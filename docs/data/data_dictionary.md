@@ -400,7 +400,7 @@ Keyed by W1 row so the count reconciles exactly with the sheet (513 rows); the 5
 | 381 | Net Debt/Operating Cash Flow | `NET_DEBT_TO_OCF` | Coverage Ratios | Q | Y | RA r53 | dimensionless | 0/8 |
 | 382 | Unlevered FCF/Total Debt | `UFCF_TO_TOT_DEBT` | Coverage Ratios | Q | Y | RA r54 | dimensionless | 0/8 |
 | 383 | Capex/PP&E | `CAPEX_TO_PPE` | Capital Intensity Ratios | Q | Y | RA r70 | dimensionless | 0/8 |
-| 384 | Capex/D&A | `CAPEX_TO_DA` | Capital Intensity Ratios | Q | Y | none (W1 list only) | NOT_ESTABLISHED | n/a |
+| 384 | Capex/D&A | `CAPEX_TO_DA` | Capital Intensity Ratios | Q | Y | RA r69 | dimensionless | 0/8 |
 | 385 | D&A/PP&E | `DA_TO_PPE` | Capital Intensity Ratios | Q | Y | RA r71 | dimensionless | 0/8 |
 | 386 | Net Working Capital/Average Assets | `NWC_TO_AVG_ASSET` | Fundamentals | Q |  | RA r74 | dimensionless | 0/8 |
 | 387 | Fixed Asset Turnover | `FIXED_ASSET_TURNOVER` | Fundamentals | Q |  | RA r72 | dimensionless | 0/8 |
@@ -413,7 +413,7 @@ Keyed by W1 row so the count reconciles exactly with the sheet (513 rows); the 5
 | 394 | P/Adj. Sales | `P_TO_SALES_ADJ` | Trading Multiples | D/M | Y | RA r115, TM | dimensionless | 0/8; n=0 |
 | 395 | P/BV | `P_TO_BV` | Trading Multiples | D/M | Y | RA r116, TM | dimensionless | 0/8; n=0 |
 | 396 | P/TBV | `P_TO_TBV` | Trading Multiples | D/M | Y | RA r117, TM | dimensionless | 0/8; n=0 |
-| 397 | P/CashFlow | `P_TO_CF` | Trading Multiples | D/M | Y | RA r118 | dimensionless | 8/8 |
+| 397 | P/CashFlow | `P_TO_CF` | Trading Multiples | D/M | Y | RA r118, TM | dimensionless | 8/8; n=254 |
 | 398 | P/FCF | `P_TO_FCF` | Trading Multiples | D/M | Y | RA r119, TM | dimensionless | 8/8; n=254 |
 | 399 | P/FFO | `P_TO_FFO` | Trading Multiples | D/M | Y | RA r137 | dimensionless | 0/8 |
 | 400 | EV/Sales | `EV_TO_SALES` | Trading Multiples | D/M | Y | RA r121, TM | dimensionless | 8/8; n=254 |
@@ -505,7 +505,7 @@ Keyed by W1 row so the count reconciles exactly with the sheet (513 rows); the 5
 | 486 | Sector (GICS L1) | `SECTOR_GICS` | Reference (static) | N/A |  | FP r10 | NOT_ESTABLISHED | v |
 | 487 | Industry Group (GICS L2) | NOT_ESTABLISHED | Reference (static) | N/A |  | none (W1 list only) | NOT_ESTABLISHED | n/a |
 | 488 | Industry (GICS L3) | NOT_ESTABLISHED | Reference (static) | N/A |  | none (W1 list only) | NOT_ESTABLISHED | n/a |
-| 489 | Sub-sector (GICS L4) | NOT_ESTABLISHED | Reference (static) | N/A |  | none (W1 list only) | NOT_ESTABLISHED | n/a |
+| 489 | Sub-sector (GICS L4) | `SUB_INDUSTRY_GICS` | Reference (static) | N/A |  | FP r11 | NOT_ESTABLISHED | v |
 | 490 | Security Type | NOT_ESTABLISHED | Reference (static) | N/A |  | none (W1 list only) | NOT_ESTABLISHED | n/a |
 | 491 | Country of Incorporation | NOT_ESTABLISHED | Reference (static) | N/A |  | none (W1 list only) | NOT_ESTABLISHED | n/a |
 | 492 | Country of Headquaters | `COUNTRY_HQ` | Reference (static) | N/A |  | FP r8 | NOT_ESTABLISHED | v |
@@ -557,14 +557,13 @@ These names exist only in W1 `Available Consensus`; most are punctuation/`_2` va
 | 139 | Gross Margin, % | `GROSS_MARGIN` | Margins |
 | 165 | Dividend Yield, % | `DIV_YIELD` | Trading Multiples |
 
-## Section 3 — W2-only labels not in W1 (4 rows)
+## Section 3 — W2-only labels not in W1 (after case-insensitive matching, as Excel MATCH resolves)
+
+Three W2 labels differ from W1 names only by letter case and are the same fields (Excel MATCH is case-insensitive; W1 cols D/E/F link them, so they are already counted in Section 1): `CapEx/D&A` RA r69 = W1 row 384 `Capex/D&A`; `Sub-Sector (GICS L4)` FP r11 = W1 row 489; `P/Cashflow` TM = W1 row 397 `P/CashFlow`. Only genuinely new labels are listed here.
 
 | Source | name | excel_code | note |
 |--------|------|------------|------|
-| RA r69 | CapEx/D&A | `CAPEX_TO_DA` | case variant of W1 `Capex/D&A` (row 380) |
-| FP r20 | Shares Outstanding (in mm) | `SHARES_OUTSTANDING` | FP variant of `Total Shares Outstanding (EoP Basic)` |
-| FP r11 | Sub-Sector (GICS L4) | `SUB_INDUSTRY_GICS` | case variant of W1 `Sub-sector (GICS L4)` |
-| TM | P/Cashflow | `P_TO_CF` | case variant of W1 `P/CashFlow` |
+| FP r20 | Shares Outstanding (in mm) | `SHARES_OUTSTANDING` | FP variant of `Total Shares Outstanding (EoP Basic)` (W1 row 420) |
 
 ## Section 4 — M&A deal fields (W1 col G: 258 fields)
 
@@ -879,10 +878,10 @@ Private-funding-round dataset (one record per round). Same caveats as Section 4.
 |---------|-----------------|-------------|------------|
 | 1 Equity metrics | 513 | W1 Financial Metrics col A rows 2-514 = 513 | yes (1:1 by row) |
 | 2 Consensus variants | 16 | W1 Available Consensus 176 metrics = 160 matched + 16 unmatched | yes (176-160) |
-| 3 W2-only labels | 4 | W2 coded labels not in W1: FS 1, FP 2, TM 1 | yes |
+| 3 W2-only labels | 1 | W2 coded labels not in W1 after case-insensitive matching | yes |
 | 4 M&A fields | 258 | W1 col G rows 2-259 = 258 | yes |
 | 5 Funding fields | 35 | W1 col I rows 2-36 = 35 | yes |
-| **Total** | **826** | | |
+| **Total** | **823** | | |
 
-W2 coverage cross-check: FS coded rows 306, Ratios coded 104 + uncoded 14, Front Page 34, Trading Multiples 26 pairs (24 distinct codes). Every W2 coded label except the 4 in Section 3 appears in Section 1 via exact-name match; W1 cols D/E/F confirm the same crosswalk by formula.
+W2 coverage cross-check: FS coded rows 306, Ratios coded 104 + uncoded 14, Front Page 34, Trading Multiples 26 pairs (24 distinct codes). Every W2 coded label except those in Section 3 appears in Section 1 via case-insensitive name match, mirroring W1's own MATCH crosswalk (cols D/E/F).
 

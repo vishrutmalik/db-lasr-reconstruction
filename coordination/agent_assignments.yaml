@@ -25,51 +25,51 @@ active:
     github_issue: 8
     branch: agent/paper-researcher/G008-p2-nlasr2-2013-evidence
     worktree: .worktrees/G008-paper-researcher
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #42)
     dependencies: [G005]
     owned_paths: ["docs/evidence/p2_nlasr2_2013/**"]
     read_only_paths: ["inputs/papers/20130123_Rise of the Machines II.pdf (main checkout)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
     shared_interfaces: ["evidence_rows.md format"]
     started_at: 2026-07-19
     last_updated_at: 2026-07-19
-    latest_commit: null
+    latest_commit: 497efc3 (final, pushed, worktree clean)
     verification_required: true
     red_team_required: false
-    notes: null
+    notes: Figure 7 image-only; boosting params import-from-P1 flagged.
   G009:
     agent_role: paper-researcher
     objective: Evidence extraction from P3 (LASR/LASR-HC/LASR-HF, true date 2014-12-01, 80pp)
     github_issue: 9
     branch: agent/paper-researcher/G009-p3-lasr2014-evidence
     worktree: .worktrees/G009-paper-researcher
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #43)
     dependencies: [G005]
     owned_paths: ["docs/evidence/p3_lasr_2014/**"]
     read_only_paths: ["inputs/papers/20140101_Rise of the Machines III.pdf (main checkout)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
     shared_interfaces: ["evidence_rows.md format"]
     started_at: 2026-07-19
     last_updated_at: 2026-07-19
-    latest_commit: null
+    latest_commit: bc11253 (final, pushed, worktree clean)
     verification_required: true
     red_team_required: false
-    notes: Filename date wrong (CR-001); use 2014-12-01.
+    notes: Filename date wrong (CR-001); 3 variants separated; boosting internals image-only.
   G010:
     agent_role: paper-researcher
     objective: Evidence extraction from P4 (Return of the Machines, 2020-04-23, 25pp)
     github_issue: 10
     branch: agent/paper-researcher/G010-p4-nlasr2020-evidence
     worktree: .worktrees/G010-paper-researcher
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #44)
     dependencies: [G005]
     owned_paths: ["docs/evidence/p4_nlasr_2020/**"]
     read_only_paths: ["inputs/papers/20200423_Return of the Machines.pdf (main checkout)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
     shared_interfaces: ["evidence_rows.md format"]
     started_at: 2026-07-19
     last_updated_at: 2026-07-19
-    latest_commit: null
+    latest_commit: b2e2098 (final, pushed, worktree clean)
     verification_required: true
     red_team_required: false
-    notes: null
+    notes: New 2019 weak learner (OLS line fit, monotonic gate); dual weekly/4-week clock.
   G012:
     agent_role: data-researcher
     objective: Exhaustive workbook schema extraction + data dictionary + PIT assessment

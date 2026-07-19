@@ -37,6 +37,24 @@ active:
     red_team_required: false
     notes: A-001 now positively evidenced (Data!N2:O3 latest_filing only).
 
+  G041:
+    agent_role: paper-researcher
+    objective: Trim >15-word quotes in merged P1/P3/P4 evidence (G008-standard compliance)
+    github_issue: 46
+    branch: agent/paper-researcher/G041-quote-compliance
+    worktree: .worktrees/G041-paper-researcher
+    status: IN_PROGRESS
+    dependencies: [G007, G009, G010]
+    owned_paths: ["docs/evidence/p1_nlasr_2012/**", "docs/evidence/p3_lasr_2014/**", "docs/evidence/p4_nlasr_2020/**"]
+    read_only_paths: ["docs/verification/G007.md", "docs/verification/G009.md", "docs/verification/G010.md"]
+    shared_interfaces: []
+    started_at: 2026-07-19
+    last_updated_at: 2026-07-19
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: G008 dir excluded (own remediation branch). Trims only; citations preserved.
+
 history:
   - goal_id: G010
     agent_role: paper-researcher

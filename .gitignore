@@ -23,6 +23,9 @@ secrets*
 # ── Worktrees (agent isolation, never tracked) ───────────────────────────────
 .worktrees/
 
+# ── Derived text caches of licensed PDFs (never commit) ─────────────────────
+docs/evidence/**/_pages/
+
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]

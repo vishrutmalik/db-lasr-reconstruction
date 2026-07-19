@@ -12,46 +12,46 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 
 | ID | Title | Agent | Deps | Status | Issue | PR |
 |----|-------|-------|------|--------|-------|----|
-| G001 | Bootstrap local Git repo + control files ✎ | orchestrator | — | IN_PROGRESS | — | n/a (bootstrap) |
-| G002 | Private GitHub repo + SSH remote + push ✎ | orchestrator | G001 | READY | — | n/a |
-| G003 | GitHub labels, issue templates, PR template | orchestrator | G002 | BLOCKED | — | n/a |
-| G004 | Input inventory & verified manifest ✎ | orchestrator | — | IMPLEMENTED | — | n/a (bootstrap) |
-| G005 | Agent definitions + core skills ✎ | orchestrator | G001 | READY | — | n/a (bootstrap) |
-| G006 | Full skills library (20 skills) | implementer | G005 | BLOCKED | — | |
-| G007 | Paper 1 (N-LASR 2012) evidence extraction ✎ | paper-researcher | G005 | BLOCKED | — | |
-| G008 | Paper 2 (N-LASR2 2013) evidence extraction ✎ | paper-researcher | G005 | BLOCKED | — | |
-| G009 | Paper 3 (LASR 2014) evidence extraction ✎ | paper-researcher | G005 | BLOCKED | — | |
-| G010 | Paper 4 (N-LASR 2020) evidence extraction ✎ | paper-researcher | G005 | BLOCKED | — | |
-| G011 | Cross-paper contradiction register + 7 model-version specs | quant-reviewer | G007–G010 | BLOCKED | — | |
-| G012 | Workbook schema extraction + data dictionary ✎ | data-researcher | G005 | BLOCKED | — | |
-| G013 | Field mapping: provider fields → model requirements | data-researcher | G011, G012 | BLOCKED | — | |
-| G014 | Quantitative correctness & leakage criteria | quant-reviewer | G007–G010 | BLOCKED | — | |
-| G015 | System architecture design | architect | G011, G012, G013 | BLOCKED | — | |
-| G016 | pyproject, dev tooling, CI workflow | implementer | G015 | BLOCKED | — | |
-| G017 | Typed canonical schemas | implementer | G015, G016 | BLOCKED | — | |
-| G018 | Provider interface + contract tests | implementer | G017 | BLOCKED | — | |
-| G019 | Synthetic data generator + synthetic provider | implementer | G018 | BLOCKED | — | |
-| G020 | Point-in-time data layer + as-of joins | implementer | G017, G018 | BLOCKED | — | |
-| G021 | Data-quality checks | implementer | G020 | BLOCKED | — | |
-| G022 | Feature registry + small audited feature library | implementer | G020, G013 | BLOCKED | — | |
-| G023 | Target & label engine (all 4 target families) | implementer | G020, G014 | BLOCKED | — | |
-| G024 | N-LASR 2012 weak learner + AdaBoost loop (formula-level tests) | implementer | G007, G023 | BLOCKED | — | |
-| G025 | Temporal ensemble framework | implementer | G024 | BLOCKED | — | |
-| G026 | Walk-forward backtester (purge/embargo, event-time) | implementer | G023, G014 | BLOCKED | — | |
-| G027 | Level-1/2 portfolio construction + accounting | implementer | G026 | BLOCKED | — | |
-| G028 | Reporting & diagnostics (signal + portfolio metrics) | implementer | G026, G027 | BLOCKED | — | |
-| G029 | End-to-end synthetic vertical slice (CLI, reproducible) | implementer | G019–G028 | BLOCKED | — | |
-| G030 | N-LASR2 neutralization + hedge learner | implementer | G008, G029 | BLOCKED | — | |
-| G031 | LASR 2014 linearized weak learner | implementer | G009, G029 | BLOCKED | — | |
-| G032 | LASR-HC configuration (3-month target, overlap handling) | implementer | G031 | BLOCKED | — | |
-| G033 | N-LASR 2020 configuration (weekly, 4 samples, monotonic) | implementer | G010, G029 | BLOCKED | — | |
-| G034 | Transaction-cost & borrow model | implementer | G027 | BLOCKED | — | |
-| G035 | Level-3 constrained portfolio + generic risk model | implementer | G034 | BLOCKED | — | |
-| G036 | Modern challenger models (same folds/costs) | implementer | G029, G033 | BLOCKED | — | |
-| G037 | Red-team leakage & survivorship audit | red-team | G029 | BLOCKED | — | |
-| G038 | Full synthetic experiment + reproducibility check | verifier | G029–G037 | BLOCKED | — | |
-| G039 | Real-data integration guide (AlphaSense adapter spec) | data-researcher | G013, G018 | BLOCKED | — | |
-| G040 | Final clean-clone audit + release tag | verifier | all | BLOCKED | — | |
+| G001 | Bootstrap local Git repo + control files ✎ | orchestrator | — | MERGED | [#1](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/1) | n/a (bootstrap) |
+| G002 | Private GitHub repo + SSH remote + push ✎ | orchestrator | G001 | MERGED | [#2](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/2) | n/a |
+| G003 | GitHub labels, issue templates, PR template | orchestrator | G002 | MERGED | [#3](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/3) | n/a |
+| G004 | Input inventory & verified manifest ✎ | orchestrator | — | MERGED | [#4](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/4) | n/a (bootstrap) |
+| G005 | Agent definitions + core skills ✎ | orchestrator | G001 | MERGED | [#5](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/5) | n/a (bootstrap) |
+| G006 | Full skills library (20 skills) | implementer | G005 | BLOCKED | [#6](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/6) | |
+| G007 | Paper 1 (N-LASR 2012) evidence extraction ✎ | paper-researcher | G005 | READY | [#7](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/7) | |
+| G008 | Paper 2 (N-LASR2 2013) evidence extraction ✎ | paper-researcher | G005 | READY | [#8](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/8) | |
+| G009 | Paper 3 (LASR 2014) evidence extraction ✎ | paper-researcher | G005 | READY | [#9](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/9) | |
+| G010 | Paper 4 (N-LASR 2020) evidence extraction ✎ | paper-researcher | G005 | READY | [#10](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/10) | |
+| G011 | Cross-paper contradiction register + 7 model-version specs | quant-reviewer | G007–G010 | BLOCKED | [#11](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/11) | |
+| G012 | Workbook schema extraction + data dictionary ✎ | data-researcher | G005 | READY | [#12](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/12) | |
+| G013 | Field mapping: provider fields → model requirements | data-researcher | G011, G012 | BLOCKED | [#13](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/13) | |
+| G014 | Quantitative correctness & leakage criteria | quant-reviewer | G007–G010 | BLOCKED | [#14](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/14) | |
+| G015 | System architecture design | architect | G011, G012, G013 | BLOCKED | [#15](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/15) | |
+| G016 | pyproject, dev tooling, CI workflow | implementer | G015 | BLOCKED | [#16](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/16) | |
+| G017 | Typed canonical schemas | implementer | G015, G016 | BLOCKED | [#17](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/17) | |
+| G018 | Provider interface + contract tests | implementer | G017 | BLOCKED | [#18](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/18) | |
+| G019 | Synthetic data generator + synthetic provider | implementer | G018 | BLOCKED | [#19](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/19) | |
+| G020 | Point-in-time data layer + as-of joins | implementer | G017, G018 | BLOCKED | [#20](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/20) | |
+| G021 | Data-quality checks | implementer | G020 | BLOCKED | [#21](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/21) | |
+| G022 | Feature registry + small audited feature library | implementer | G020, G013 | BLOCKED | [#22](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/22) | |
+| G023 | Target & label engine (all 4 target families) | implementer | G020, G014 | BLOCKED | [#23](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/23) | |
+| G024 | N-LASR 2012 weak learner + AdaBoost loop (formula-level tests) | implementer | G007, G023 | BLOCKED | [#24](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/24) | |
+| G025 | Temporal ensemble framework | implementer | G024 | BLOCKED | [#25](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/25) | |
+| G026 | Walk-forward backtester (purge/embargo, event-time) | implementer | G023, G014 | BLOCKED | [#26](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/26) | |
+| G027 | Level-1/2 portfolio construction + accounting | implementer | G026 | BLOCKED | [#27](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/27) | |
+| G028 | Reporting & diagnostics (signal + portfolio metrics) | implementer | G026, G027 | BLOCKED | [#28](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/28) | |
+| G029 | End-to-end synthetic vertical slice (CLI, reproducible) | implementer | G019–G028 | BLOCKED | [#29](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/29) | |
+| G030 | N-LASR2 neutralization + hedge learner | implementer | G008, G029 | BLOCKED | [#40](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/40) | |
+| G031 | LASR 2014 linearized weak learner | implementer | G009, G029 | BLOCKED | [#30](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/30) | |
+| G032 | LASR-HC configuration (3-month target, overlap handling) | implementer | G031 | BLOCKED | [#31](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/31) | |
+| G033 | N-LASR 2020 configuration (weekly, 4 samples, monotonic) | implementer | G010, G029 | BLOCKED | [#32](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/32) | |
+| G034 | Transaction-cost & borrow model | implementer | G027 | BLOCKED | [#33](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/33) | |
+| G035 | Level-3 constrained portfolio + generic risk model | implementer | G034 | BLOCKED | [#34](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/34) | |
+| G036 | Modern challenger models (same folds/costs) | implementer | G029, G033 | BLOCKED | [#35](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/35) | |
+| G037 | Red-team leakage & survivorship audit | red-team | G029 | BLOCKED | [#36](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/36) | |
+| G038 | Full synthetic experiment + reproducibility check | verifier | G029–G037 | BLOCKED | [#37](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/37) | |
+| G039 | Real-data integration guide (AlphaSense adapter spec) | data-researcher | G013, G018 | BLOCKED | [#38](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/38) | |
+| G040 | Final clean-clone audit + release tag | verifier | all | BLOCKED | [#39](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/39) | |
 
 Deferred by design (MASTER_PROMPT §31/§32): LASR-HF beyond modular stubs, deep
 learning, live brokerage, distributed infra.
@@ -71,14 +71,14 @@ learning, live brokerage, distributed infra.
   `inputs/` files NOT tracked; control files present.
 - **Verification:** orchestrator self-check (control-plane exception; no
   quantitative content).
-- **Status:** IN_PROGRESS.
+- **Status:** MERGED (bootstrap, control-plane exception D-004).
 
 ### G002 — Private GitHub repo + SSH remote + push
 - **Objective:** Create **private** repo `db-lasr-reconstruction` via
   authenticated `gh`, SSH remote `origin`, push `main`.
 - **Acceptance:** `gh repo view` shows `private: true`; `git ls-remote origin`
   works; `origin/main` == local `main`.
-- **Status:** READY (gh authenticated, repo-scope token verified).
+- **Status:** MERGED — repo https://github.com/vishrutmalik/db-lasr-reconstruction (PRIVATE, SSH origin).
 
 ### G004 — Input inventory & verified manifest
 - **Objective:** Hash, size, page/sheet counts, verified titles & dates for all
@@ -86,7 +86,7 @@ learning, live brokerage, distributed infra.
 - **Output:** `input_manifest.md` (done), CR-001 in contradiction register.
 - **Acceptance:** every input file listed with hash + verified metadata;
   P3 date discrepancy documented.
-- **Status:** IMPLEMENTED (commits pending in bootstrap).
+- **Status:** MERGED (bootstrap commit aa71c7e).
 
 ### G005 — Agent definitions + core skills
 - **Objective:** `.claude/agents/` definitions for orchestrator support roles
@@ -95,7 +95,7 @@ learning, live brokerage, distributed infra.
   extraction, excel schema mapping, goal decomposition, PR verification).
 - **Acceptance:** agent files valid for installed Claude Code version; each
   skill has purpose/procedure/invariants/exit criteria.
-- **Status:** READY.
+- **Status:** MERGED (bootstrap; remaining 15 skills tracked as G006).
 
 ### G007–G010 — Paper evidence extraction (one goal per paper)
 - **Objective (each):** Extract into `docs/evidence/<paper-id>/` every item in
@@ -110,7 +110,7 @@ learning, live brokerage, distributed infra.
   not-disclosed; ≥1 citation per material claim; formulas transcribed;
   contradiction candidates flagged for G011.
 - **Verifier:** required (fresh-context spot-check of citations against PDF).
-- **Status:** BLOCKED on G005.
+- **Status:** READY (G005 merged).
 
 ### G012 — Workbook schema extraction + data dictionary
 - **Objective:** Sheet-by-sheet, column-by-column inventory of W1 and W2 into
@@ -122,4 +122,4 @@ learning, live brokerage, distributed infra.
 - **Acceptance:** every sheet and column inventoried (incl. all 54 Trading
   Multiples columns); no fabricated fields; PIT caveats explicit.
 - **Verifier:** required.
-- **Status:** BLOCKED on G005.
+- **Status:** READY (G005 merged).

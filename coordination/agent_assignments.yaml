@@ -1,15 +1,96 @@
 # Agent assignment registry — orchestrator is the sole normal writer.
 # One entry per ACTIVE goal. Completed assignments move to `history`.
-#
-# Schema per assignment:
-#   goal_id, agent_role, objective, github_issue, branch, worktree, status,
-#   dependencies, owned_paths, read_only_paths, shared_interfaces,
-#   started_at, last_updated_at, latest_commit, verification_required,
-#   red_team_required, notes
 
-active: {}
+active:
+  G007:
+    agent_role: paper-researcher
+    objective: Implementation-grade evidence extraction from P1 (N-LASR, 2012-06-05, 68pp)
+    github_issue: 7
+    branch: agent/paper-researcher/G007-p1-nlasr2012-evidence
+    worktree: .worktrees/G007-paper-researcher
+    status: IN_PROGRESS
+    dependencies: [G005]
+    owned_paths: ["docs/evidence/p1_nlasr_2012/**"]
+    read_only_paths: ["inputs/papers/20120605_Rise of the Machines.pdf (main checkout, git-ignored)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
+    shared_interfaces: ["evidence_rows.md format (evidence_matrix.md columns)"]
+    started_at: 2026-07-19
+    last_updated_at: 2026-07-19
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: PDF text via pypdf; page rendering unavailable; UNREADABLE_EXHIBIT convention.
+  G008:
+    agent_role: paper-researcher
+    objective: Evidence extraction from P2 (N-LASR2, 2013-01-23, 61pp)
+    github_issue: 8
+    branch: agent/paper-researcher/G008-p2-nlasr2-2013-evidence
+    worktree: .worktrees/G008-paper-researcher
+    status: IN_PROGRESS
+    dependencies: [G005]
+    owned_paths: ["docs/evidence/p2_nlasr2_2013/**"]
+    read_only_paths: ["inputs/papers/20130123_Rise of the Machines II.pdf (main checkout)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
+    shared_interfaces: ["evidence_rows.md format"]
+    started_at: 2026-07-19
+    last_updated_at: 2026-07-19
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: null
+  G009:
+    agent_role: paper-researcher
+    objective: Evidence extraction from P3 (LASR/LASR-HC/LASR-HF, true date 2014-12-01, 80pp)
+    github_issue: 9
+    branch: agent/paper-researcher/G009-p3-lasr2014-evidence
+    worktree: .worktrees/G009-paper-researcher
+    status: IN_PROGRESS
+    dependencies: [G005]
+    owned_paths: ["docs/evidence/p3_lasr_2014/**"]
+    read_only_paths: ["inputs/papers/20140101_Rise of the Machines III.pdf (main checkout)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
+    shared_interfaces: ["evidence_rows.md format"]
+    started_at: 2026-07-19
+    last_updated_at: 2026-07-19
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: Filename date wrong (CR-001); use 2014-12-01.
+  G010:
+    agent_role: paper-researcher
+    objective: Evidence extraction from P4 (Return of the Machines, 2020-04-23, 25pp)
+    github_issue: 10
+    branch: agent/paper-researcher/G010-p4-nlasr2020-evidence
+    worktree: .worktrees/G010-paper-researcher
+    status: IN_PROGRESS
+    dependencies: [G005]
+    owned_paths: ["docs/evidence/p4_nlasr_2020/**"]
+    read_only_paths: ["inputs/papers/20200423_Return of the Machines.pdf (main checkout)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
+    shared_interfaces: ["evidence_rows.md format"]
+    started_at: 2026-07-19
+    last_updated_at: 2026-07-19
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: null
+  G012:
+    agent_role: data-researcher
+    objective: Exhaustive workbook schema extraction + data dictionary + PIT assessment
+    github_issue: 12
+    branch: agent/data-researcher/G012-workbook-schema
+    worktree: .worktrees/G012-data-researcher
+    status: IN_PROGRESS
+    dependencies: [G005]
+    owned_paths: ["docs/data/**"]
+    read_only_paths: ["inputs/data_templates/*.xlsx (main checkout, git-ignored)", "MASTER_PROMPT.md", "input_manifest.md", "skills/excel-schema-mapping/SKILL.md"]
+    shared_interfaces: ["evidence_rows.md format", "gap_list feeds provider capability flags (G018)"]
+    started_at: 2026-07-19
+    last_updated_at: 2026-07-19
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: Assumption A-001 (no PIT by default) governs.
 
-history: []
+history:
+  - goal_id: G001-G005
+    note: Bootstrap phase, orchestrator on main (D-004), commits aa71c7e + 6ebe98f, issues 1-5 closed.
 
 # Path-ownership ground rules (MASTER_PROMPT §3.4/§3.5):
 # - Orchestrator-only: MASTER_PROMPT.md, goals.md, progress.md, decisions.md,

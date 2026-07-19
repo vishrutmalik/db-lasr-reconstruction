@@ -19,23 +19,6 @@ active:
     verification_required: true
     red_team_required: false
     notes: Figure 7 image-only; boosting params import-from-P1 flagged.
-  G009:
-    agent_role: paper-researcher
-    objective: Evidence extraction from P3 (LASR/LASR-HC/LASR-HF, true date 2014-12-01, 80pp)
-    github_issue: 9
-    branch: agent/paper-researcher/G009-p3-lasr2014-evidence
-    worktree: .worktrees/G009-paper-researcher
-    status: IN_VERIFICATION (PR #43)
-    dependencies: [G005]
-    owned_paths: ["docs/evidence/p3_lasr_2014/**"]
-    read_only_paths: ["inputs/papers/20140101_Rise of the Machines III.pdf (main checkout)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
-    shared_interfaces: ["evidence_rows.md format"]
-    started_at: 2026-07-19
-    last_updated_at: 2026-07-19
-    latest_commit: bc11253 (final, pushed, worktree clean)
-    verification_required: true
-    red_team_required: false
-    notes: Filename date wrong (CR-001); 3 variants separated; boosting internals image-only.
   G010:
     agent_role: paper-researcher
     objective: Evidence extraction from P4 (Return of the Machines, 2020-04-23, 25pp)
@@ -72,6 +55,13 @@ active:
     notes: A-001 now positively evidenced (Data!N2:O3 latest_filing only).
 
 history:
+  - goal_id: G009
+    agent_role: paper-researcher
+    branch: agent/paper-researcher/G009-p3-lasr2014-evidence (deleted after merge)
+    final_commit: bc11253 (evidence) + 09b2747 (verification)
+    pr: 43
+    verification: PASS (docs/verification/G009.md, 24/24 spot-checks, 0 blocking)
+    worktree: removed
   - goal_id: G007
     agent_role: paper-researcher
     branch: agent/paper-researcher/G007-p1-nlasr2012-evidence (deleted after merge)

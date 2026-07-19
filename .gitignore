@@ -5,8 +5,8 @@ inputs/data_templates/*
 !inputs/data_templates/README.md
 
 # ── Data layers (generated / raw / proprietary) ──────────────────────────────
-data/
-!data/.gitkeep
+/data/
+!/data/.gitkeep
 artifacts/
 models/
 reports/generated/

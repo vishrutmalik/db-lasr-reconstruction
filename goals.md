@@ -141,6 +141,28 @@ learning, live brokerage, distributed infra.
 - **Branch:** agent/architect/G015-system-architecture.
 - **Status:** BLOCKED on G013 (dispatch immediately on its merge).
 
+### G017 — Typed canonical schemas (expanded 2026-07-20, dispatch-ready on G016 merge)
+- **Objective:** Implement docs/architecture/canonical_schemas.md as typed,
+  tested code in src/lasr/data/schemas/ + src/lasr/core/ (time vocabulary,
+  identity spine): every §14 table family as pydantic/dataclass schema with
+  event/knowledge/vintage columns, PK + sort keys, nullability policy;
+  the FeatureSpec and training-example schemas; the frozen TimingRecord (add
+  explicit holding_period — G015 verification N-4); the import-linter rule
+  from testing_strategy.md (models can never import providers/PIT).
+- **Must resolve (from G015 verification, queued):** N-2 single
+  delisting-return home; N-6 PKs for the 6 flagged tables; N-7
+  ComponentSpec-vs-ExpertSpec naming (pick one, record in code + report);
+  N-1 EnsembleConfig expressibility for lasr_hf blend + P1 Ultra (via
+  ExpertSpec.feature_list_id per the architecture).
+- **Tests:** schema construction/validation round-trips; structural CI
+  enforcement (CI-003 universe intervals, CI-018 training-example fields,
+  CI-049 delisting single-home); import-rule test; mypy strict clean.
+- **Owned paths:** src/lasr/core/**, src/lasr/data/schemas/**,
+  tests/unit/test_schemas*.py, tests/unit/test_import_rules.py.
+- **Branch:** agent/implementer/G017-canonical-schemas. **Verifier:** required.
+  **Red-team:** not required (structural; PIT behavior red-teamed at G020).
+- **Status:** BLOCKED on G016 merge (toolchain).
+
 ### G012 — Workbook schema extraction + data dictionary
 - **Objective:** Sheet-by-sheet, column-by-column inventory of W1 and W2 into
   `docs/data/workbook_schema/`; canonical data dictionary; explicit

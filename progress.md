@@ -25,8 +25,15 @@ Session-independent status. Update at every session end and major milestone.
 - Full detail: `coordination/agent_assignments.yaml`
 
 ## Blockers
-- (none). `gh` CLI at `~/.local/bin/gh` (NOT on default PATH), authenticated,
+- (none active). `gh` CLI at `~/.local/bin/gh` (NOT on default PATH), authenticated,
   repo scope. GitHub API shows occasional transient connection-refused — retry.
+
+## Incident log
+- 2026-07-20: Claude session usage limit killed 3 background agents mid-task
+  (G008 remediation, G041 trims — both left valid uncommitted worktree edits;
+  G012 verifier — died before any output). After reset: G008/G041 agents
+  resumed from transcript, G012 verifier relaunched fresh. No repo state lost;
+  worktree edits preserved.
 
 ## Environment facts (for session resumption)
 - Project root: `/Users/admin/Library/CloudStorage/OneDrive-KlayCapitalLimited/Documents/stock_model`

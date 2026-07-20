@@ -19,14 +19,25 @@ G007–G013.
 | W1 | AlphaSense Available Metrics with Consensus v3 | n/a |
 | W2 | ASQ Comprehensive Financial Data NVDA v3 | n/a |
 
-## Rows
+## Row sources (federated — D-005)
+
+Per-source evidence rows live in their verified evidence directories and are
+NOT duplicated here (single source of truth, no copy drift):
+
+| Source | Rows | File | Verified by |
+|--------|------|------|-------------|
+| P1 | 48 (P1-01…48) | docs/evidence/p1_nlasr_2012/evidence_rows.md | docs/verification/G007.md (PASS) |
+| P2 | 30 | docs/evidence/p2_nlasr2_2013/evidence_rows.md | docs/verification/G008.md (PASS r2) |
+| P3 | 38 (P3-01…38) | docs/evidence/p3_lasr_2014/evidence_rows.md | docs/verification/G009.md (PASS) |
+| P4 | 34 + 5 CR candidates | docs/evidence/p4_nlasr_2020/evidence_rows.md | docs/verification/G010.md (PASS) |
+| W1/W2 | 15 (E-G012-nn) | docs/data/evidence_rows.md | docs/verification/G012.md (pending r2) |
+
+Cross-cutting orchestrator rows:
 
 | # | Component | Source | Location | Statement | Class | Consequence | Ambiguity | Code | Test | Goal |
 |---|-----------|--------|----------|-----------|-------|-------------|-----------|------|------|------|
 | E-001 | Paper-3 dating | P3 | title page | "Date 1 December 2014" | EXPLICIT | model-version timeline uses 2014-12; filename date rejected | none | n/a | n/a | G004 |
 | E-002 | Data provider | W1/W2 | workbook branding & support contact | Templates are AlphaSense financial-data products | EXPLICIT | provider adapter target is AlphaSense | API shape unknown from workbooks | G018 | contract tests | G012 |
-
-(further rows added by research goals)
 
 # Contradiction Register
 

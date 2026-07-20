@@ -21,7 +21,7 @@ Session-independent status. Update at every session end and major milestone.
   .worktrees/G011-quant-reviewer, owns docs/methodology/versions/** + contradiction_register.md
 - G014 correctness & leakage criteria → quant-reviewer,
   .worktrees/G014-quant-reviewer, owns docs/methodology/correctness_criteria.md + leakage_tests.md
-- G041 quote-compliance (P1/P3/P4 trims) → IN_VERIFICATION, PR #47
+- G041 MERGED (PR #47)
 - Full detail: `coordination/agent_assignments.yaml`
 
 ## Blockers
@@ -29,6 +29,12 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-07-20 (3): Second usage-limit interruption killed the G013 researcher
+  (no commits yet; worktree clean) and the G006 verifier (report not started).
+  Recovery per MASTER_PROMPT §6: state reconciled (main=origin/main=ae41048,
+  all coordination files consistent), stale merged G011 remote branch pruned,
+  both agents resumed from transcripts on their original branches/worktrees.
+  No work lost, no duplicates created.
 - 2026-07-20 (2): Duplicate-verifier race on G012 — the session-limit-killed
   verifier was NOT dead; it resumed silently and completed a second
   independent pass while its replacement's results were already merged.

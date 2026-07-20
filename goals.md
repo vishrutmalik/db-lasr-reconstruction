@@ -113,6 +113,33 @@ learning, live brokerage, distributed infra.
 - **Verifier:** required (fresh-context spot-check of citations against PDF).
 - **Status:** READY (G005 merged).
 
+### G015 — System architecture design (expanded 2026-07-20, dispatch-ready)
+- **Objective:** Design the complete system per MASTER_PROMPT §§14-16, 18-25:
+  module map for src/lasr/*; canonical table schemas (security master, market,
+  fundamentals, estimates, corporate actions, classifications, trading) with
+  effective-time + knowledge-time columns; the 5 data layers; provider
+  interface contract incl. capability flags (supports_pit per field family,
+  history depth, revision support) grounded in docs/data/pit_assessment.md +
+  gap_list.md + field_mapping.md; feature/label store design; model-training
+  interfaces sized to the 7 version specs; artifact/lineage plan; config
+  system (§28: version/universe/dates/windows/target/features/neutralization/
+  costs/constraints/provider all config-driven); testing strategy per layer
+  binding CI-001..055; toolchain proposal for G016 (Python version, deps,
+  lint/type/test stack, CI matrix).
+- **Inputs:** docs/methodology/versions/*, contradiction_register.md,
+  correctness_criteria.md, leakage_tests.md, docs/data/* (incl. G013 outputs),
+  docs/evidence/*.
+- **Owned paths:** docs/architecture/** (new).
+- **Acceptance:** every §14 table family has a schema with PIT semantics; every
+  interface names its contract tests; every CI invariant maps to a layer that
+  enforces it; the 7 version specs are expressible in the config system without
+  code edits; no distributed-infra or premature-abstraction constructs;
+  implementer of G017 can start from the doc alone.
+- **Verifier:** required (fresh context). **Red-team:** not required (design;
+  quantitative content re-audited at implementation goals).
+- **Branch:** agent/architect/G015-system-architecture.
+- **Status:** BLOCKED on G013 (dispatch immediately on its merge).
+
 ### G012 — Workbook schema extraction + data dictionary
 - **Objective:** Sheet-by-sheet, column-by-column inventory of W1 and W2 into
   `docs/data/workbook_schema/`; canonical data dictionary; explicit

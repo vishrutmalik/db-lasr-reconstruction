@@ -70,6 +70,14 @@ verifier):
   policy block. Sensitivity: identifier-collision synthetic test (G019).
 - Related: D-009 bar-knowledge convention joins the A-002 family.
 
+### Toolchain conventions (G016, merged PR #54)
+- Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per
+  docs/runbooks/dev_setup.md. TEST_SEED=1729 root test seed (tests/conftest.py).
+- challengers extra floors sklearn>=1.5 / xgboost>=2.1 chosen by G016 (proposal
+  gave none; G036 may revise with a decisions entry).
+- `lasr` console script targets lasr.cli:main which lands at G029 (metadata-only
+  until then). TID251 banned-api list non-exhaustive — G017 policy call queued.
+
 ### Field-mapping assumptions (G013, merged PR #52)
 Defined in docs/data/field_mapping.md rows: FM-35 country concept (HQ vs
 exchange listing), FM-18 dividend timing in total-return assembly, FM-31

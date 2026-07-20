@@ -27,8 +27,8 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G013 | Field mapping: provider fields → model requirements | data-researcher | G011, G012 | MERGED | [#13](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/13) | [#52](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/52) |
 | G014 | Quantitative correctness & leakage criteria | quant-reviewer | G007–G010 | MERGED | [#14](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/14) | [#49](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/49) |
 | G015 | System architecture design | architect | G011, G012, G013 | MERGED | [#15](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/15) | [#53](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/53) |
-| G016 | pyproject, dev tooling, CI workflow | implementer | G015 | IN_VERIFICATION | [#16](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/16) | [#54](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/54) |
-| G017 | Typed canonical schemas | implementer | G015, G016 | BLOCKED | [#17](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/17) | |
+| G016 | pyproject, dev tooling, CI workflow | implementer | G015 | MERGED | [#16](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/16) | [#54](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/54) |
+| G017 | Typed canonical schemas | implementer | G015, G016 | IN_PROGRESS | [#17](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/17) | |
 | G018 | Provider interface + contract tests | implementer | G017 | BLOCKED | [#18](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/18) | |
 | G019 | Synthetic data generator + synthetic provider | implementer | G018 | BLOCKED | [#19](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/19) | |
 | G020 | Point-in-time data layer + as-of joins | implementer | G017, G018 | BLOCKED | [#20](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/20) | |
@@ -161,7 +161,7 @@ learning, live brokerage, distributed infra.
   tests/unit/test_schemas*.py, tests/unit/test_import_rules.py.
 - **Branch:** agent/implementer/G017-canonical-schemas. **Verifier:** required.
   **Red-team:** not required (structural; PIT behavior red-teamed at G020).
-- **Status:** BLOCKED on G016 merge (toolchain).
+- **Status:** IN_PROGRESS (dispatched on G016 merge).
 
 ### G012 — Workbook schema extraction + data dictionary
 - **Objective:** Sheet-by-sheet, column-by-column inventory of W1 and W2 into

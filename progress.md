@@ -17,11 +17,12 @@ Session-independent status. Update at every session end and major milestone.
 - Evidence matrix federated over per-source row files (D-005).
 
 ## Active assignments
-- G011 contradiction register + 7 model-version specs → quant-reviewer,
-  .worktrees/G011-quant-reviewer, owns docs/methodology/versions/** + contradiction_register.md
-- G014 correctness & leakage criteria → quant-reviewer,
-  .worktrees/G014-quant-reviewer, owns docs/methodology/correctness_criteria.md + leakage_tests.md
-- G041 MERGED (PR #47)
+- G006 skills library → IN_VERIFICATION (PR #51, verifier resumed post-limit),
+  .worktrees/G006-implementer at c799c4b
+- G013 field mapping → IN_PROGRESS (researcher resumed post-limit),
+  .worktrees/G013-data-researcher, owns docs/data/field_mapping.md + feature_coverage.md
+- Merged this phase: G011 (PR #50), G014 (PR #49), G041 (PR #47) — see history
+- Next dispatch: G015 architecture (detail block ready in goals.md) on G013 merge
 - Full detail: `coordination/agent_assignments.yaml`
 
 ## Blockers

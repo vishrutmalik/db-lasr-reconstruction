@@ -193,7 +193,7 @@ Mechanics (all EXPLICIT):
 
 ## 26. Number of boosting rounds
 
-- NOT_DISCLOSED in P2. Searched pp.10–11, 33–34, 40–41. (P1 p.20 states 30 layers — do not import silently; see contradiction_candidates CC-06.)
+- NOT_DISCLOSED in P2. Searched pp.10–11, 33–34, 40–41. (P1 p.20 states 30 layers — do not import silently; see contradiction_candidates CC-03.)
 
 ## 27. Stopping conditions
 

@@ -12,8 +12,8 @@ importable module, numerically faithful to the paper's own worked example.
 ## Preconditions
 docs/evidence/p1_nlasr_2012/formulas.md read end-to-end (it is the numeric
 source of truth here); normalized (0,1] factor panel and ±1 labels available;
-model-version spec docs/methodology/versions/nlasr_2012.md consulted —
-PENDING_G011 (PR #50 in verification); until merged, P1 formulas.md governs.
+model-version spec docs/methodology/versions/nlasr_2012.md consulted
+(merged; P1 formulas.md remains the numeric source of truth).
 
 ## Inputs
 Training matrix of normalized factor scores, labels y ∈ {+1,−1}, config:
@@ -25,9 +25,11 @@ All formulas cite docs/evidence/p1_nlasr_2012/formulas.md (§ numbers) which
 cites P1 pages.
 1. Initialize observation weights w(xᵢ) = 1/N; smoothing ε = 1/N (§0, §2;
    P1 p.11, p.13, p.15). N = pooled stock-month datapoints in the window.
-2. Per round l = 1..L, per candidate factor k: assign stocks to Q quantile
-   bins of the normalized rank; compute per-bin weighted class masses
-   W⁺ⱼ, W⁻ⱼ (§1, p.13).
+2. Per round l = 1..L, per candidate factor k: assign stocks to Q
+   EQUAL-COUNT quantile bins of the cross-sectional normalized rank
+   (Q=5 production; count EXPLICIT P1-10/11, equal-count scheme ASSUMED per
+   OQ-P1-01 — as nlasr_2012.md §5 records); compute per-bin weighted class
+   masses W⁺ⱼ, W⁻ⱼ (§1, p.13).
 3. Selection objective Z_k = Σⱼ √(W⁺ⱼ·W⁻ⱼ); select argmin Z (§3, p.13,
    p.15–16). Z uses RAW (unsmoothed) masses — the p.15 example does
    (OQ-P1-03; keep `z_smoothing` flag, default off). Previously selected

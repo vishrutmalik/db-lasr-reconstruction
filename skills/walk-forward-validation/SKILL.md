@@ -13,8 +13,8 @@ touching test folds, timing explicit at every step (MASTER_PROMPT §23).
 ## Preconditions
 Target engine with per-row timestamps and overlap metadata
 (skills/target-label-construction); models refittable per schedule;
-docs/methodology/correctness_criteria.md consulted — PENDING_G011 (encode
-its leakage invariants as tests once merged).
+docs/methodology/correctness_criteria.md consulted (merged; encode its
+leakage invariants — notably CI-010/CI-015 — as tests).
 
 ## Inputs
 Model config, target-family config, fold scheme (expanding | rolling),
@@ -30,9 +30,11 @@ rebalance calendar, timing enum, hyperparameter grid + selection protocol.
 3. Purge/embargo per target family:
    - 1M monthly: exclude the month whose label is unrealized at fit time.
    - 3M (LASR-HC): purge 3 months — DB's own guard uses data up to three
-     months prior to the rebalance date (P3 extraction, p.58); add embargo
-     for serial correlation (~80% at 6M horizon per P3 p.59 — overlap is
-     real, §19.2 requires purging or embargoing).
+     months prior to the rebalance date (P3 extraction, p.58); add an
+     embargo of at least one full target horizon after the test period,
+     configurable and defaulting ON for overlapping families (CI-015(b),
+     correctness_criteria.md); serial correlation is real (~80% at 6M
+     horizon per P3 p.59 — §19.2 requires purging or embargoing).
    - 1W (HF): purge 1 week; respect open/close timing.
    - 4W weekly-sampled (P4): overlapping labels — purge 4 weeks between
      train end and test start (P4 discloses no de-overlap treatment;

@@ -77,8 +77,10 @@ target — "train our model using next quarter's return", P3 p.58; P3-02).
 | capacity scenario | $5B + 10% ADV | EXPLICIT (P3-31) | — |
 
 **Tally (deltas): 4 EXPLICIT · 0 IMPORTED · 1 INFERRED · 3 ASSUMED**
-(plus inherited `lasr_2014` provenance: 17 EXPLICIT · 6 IMPORTED · 3
-INFERRED · 6 ASSUMED).
+(plus inherited `lasr_2014` provenance: 19 EXPLICIT · 6 IMPORTED ·
+0 INFERRED · 4 ASSUMED — matches the corrected lasr_2014.md tally of 29
+parameters; stale echo fixed by G042 per G011 verification non-blocking
+finding 1).
 
 ## 4. Related contradiction-register entries
 

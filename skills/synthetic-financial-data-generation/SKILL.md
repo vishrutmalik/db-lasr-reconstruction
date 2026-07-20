@@ -43,8 +43,8 @@ list), seed.
    c. a teeth check: a test that FAILS if the framework misses the planted
       effect/defect (e.g. leaked feature not flagged, restatement leakage
       not caught) — a detector that cannot fail is not evidence.
-   Registry of scenarios + expected outcomes forward-referenced in
-   docs/methodology/leakage_tests.md — PENDING_G011.
+   Registry of scenarios + expected outcomes:
+   docs/methodology/leakage_tests.md (LT-001..021, merged).
 4. Implement at least the §17 named scenarios: value works in one regime
    only; momentum reverses in crisis; sector exposure predictive until
    sector-neutralized; deliberately leaked feature → unrealistic

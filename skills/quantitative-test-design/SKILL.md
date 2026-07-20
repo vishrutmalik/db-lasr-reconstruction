@@ -17,8 +17,8 @@ the module under test importable; seed policy defined for the repo.
 
 ## Inputs
 Component under test, its evidence rows, its declared invariants
-(goal acceptance criteria + docs/methodology/correctness_criteria.md —
-PENDING_G011).
+(goal acceptance criteria + docs/methodology/correctness_criteria.md,
+CI-001..055).
 
 ## Procedure
 1. **Golden fixtures from paper-verified numbers** — prefer values the

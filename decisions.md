@@ -36,3 +36,10 @@
   MASTER_PROMPT §3.1 ("small control-plane updates"). All research and
   implementation goals thereafter go through branches + PRs.
 - **Reversibility:** n/a. **Date:** 2026-07-19. **Agent:** orchestrator. **Goal:** G001.
+
+## D-005 — Federated evidence matrix
+- **Decision:** evidence_matrix.md indexes per-source evidence_rows.md files
+  instead of duplicating ~165 rows; Code/Test columns get filled in the
+  per-source files as implementation goals land.
+- **Alternatives:** copy all rows centrally (rejected: duplication/drift).
+- **Reversibility:** EASY. **Date:** 2026-07-20. **Agent:** orchestrator. **Goal:** G011.

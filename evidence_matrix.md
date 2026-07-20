@@ -34,4 +34,8 @@ G007–G013.
 |----|--------------|---------|-----------|--------|------|
 | CR-001 | Filename date `20140101` vs title-page date 1 Dec 2014 for P3 | filename vs P3 p.1 | Use title-page date (D-003) | n/a | n/a |
 
-(cross-paper methodology contradictions added by G011)
+Cross-paper contradiction candidates collected by research goals (14 from P1,
+9 from P2, 9 from P3, 10 from P4, in each dir's contradiction_candidates.md)
+are triaged and resolved into this register by G011
+(docs/methodology/contradiction_register.md will hold the full resolved set;
+this table indexes the resolved outcomes).

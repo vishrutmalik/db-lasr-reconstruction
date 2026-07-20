@@ -388,7 +388,7 @@ Keyed by W1 row so the count reconciles exactly with the sheet (513 rows); the 5
 | 369 | Total Debt/Total Capital | `TOT_DEBT_TO_CAPITAL` | Leverage Ratios | Q | Y | RA r60 | dimensionless | 0/8 |
 | 370 | Total Debt/Total Assets | `TOT_DEBT_TO_ASSET` | Leverage Ratios | Q | Y | RA r64 | dimensionless | 0/8 |
 | 371 | Total Liabilities/Total Assets | `TOT_LIAB_TO_ASSET` | Leverage Ratios | Q | Y | RA r66 | dimensionless | 0/8 |
-| 372 | Total Assets/Shareholders' Equity | `TOT_ASSET_TO_EQUITY` | Leverage Ratios | Q | Y | RA r65 | dimensionless | 0/8 |
+| 372 | Total Assets/Shareholders' Equity | `TOT_ASSET_TO_EQUITY` | Leverage Ratios | Q | Y | RA r58 | dimensionless | 0/8 |
 | 373 | EBIT/Interest Expenses | `EBIT_TO_INT_EXP` | Fundamentals | Q |  | RA r46 | dimensionless | 0/8 |
 | 374 | EBITDA/Interest Expenses | `EBITDA_TO_INT_EXP` | Fundamentals | Q |  | RA r47 | dimensionless | 0/8 |
 | 375 | (EBITDA-CapEx)/Interest Expenses | `EBITDA_LESS_CAPEX_TO_INT_EXP` | Coverage Ratios | Q | Y | RA r48 | dimensionless | 0/8 |
@@ -403,8 +403,8 @@ Keyed by W1 row so the count reconciles exactly with the sheet (513 rows); the 5
 | 384 | Capex/D&A | `CAPEX_TO_DA` | Capital Intensity Ratios | Q | Y | RA r69 | dimensionless | 0/8 |
 | 385 | D&A/PP&E | `DA_TO_PPE` | Capital Intensity Ratios | Q | Y | RA r71 | dimensionless | 0/8 |
 | 386 | Net Working Capital/Average Assets | `NWC_TO_AVG_ASSET` | Fundamentals | Q |  | RA r74 | dimensionless | 0/8 |
-| 387 | Fixed Asset Turnover | `FIXED_ASSET_TURNOVER` | Fundamentals | Q |  | RA r72 | dimensionless | 0/8 |
-| 388 | Total Asset Turnover | `TOTAL_ASSET_TURNOVER` | Capital Intensity Ratios | Q | Y | RA r73 | dimensionless | 0/8 |
+| 387 | Fixed Asset Turnover | `FIXED_ASSET_TURNOVER` | Fundamentals | Q |  | RA r37 | dimensionless | 0/8 |
+| 388 | Total Asset Turnover | `TOTAL_ASSET_TURNOVER` | Capital Intensity Ratios | Q | Y | RA r38 | dimensionless | 0/8 |
 | 389 | Dividend Payout Ratio, % | `DIV_PAYOUT_RATIO` | Fundamentals | Q |  | RA r78 | percent | 0/8 |
 | 390 | LTM Dividend Payout Ratio (%) | `LTM_DIV_PAYOUT_RATIO` | Fundamentals | LTM |  | RA r79 | percent | 0/8 |
 | 391 | P/E | `PE` | Trading Multiples | D/M | Y | RA r112, TM | dimensionless | 8/8; n=254 |
@@ -532,7 +532,9 @@ Keyed by W1 row so the count reconciles exactly with the sheet (513 rows); the 5
 | 513 | Peers & Competitors | NOT_ESTABLISHED | Reference (static) | N/A |  | none (W1 list only) | NOT_ESTABLISHED | n/a |
 | 514 | Exact Period End Date | NOT_ESTABLISHED | Reference (static) | N/A |  | none (W1 list only) | date | n/a |
 
-Code conflict footnote: label `P/AFFO` maps to `P_TO_AFFO` in W1 Available Consensus (row 166) but to code `P_TO_FFO` on W2 Ratios row 120 (provider label/code mismatch; W2 Ratios row 137 `P/FFO` also uses `P_TO_FFO`).
+Code conflict footnote: label `P/AFFO` maps to `P_TO_AFFO` in W1 Available Consensus (row 167) but to code `P_TO_FFO` on W2 Ratios row 120 (provider label/code mismatch; W2 Ratios row 137 `P/FFO` also uses `P_TO_FFO`).
+
+Duplicate Ratios-row footnote: W2 Ratios rows 37/38/58 (`FIXED_ASSET_TURNOVER`, `TOTAL_ASSET_TURNOVER`, `TOT_ASSET_TO_EQUITY`) are repeated verbatim at rows 72/73/65 — same code, same label, cached values cell-identical (0/8 fill). Rows 372, 387 and 388 above cite the first occurrence, consistent with W1's own MATCH crosswalk resolution and `w1_metrics_catalog.md`; a citation of the duplicate row would be equivalent.
 
 ## Section 2 — Consensus-sheet name variants not in Section 1 (16 rows)
 
@@ -883,5 +885,5 @@ Private-funding-round dataset (one record per round). Same caveats as Section 4.
 | 5 Funding fields | 35 | W1 col I rows 2-36 = 35 | yes |
 | **Total** | **823** | | |
 
-W2 coverage cross-check: FS coded rows 306, Ratios coded 104 + uncoded 14, Front Page 34, Trading Multiples 26 pairs (24 distinct codes). Every W2 coded label except those in Section 3 appears in Section 1 via case-insensitive name match, mirroring W1's own MATCH crosswalk (cols D/E/F).
+W2 coverage cross-check: FS coded rows 306, Ratios coded 104 + uncoded 14, Front Page 34, Trading Multiples 26 pairs (25 distinct codes; `P_TO_FCF` queried twice). Every W2 coded label except those in Section 3 appears in Section 1 via case-insensitive name match, mirroring W1's own MATCH crosswalk (cols D/E/F).
 

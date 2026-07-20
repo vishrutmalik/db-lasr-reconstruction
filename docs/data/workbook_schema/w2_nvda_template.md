@@ -612,7 +612,7 @@ Observations:
 - Two observation counts: 375 obs (full daily series: `CLOSE`, `MCAP`, `EV`, and the `_ADJ` multiples) vs 254 obs (unadjusted LTM multiples).
 - The 254-obs series have two ~3-month holes: 2025-07-30 -> 2025-10-26 and 2026-01-30 -> 2026-04-26 — daily values disappear until the next quarter's LTM fundamentals become available, then resume. Each pair carries its own date column because series lengths differ.
 - 6 pairs returned no data for NVDA: `P_TO_SALES_ADJ`, `EV_TO_SALES_ADJ`, `P_TO_BV`, `P_TO_TBV`, `P_TO_AFFO`, `PEG` (headers present, values empty).
-- Distinct codes: 24 (26 pairs - 1 duplicated `P_TO_FCF` - counting each once); all 24 also exist on the Ratios tab / W1 list.
+- Distinct codes: 25 (26 code-bearing pairs - 1 duplicated `P_TO_FCF` = 25). 22 of the 25 also appear as codes on the Ratios tab; the 3 exceptions are `CLOSE` (coded only on Front Page r17 and here, not a Ratios code), `PEG` (label-only Ratios row 134 with no code; the name exists in W1 Financial Metrics r414 / Available Consensus r168), and `P_TO_AFFO` (appears only in W1 Available Consensus r167 and this TM header; the Ratios tab pairs the `P/AFFO` label with code `P_TO_FFO`, r120).
 - Units: prices in trading currency (USD); `MCAP`/`EV` in millions; multiples dimensionless; `FCF_YIELD_MCAP` decimal fraction (0.0167 = 1.67%).
 
 ## Sheet `Data` (lookup/config sheet)

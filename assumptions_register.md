@@ -64,6 +64,12 @@ verifier):
 | A-G011-57 | P4 beta<0 gate action (CR-030) | `beta_negative_action` | nlasr_2020 |
 | A-G011-48/50 | P4 liquidity screen / 114-feature reconstruction | provider flags + feature registry | nlasr_2020 |
 
+### Field-mapping assumptions (G013, merged PR #52)
+Defined in docs/data/field_mapping.md rows: FM-35 country concept (HQ vs
+exchange listing), FM-18 dividend timing in total-return assembly, FM-31
+full-MCAP proxy for float-adjusted size, FM-22 market-proxy construction for
+beta. Each carries a config parameter; sensitivity tests bind at G022/G023.
+
 ### CI/LT presupposed assumptions (G014, merged PR #49)
 CI-044/CI-048 presuppose: borrow=0 for P1–P3 reconstructions (P1-39/P3-36);
 epsilon & rounds inheritance (P3 Q5, OQ-P4-02/04); deterministic tie-breaking

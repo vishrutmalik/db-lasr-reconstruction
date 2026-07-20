@@ -24,9 +24,9 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G010 | Paper 4 (N-LASR 2020) evidence extraction ✎ | paper-researcher | G005 | MERGED | [#10](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/10) | [#44](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/44) |
 | G011 | Cross-paper contradiction register + 7 model-version specs | quant-reviewer | G007–G010 | MERGED | [#11](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/11) | [#50](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/50) |
 | G012 | Workbook schema extraction + data dictionary ✎ | data-researcher | G005 | MERGED | [#12](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/12) | [#45](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/45) |
-| G013 | Field mapping: provider fields → model requirements | data-researcher | G011, G012 | IN_VERIFICATION | [#13](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/13) | [#52](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/52) |
+| G013 | Field mapping: provider fields → model requirements | data-researcher | G011, G012 | MERGED | [#13](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/13) | [#52](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/52) |
 | G014 | Quantitative correctness & leakage criteria | quant-reviewer | G007–G010 | MERGED | [#14](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/14) | [#49](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/49) |
-| G015 | System architecture design | architect | G011, G012, G013 | BLOCKED | [#15](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/15) | |
+| G015 | System architecture design | architect | G011, G012, G013 | IN_PROGRESS | [#15](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/15) | |
 | G016 | pyproject, dev tooling, CI workflow | implementer | G015 | BLOCKED | [#16](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/16) | |
 | G017 | Typed canonical schemas | implementer | G015, G016 | BLOCKED | [#17](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/17) | |
 | G018 | Provider interface + contract tests | implementer | G017 | BLOCKED | [#18](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/18) | |

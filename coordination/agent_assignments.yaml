@@ -2,6 +2,24 @@
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
 active:
+  G042:
+    agent_role: quant-reviewer
+    objective: Deferred doc cleanup incl. CI-046 turnover-unit reconciliation (pre-G027 blocker)
+    github_issue: 55
+    branch: agent/quant-reviewer/G042-doc-cleanup
+    worktree: .worktrees/G042-quant-reviewer
+    status: IN_PROGRESS
+    dependencies: [G006, G011, G014, G015]
+    owned_paths: ["docs/methodology/**", "skills/**", "docs/evidence/p2_nlasr2_2013/extraction.md (one cross-ref line)"]
+    read_only_paths: ["docs/evidence/**", "docs/verification/**", "docs/architecture/**"]
+    shared_interfaces: ["correctness_criteria.md consumed by G017+ tests"]
+    started_at: 2026-07-20
+    last_updated_at: 2026-07-20
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: Runs parallel to G016 verification (disjoint paths). Sourced from integration_queue deferred list.
+
   G016:
     agent_role: implementer
     objective: Toolchain + repo scaffolding + CI per docs/architecture/toolchain_proposal.md

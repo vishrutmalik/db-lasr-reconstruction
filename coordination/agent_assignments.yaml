@@ -2,24 +2,6 @@
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
 active:
-  G006:
-    agent_role: implementer
-    objective: Author the remaining 15 project skills (evidence-informed)
-    github_issue: 6
-    branch: agent/implementer/G006-skills-library
-    worktree: .worktrees/G006-implementer
-    status: IN_VERIFICATION (PR #51)
-    dependencies: [G005]
-    owned_paths: ["skills/** (new dirs only; the 5 existing skills read-only)"]
-    read_only_paths: ["docs/evidence/**", "docs/data/**", "MASTER_PROMPT.md", "skills/*/SKILL.md (existing)"]
-    shared_interfaces: ["skill format per MASTER_PROMPT SS12"]
-    started_at: 2026-07-20
-    last_updated_at: 2026-07-20
-    latest_commit: c799c4b (final; 15 skills, 4 commits)
-    verification_required: true
-    red_team_required: false
-    notes: PENDING_G011 references now resolvable (G011 merged first).
-
   G013:
     agent_role: data-researcher
     objective: Map AlphaSense provider fields to model-version requirements (direct/renamed/derivable/ambiguous/unavailable)
@@ -39,6 +21,13 @@ active:
     notes: New files only within docs/data/ (G012 outputs read-only).
 
 history:
+  - goal_id: G006
+    agent_role: implementer
+    branch: agent/implementer/G006-skills-library (deleted after merge)
+    final_commit: c799c4b (15 skills) + 4fcb509 (verification PASS)
+    pr: 51
+    verification: PASS (docs/verification/G006.md; 0 blocking, 7 non-blocking deferred to doc cleanup)
+    worktree: removed
   - goal_id: G011
     agent_role: quant-reviewer
     branch: agent/quant-reviewer/G011-contradictions-model-specs (deleted after merge)

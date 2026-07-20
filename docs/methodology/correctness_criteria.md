@@ -142,6 +142,8 @@ rejects any config whose HP-selection window intersects its reported OOS
 window.
 **Scope:** experiment tracking / validation protocol (G026, G028, G038).
 **Basis:** E-P4-14, P3-32, E-P2-28; MP §23 research-validity metrics.
+**Tested by:** G026, G038 (mirrors the coverage map below; field added by
+G042 per G014 verification non-blocking finding 1).
 **Prevents:** false out-of-sample claims; multiple-testing contamination of
 the test period.
 
@@ -229,7 +231,9 @@ inference on overlapping families must use overlap-robust errors (G028).
 (G032, G033), metrics (G028).
 **Basis:** MP §19.2 ("purging or embargoing where required"), MP §30
 ("overlapping labels are handled deliberately"); P3-02/23; E-P4-07/13;
-OQ-P4-06 (pooled overlapping weekly rows EXPLICITly implied).
+OQ-P4-06 (pooled overlapping weekly rows — ASSUMED per the OQ's own tag,
+supported by the Step-4 N example; wording corrected by G042 per G014
+verification non-blocking finding 2).
 **Tested by:** G023, G026, G032, G033; exercised by LT-012.
 **Prevents:** shared-outcome contamination between train and test — the
 classic inflated-CV leak of overlapping labels.
@@ -634,11 +638,18 @@ returns"); E-P4-34.
 pre-trade weight); two-way = 2× one-way; the convention is documented once
 and used by metrics, constraints, and cost calc alike. Hand fixture: a
 portfolio replacing half its names computes the known value. Paper
-sanity bands consumed as acceptance checks: P1 decile L/S two-way >250%/yr;
+sanity bands consumed as acceptance checks: P1 decile L/S two-way >250%/mo;
 P4 one-way ≈3.8% daily ≈ 19% weekly.
 **Scope:** accounting + metrics (G027, G028).
 **Basis:** P1-37, P3-27 ("30% one-way per month (60% two-way …)" pins the
-2× relation), E-P4-33.
+2× relation), E-P4-33. Unit reconciliation (G042, closes G015 finding N-10):
+this row previously read ">250%/yr" against ">250%/mo" in
+versions/nlasr_2012.md §11 — the per-YEAR unit here was the error. P1 p.36
+(Fig 53) states "monthly turnover of our model, the average is over 250%"
+and caps "the maximum turnover in a given period" at 400% — a per-month
+figure by the paper's own text (an annual reading would also contradict the
+400% per-period ceiling); P1 extraction §33 records the same ("two-way
+monthly", max 400%). The spec's >250%/mo band stands unchanged.
 **Tested by:** G027, G028; exercised by LT-008.
 **Prevents:** the classic 2× turnover ambiguity corrupting cost drag and
 constraint checks.

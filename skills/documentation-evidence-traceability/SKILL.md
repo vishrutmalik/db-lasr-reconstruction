@@ -52,8 +52,9 @@ workbook cell, or reasoning); the code/test paths that realize it.
    so the verifier can trace both directions.
 6. Cross-register: assumptions → A-### (assumptions_register.md); decisions
    → D-### (decisions.md); contradictions → the contradiction register
-   (per-paper contradiction_candidates.md; cross-paper register — 
-   PENDING_G011); open questions → OQ-Px-nn files. One fact, one home,
+   (per-paper contradiction_candidates.md; cross-paper
+   docs/methodology/contradiction_register.md); open questions →
+   OQ-Px-nn files. One fact, one home,
    links elsewhere.
 7. When editing shared control files (evidence_matrix.md, registers): pull
    latest main first, append rather than reorder, keep IDs immutable

@@ -19,7 +19,7 @@ risk-adj <=1.6; P4 net Sharpe ~1.6 base case) for plausibility bounds.
 
 ## Inputs
 Component under audit, its claimed guarantees, scenario registry
-(docs/methodology/leakage_tests.md — PENDING_G011), prior audit findings.
+(docs/methodology/leakage_tests.md, LT-001..021), prior audit findings.
 
 ## Procedure
 1. Walk the §10.8 checklist item by item — every item gets a targeted probe,

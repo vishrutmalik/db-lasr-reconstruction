@@ -13,8 +13,8 @@ piecewise-linear in percentile rank, directly comparable to hard-bin N-LASR.
 ## Preconditions
 docs/evidence/p3_lasr_2014/formulas.md read (numeric source of truth);
 hard-bin learner (skills/nlasr-weak-learner) available for comparison tests;
-model-version spec docs/methodology/versions/lasr_2014.md consulted —
-PENDING_G011; until merged, P3 formulas.md governs.
+model-version spec docs/methodology/versions/lasr_2014.md consulted
+(merged; P3 formulas.md remains the numeric source of truth).
 
 ## Inputs
 Percentile ranks p(x) ∈ [0,100] per factor, labels ±1, boosting weights;
@@ -37,8 +37,10 @@ All references are docs/evidence/p3_lasr_2014/formulas.md (§) citing P3 pages.
    membership and it is < 1 (p=5 ⇒ m₁=0.75 total), so literal formula leaks
    training mass and shrinks tail predictions toward 0. P3 is silent
    (open_questions.md Q1). Implement BOTH `tail_mode: literal` and
-   `tail_mode: clipped` (flat extrapolation, dist=0 in the tails); never
-   default silently — the config must state which.
+   `tail_mode: clamp` (flat extrapolation, dist=0 in the tails; enum token
+   per the authoritative spec lasr_2014.md §5 / A-G011-31 — this skill's
+   earlier token was renamed by G042 to match the spec); never default
+   silently — the config must state which.
 6. Boosting loop (selection objective, weight update, rounds): NOT restated
    in P3 readable text (§6) — reuse the P1 loop with cross-reference flags;
    P3 notes gains "beyond 10 or 20" rounds are minimal (p.8).
@@ -53,7 +55,7 @@ vs hard-bin learner; evidence rows P3-* updated.
 
 ## Common failure modes
 - Normalizing memberships to sum 1 in the tails without flagging it — that
-  IS `clipped` behavior; keep it behind the flag.
+  IS `clamp` behavior; keep it behind the flag.
 - Membership over raw factor values instead of percentile rank.
 - Hard-bin masses with linear prediction only (must be fractional on the
   TRAINING side too, §3.2).
@@ -76,7 +78,7 @@ h dimensionless; determinism.
    smoothly (§4).
 4. Synthetic comparison: score autocorrelation of linearized >= hard-bin in
    the controlled scenario (MASTER §20.3).
-5. tail_mode: literal vs clipped differ only for p outside [c₁,c_Q].
+5. tail_mode: literal vs clamp differ only for p outside [c₁,c_Q].
 
 ## Git branch and worktree expectations
 Assigned `agent/implementer/G0XX-...` branch in `.worktrees/G0XX-implementer/`;

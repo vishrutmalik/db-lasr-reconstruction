@@ -13,7 +13,8 @@ weighting rules the papers evidence.
 ## Preconditions
 Weak learner(s) implemented and verified; per-expert sample selectors
 expressible over the training-example layer; rank-IC/P&L history storage
-available for learned weights; model-version specs consulted — PENDING_G011.
+available for learned weights; model-version specs consulted
+(docs/methodology/versions/, merged).
 
 ## Inputs
 Training-example panel, expert definitions (§21: name, sample selector,

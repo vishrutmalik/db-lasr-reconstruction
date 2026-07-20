@@ -8,17 +8,17 @@ active:
     github_issue: 6
     branch: agent/implementer/G006-skills-library
     worktree: .worktrees/G006-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #51)
     dependencies: [G005]
     owned_paths: ["skills/** (new dirs only; the 5 existing skills read-only)"]
     read_only_paths: ["docs/evidence/**", "docs/data/**", "MASTER_PROMPT.md", "skills/*/SKILL.md (existing)"]
     shared_interfaces: ["skill format per MASTER_PROMPT SS12"]
     started_at: 2026-07-20
     last_updated_at: 2026-07-20
-    latest_commit: null
+    latest_commit: c799c4b (final; 15 skills, 4 commits)
     verification_required: true
     red_team_required: false
-    notes: Model-specific skills may forward-reference docs/methodology/versions/ (G011, in verification).
+    notes: PENDING_G011 references now resolvable (G011 merged first).
 
   G013:
     agent_role: data-researcher

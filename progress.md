@@ -3,7 +3,7 @@
 Session-independent status. Update at every session end and major milestone.
 
 - **Last orchestrator update:** 2026-07-20 (session 1 continued)
-- **Current milestone:** M2 — methodology consolidation (research phase M1 complete)
+- **Current milestone:** M3 — architecture (M1 research + M2 methodology complete)
 - **Remote:** git@github.com:vishrutmalik/db-lasr-reconstruction.git (PRIVATE)
 
 ## Completed & merged
@@ -17,12 +17,10 @@ Session-independent status. Update at every session end and major milestone.
 - Evidence matrix federated over per-source row files (D-005).
 
 ## Active assignments
-- G006 skills library → IN_VERIFICATION (PR #51, verifier resumed post-limit),
-  .worktrees/G006-implementer at c799c4b
-- G013 field mapping → IN_PROGRESS (researcher resumed post-limit),
-  .worktrees/G013-data-researcher, owns docs/data/field_mapping.md + feature_coverage.md
-- Merged this phase: G011 (PR #50), G014 (PR #49), G041 (PR #47) — see history
-- Next dispatch: G015 architecture (detail block ready in goals.md) on G013 merge
+- G015 system architecture → architect, .worktrees/G015-architect,
+  owns docs/architecture/** (7 deliverables incl. toolchain proposal for G016)
+- Merged in M2: G011 (PR #50), G014 (PR #49), G041 (PR #47), G006 (PR #51),
+  G013 (PR #52) — all with PASS verification reports
 - Full detail: `coordination/agent_assignments.yaml`
 
 ## Blockers

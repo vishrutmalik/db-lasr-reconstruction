@@ -25,7 +25,7 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G011 | Cross-paper contradiction register + 7 model-version specs | quant-reviewer | G007–G010 | IN_VERIFICATION | [#11](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/11) | [#50](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/50) |
 | G012 | Workbook schema extraction + data dictionary ✎ | data-researcher | G005 | MERGED | [#12](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/12) | [#45](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/45) |
 | G013 | Field mapping: provider fields → model requirements | data-researcher | G011, G012 | BLOCKED | [#13](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/13) | |
-| G014 | Quantitative correctness & leakage criteria | quant-reviewer | G007–G010 | IN_VERIFICATION | [#14](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/14) | [#49](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/49) |
+| G014 | Quantitative correctness & leakage criteria | quant-reviewer | G007–G010 | MERGED | [#14](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/14) | [#49](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/49) |
 | G015 | System architecture design | architect | G011, G012, G013 | BLOCKED | [#15](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/15) | |
 | G016 | pyproject, dev tooling, CI workflow | implementer | G015 | BLOCKED | [#16](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/16) | |
 | G017 | Typed canonical schemas | implementer | G015, G016 | BLOCKED | [#17](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/17) | |

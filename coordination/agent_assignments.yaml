@@ -19,23 +19,6 @@ active:
     verification_required: true
     red_team_required: false
     notes: 42 candidates triaged (14 REAL / 9 ERRATA / 7 APPARENT).
-  G014:
-    agent_role: quant-reviewer
-    objective: Testable quantitative correctness & leakage criteria (invariants for all implementation goals)
-    github_issue: 14
-    branch: agent/quant-reviewer/G014-correctness-criteria
-    worktree: .worktrees/G014-quant-reviewer
-    status: IN_VERIFICATION (PR #49)
-    dependencies: [G007, G008, G009, G010]
-    owned_paths: ["docs/methodology/correctness_criteria.md", "docs/methodology/leakage_tests.md"]
-    read_only_paths: ["docs/evidence/**", "MASTER_PROMPT.md"]
-    shared_interfaces: ["invariants encoded as tests by G017-G029; scenarios feed G019/G037"]
-    started_at: 2026-07-20
-    last_updated_at: 2026-07-20
-    latest_commit: 3aa490c (final; CI-001..055 + LT-001..021)
-    verification_required: true
-    red_team_required: false
-    notes: File-level split from G011 (same dir, disjoint files) documented here.
   G006:
     agent_role: implementer
     objective: Author the remaining 15 project skills (evidence-informed)
@@ -55,6 +38,13 @@ active:
     notes: Model-specific skills may forward-reference docs/methodology/versions/ (G011, in verification).
 
 history:
+  - goal_id: G014
+    agent_role: quant-reviewer
+    branch: agent/quant-reviewer/G014-correctness-criteria (deleted after merge)
+    final_commit: 3aa490c (criteria) + 00cd63a (verification PASS)
+    pr: 49
+    verification: PASS (docs/verification/G014.md; 0 blocking)
+    worktree: removed
   - goal_id: G041
     agent_role: paper-researcher
     branch: agent/paper-researcher/G041-quote-compliance (deleted after merge)

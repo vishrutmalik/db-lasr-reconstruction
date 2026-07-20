@@ -22,10 +22,10 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G008 | Paper 2 (N-LASR2 2013) evidence extraction ✎ | paper-researcher | G005 | MERGED | [#8](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/8) | [#42](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/42) |
 | G009 | Paper 3 (LASR 2014) evidence extraction ✎ | paper-researcher | G005 | MERGED | [#9](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/9) | [#43](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/43) |
 | G010 | Paper 4 (N-LASR 2020) evidence extraction ✎ | paper-researcher | G005 | MERGED | [#10](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/10) | [#44](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/44) |
-| G011 | Cross-paper contradiction register + 7 model-version specs | quant-reviewer | G007–G010 | BLOCKED | [#11](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/11) | |
-| G012 | Workbook schema extraction + data dictionary ✎ | data-researcher | G005 | FAILED_VERIFICATION | [#12](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/12) | [#45](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/45) |
+| G011 | Cross-paper contradiction register + 7 model-version specs | quant-reviewer | G007–G010 | IN_PROGRESS | [#11](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/11) | |
+| G012 | Workbook schema extraction + data dictionary ✎ | data-researcher | G005 | IN_VERIFICATION | [#12](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/12) | [#45](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/45) |
 | G013 | Field mapping: provider fields → model requirements | data-researcher | G011, G012 | BLOCKED | [#13](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/13) | |
-| G014 | Quantitative correctness & leakage criteria | quant-reviewer | G007–G010 | BLOCKED | [#14](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/14) | |
+| G014 | Quantitative correctness & leakage criteria | quant-reviewer | G007–G010 | IN_PROGRESS | [#14](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/14) | |
 | G015 | System architecture design | architect | G011, G012, G013 | BLOCKED | [#15](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/15) | |
 | G016 | pyproject, dev tooling, CI workflow | implementer | G015 | BLOCKED | [#16](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/16) | |
 | G017 | Typed canonical schemas | implementer | G015, G016 | BLOCKED | [#17](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/17) | |

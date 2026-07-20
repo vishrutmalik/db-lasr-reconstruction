@@ -8,7 +8,7 @@ active:
     github_issue: 12
     branch: agent/data-researcher/G012-workbook-schema
     worktree: .worktrees/G012-data-researcher
-    status: FAILED_VERIFICATION (verifier 604feed, 1 blocking: TM distinct-code count 24->25; remediation dispatched)
+    status: IN_VERIFICATION round 2 (remediated 585aeb5; re-verification dispatched)
     dependencies: [G005]
     owned_paths: ["docs/data/**"]
     read_only_paths: ["inputs/data_templates/*.xlsx (main checkout, git-ignored)", "MASTER_PROMPT.md", "input_manifest.md", "skills/excel-schema-mapping/SKILL.md"]
@@ -20,6 +20,40 @@ active:
     red_team_required: false
     notes: A-001 now positively evidenced (Data!N2:O3 latest_filing only).
 
+  G011:
+    agent_role: quant-reviewer
+    objective: Cross-paper contradiction register (resolved) + 7 independently configurable model-version specs
+    github_issue: 11
+    branch: agent/quant-reviewer/G011-contradictions-model-specs
+    worktree: .worktrees/G011-quant-reviewer
+    status: IN_PROGRESS
+    dependencies: [G007, G008, G009, G010]
+    owned_paths: ["docs/methodology/versions/**", "docs/methodology/contradiction_register.md"]
+    read_only_paths: ["docs/evidence/**", "docs/verification/G007.md..G010.md", "evidence_matrix.md", "assumptions_register.md"]
+    shared_interfaces: ["version spec format feeds configs/models/* (G015+)"]
+    started_at: 2026-07-20
+    last_updated_at: 2026-07-20
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: 42 contradiction candidates to triage (14+9+9+10). Never merge versions.
+  G014:
+    agent_role: quant-reviewer
+    objective: Testable quantitative correctness & leakage criteria (invariants for all implementation goals)
+    github_issue: 14
+    branch: agent/quant-reviewer/G014-correctness-criteria
+    worktree: .worktrees/G014-quant-reviewer
+    status: IN_PROGRESS
+    dependencies: [G007, G008, G009, G010]
+    owned_paths: ["docs/methodology/correctness_criteria.md", "docs/methodology/leakage_tests.md"]
+    read_only_paths: ["docs/evidence/**", "MASTER_PROMPT.md"]
+    shared_interfaces: ["invariants encoded as tests by G017-G029; scenarios feed G019/G037"]
+    started_at: 2026-07-20
+    last_updated_at: 2026-07-20
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: File-level split from G011 (same dir, disjoint files) documented here.
   G041:
     agent_role: paper-researcher
     objective: Trim >15-word quotes in merged P1/P3/P4 evidence (G008-standard compliance)

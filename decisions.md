@@ -43,3 +43,30 @@
   per-source files as implementation goals land.
 - **Alternatives:** copy all rows centrally (rejected: duplication/drift).
 - **Reversibility:** EASY. **Date:** 2026-07-20. **Agent:** orchestrator. **Goal:** G011.
+
+## D-006 — PIT layer is a query API over append-only vintages
+- **Decision:** No materialized PIT snapshots; as-of queries over vintaged
+  canonical tables (docs/architecture/system_design.md §layers).
+- **Reversibility:** MODERATE. **Date:** 2026-07-20. **Agent:** architect. **Goal:** G015/G020.
+
+## D-007 — Feature store holds pre-neutralization values only
+- **Decision:** Neutralization is a version-keyed transform applied at
+  training-example build, never baked into stored features (CR-004 family).
+- **Reversibility:** MODERATE. **Date:** 2026-07-20. **Agent:** architect. **Goal:** G015/G022.
+
+## D-008 — Shared boosting loop + pluggable kernel/objective
+- **Decision:** One boosting engine; version differences live in Kernel and
+  selection-objective plugins (CR-008/CR-009); P4 beta<0 exit surfaced as
+  KernelExit value (CR-030).
+- **Reversibility:** HARD later. **Date:** 2026-07-20. **Agent:** architect. **Goal:** G015/G024.
+
+## D-009 — Knowledge-time stamping for non-PIT providers
+- **Decision:** knowledge_time = retrieval time for latest_filing providers;
+  datasets carry pit_grade; daily-bar knowledge convention = close of event
+  date (A-002 family).
+- **Reversibility:** EASY (config). **Date:** 2026-07-20. **Agent:** architect. **Goal:** G015/G020.
+
+## D-010 — Toolchain: uv-managed CPython 3.12, pandas 2.2 + pyarrow, pydantic v2
+- **Decision:** Per docs/architecture/toolchain_proposal.md; sklearn/xgboost
+  quarantined to a challengers extra; system Python 3.9.6 not used.
+- **Reversibility:** MODERATE. **Date:** 2026-07-20. **Agent:** architect. **Goal:** G015/G016.

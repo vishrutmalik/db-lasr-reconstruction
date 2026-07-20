@@ -2,25 +2,32 @@
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
 active:
-  G015:
-    agent_role: architect
-    objective: Complete system architecture per MASTER_PROMPT SS14-16, 18-25 (see goals.md detail block)
-    github_issue: 15
-    branch: agent/architect/G015-system-architecture
-    worktree: .worktrees/G015-architect
-    status: IN_VERIFICATION (PR #53)
-    dependencies: [G011, G012, G013, G014]
-    owned_paths: ["docs/architecture/**"]
-    read_only_paths: ["docs/methodology/**", "docs/data/**", "docs/evidence/**", "MASTER_PROMPT.md", "goals.md"]
-    shared_interfaces: ["all G016-G029 implementation contracts originate here"]
+  G016:
+    agent_role: implementer
+    objective: Toolchain + repo scaffolding + CI per docs/architecture/toolchain_proposal.md
+    github_issue: 16
+    branch: agent/implementer/G016-toolchain-ci
+    worktree: .worktrees/G016-implementer
+    status: IN_PROGRESS
+    dependencies: [G015]
+    owned_paths: ["pyproject.toml", "uv.lock", ".github/workflows/**", "src/lasr/__init__.py + py.typed + package skeleton dirs", "tests/ (skeleton conftest only)", ".python-version", "Makefile or justfile if chosen"]
+    read_only_paths: ["docs/architecture/**", "MASTER_PROMPT.md"]
+    shared_interfaces: ["pyproject + CI consumed by every later goal"]
     started_at: 2026-07-20
     last_updated_at: 2026-07-20
-    latest_commit: 443e766 (final; 7 docs, 4 commits)
+    latest_commit: null
     verification_required: true
     red_team_required: false
-    notes: Self-check 55 CI / 31 CR / 21 LT all bound.
+    notes: pyproject.toml/.github/workflows are orchestrator-owned paths -> explicit one-goal ownership grant recorded here (integration order: nothing else touches them until G016 merges).
 
 history:
+  - goal_id: G015
+    agent_role: architect
+    branch: agent/architect/G015-system-architecture (deleted after merge)
+    final_commit: 443e766 (7 docs) + 8d31b5e (verification PASS)
+    pr: 53
+    verification: PASS (docs/verification/G015.md; 0 blocking, 11 non-blocking queued)
+    worktree: removed
   - goal_id: G013
     agent_role: data-researcher
     branch: agent/data-researcher/G013-field-mapping (deleted after merge)

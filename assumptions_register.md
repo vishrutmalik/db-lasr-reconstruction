@@ -64,6 +64,12 @@ verifier):
 | A-G011-57 | P4 beta<0 gate action (CR-030) | `beta_negative_action` | nlasr_2020 |
 | A-G011-48/50 | P4 liquidity screen / 114-feature reconstruction | provider flags + feature registry | nlasr_2020 |
 
+### A-ARCH-01 — Internal security-id minting for local-file adapter
+- hash(ticker, exchange, first_seen); collision rule recorded in dataset
+  manifest (docs/architecture/canonical_schemas.md §1.1). Config: id-minting
+  policy block. Sensitivity: identifier-collision synthetic test (G019).
+- Related: D-009 bar-knowledge convention joins the A-002 family.
+
 ### Field-mapping assumptions (G013, merged PR #52)
 Defined in docs/data/field_mapping.md rows: FM-35 country concept (HQ vs
 exchange listing), FM-18 dividend timing in total-return assembly, FM-31

@@ -95,9 +95,11 @@ interfaces are correct. Delta over `lasr_2014.md` unless stated.
 | execution basis | next-day open | EXPLICIT (P3-30) | — |
 | trade day/time anchor | next trading day open after signal | INFERRED (p.71–73) | A-G011-47 |
 
-**Tally (deltas): 8 EXPLICIT · 0 IMPORTED · 1 INFERRED · 5 ASSUMED**
-(plus inherited `lasr_2014` engine provenance: 6 IMPORTED_FROM_P1 among
-them).
+**Tally (13 delta parameters): 9 EXPLICIT · 0 IMPORTED · 1 INFERRED ·
+3 ASSUMED.** Two EXPLICIT rows carry ASSUMED sub-parts (~30 reconstructed
+technical factors; standard-formula alternative deferred to `modernized`).
+Inherited `lasr_2014` engine provenance (incl. its 6 IMPORTED_FROM_P1 rows)
+applies on top.
 
 ## 7. Related contradiction-register entries
 

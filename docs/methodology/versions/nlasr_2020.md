@@ -198,9 +198,9 @@ are imports, marked as such.
 | execution | t+2 MOC | EXPLICIT (E-P4-26) | — |
 | validation split | 1996–2002 / 2003–2020 | EXPLICIT (E-P4-14) | — |
 
-**Tally: 17 EXPLICIT · 0 IMPORTED (formally; I=30 and ε-smoothing are
-functionally imports recorded as INFERRED/ASSUMED because P4 defers to
-"original research reports") · 2 INFERRED · 17 ASSUMED.**
+**Tally (38 parameters): 18 EXPLICIT · 0 IMPORTED (formally; I=30 and
+ε-smoothing are functionally imports recorded as INFERRED/ASSUMED because
+P4 defers to "original research reports") · 2 INFERRED · 18 ASSUMED.**
 
 ## 13. Related contradiction-register entries
 

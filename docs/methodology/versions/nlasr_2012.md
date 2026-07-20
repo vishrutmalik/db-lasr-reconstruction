@@ -171,8 +171,10 @@ extraction header).
 | cost model | linear one-way bps, grid 5–30 | EXPLICIT (P1-38) | — |
 | borrow | none | EXPLICIT-absence (P1-39) | A-G011-19 |
 
-**Tally: 17 EXPLICIT · 0 IMPORTED · 4 INFERRED · 13 ASSUMED** (rows above;
-EXPLICIT-absence counted as EXPLICIT).
+**Tally (39 parameters): 22 EXPLICIT · 0 IMPORTED · 4 INFERRED ·
+13 ASSUMED.** EXPLICIT-absence counted as EXPLICIT; the Q row is counted
+EXPLICIT (count stated) with its binning-scheme sub-part covered by
+A-G011-06.
 
 ## 13. Related contradiction-register entries
 

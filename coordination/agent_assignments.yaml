@@ -2,24 +2,6 @@
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
 active:
-  G012:
-    agent_role: data-researcher
-    objective: Exhaustive workbook schema extraction + data dictionary + PIT assessment
-    github_issue: 12
-    branch: agent/data-researcher/G012-workbook-schema
-    worktree: .worktrees/G012-data-researcher
-    status: IN_VERIFICATION round 2 (remediated 585aeb5; re-verification dispatched)
-    dependencies: [G005]
-    owned_paths: ["docs/data/**"]
-    read_only_paths: ["inputs/data_templates/*.xlsx (main checkout, git-ignored)", "MASTER_PROMPT.md", "input_manifest.md", "skills/excel-schema-mapping/SKILL.md"]
-    shared_interfaces: ["evidence_rows.md format", "gap_list feeds provider capability flags (G018)"]
-    started_at: 2026-07-19
-    last_updated_at: 2026-07-19
-    latest_commit: 5de02d9 (final, pushed, worktree clean)
-    verification_required: true
-    red_team_required: false
-    notes: A-001 now positively evidenced (Data!N2:O3 latest_filing only).
-
   G011:
     agent_role: quant-reviewer
     objective: Cross-paper contradiction register (resolved) + 7 independently configurable model-version specs
@@ -73,6 +55,13 @@ active:
     notes: G008 dir excluded (own remediation branch). Trims only; citations preserved.
 
 history:
+  - goal_id: G012
+    agent_role: data-researcher
+    branch: agent/data-researcher/G012-workbook-schema (deleted after merge)
+    final_commit: 5de02d9 (schema) + 604feed (verify r1 FAIL) + 585aeb5 (remediation) + ccb338c (verify r2 PASS)
+    pr: 45
+    verification: PASS round 2 (docs/verification/G012.md)
+    worktree: removed
   - goal_id: G008
     agent_role: paper-researcher
     branch: agent/paper-researcher/G008-p2-nlasr2-2013-evidence (deleted after merge)

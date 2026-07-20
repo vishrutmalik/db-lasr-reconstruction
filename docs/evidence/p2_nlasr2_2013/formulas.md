@@ -7,8 +7,8 @@ itself states, transcribed exactly, with worked micro-examples.
 ## F-P2-1 Rank normalization (feature preprocessing)
 
 Stated: "normalized score = factor rank/number of stocks" (Figure 10 note, p.16);
-"divide the factor ranking by the number of stocks to normalize the factor ranking
-to between (0, 1]" (p.9).
+"divide the factor ranking by the number of stocks to normalize … to
+between (0, 1]" (p.9).
 
 $$s_i = \frac{\operatorname{rank}(f_i)}{N} \in (0, 1]$$
 
@@ -29,6 +29,15 @@ $y_i = -1$; middle 40% discarded (p.9; within each cell p.15). Fractions
 Micro-example (Figure 10, p.16, energy cell, 10 stocks): top 3 forward returns
 (3.16%, 3.00%, 2.46%) → +1; bottom 3 (−12.41%, −7.46%, −6.94%) → −1; middle 4
 excluded. Matches printed labels. Class: EXPLICIT.
+
+Note for implementers — printed anomaly in Figure 10 (p.16), utilities cell
+(7 stocks): the printed −1 labels sit on forward returns 3.23% and 5.36% while the
+lowest return (1.81%) is marked "exclude". That is inconsistent with
+bottom-30%-by-forward-return labeling (the bottom 2 should be 1.81% and 3.23%) —
+either a printed erratum or a column-alignment artifact of text extraction. The
+micro-examples cited above (energy cell labels; utilities rank/N rows in F-P2-1)
+are unaffected, but do not use Figure 10's utilities labels wholesale as a golden
+test vector.
 
 ## F-P2-3 Neutralization cell counts
 

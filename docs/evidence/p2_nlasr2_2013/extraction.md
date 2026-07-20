@@ -3,8 +3,9 @@
 - Paper ID: **P2**
 - File: `inputs/papers/20130123_Rise of the Machines II.pdf` (SHA-256 `a6e1da5f…850d42`, matches `input_manifest.md`)
 - Title/date/authors verified against manifest: "The rise of the machines II — Introducing the second generation of machine learning model", 23 January 2013 (p.1), Wang / Luo / Cahan / Alvarez / Jussa / Chen (p.1). **No discrepancies.**
-- 61 pages; pp.59–61 are disclosures. All quotes ≤15 words.
+- 61 pages; pp.59–61 are disclosures. All quotes ≤15 words (scripted word-count of every quoted string across the five deliverables; elision marks "…" not counted as words; max found = 15).
 - Classification legend: EXPLICIT (stated), INFERRED (follows from stated text), ASSUMED (gap filled by us), MODERNIZED (deliberate deviation — none recorded here).
+- Classification tally: 29 EXPLICIT / 4 INFERRED / 2 ASSUMED / 8 NOT_DISCLOSED (43 tallies over the 40 items). Convention: each item is tallied once under the class of its headline topic — INFERRED: items 4, 5, 9, 36; ASSUMED: item 13 (the binding total-return assumption; its USD/unhedged sub-part is explicit); NOT_DISCLOSED: items 6, 7, 22, 25, 26, 27, 31, 35; EXPLICIT: the remaining 27 items — plus a second tally for three dual-status items: 6 and 31 also count EXPLICIT (verbatim-quoted sub-components: the 8-factor benchmark list p.41 and the optimizer constraint set) and 35 also counts ASSUMED (zero-borrow-cost replication default).
 - Structural note: **Figure 7 p.11 ("Algorithm of AdaBoost Stock Selection Model") is an image; no text extractable → UNREADABLE_EXHIBIT.** P2 therefore contains no transcribable weight-update/bin-score equations; it defers to Wang et al. [2012] (P1) for the algorithm ("uses the same machine learning algorithm we used before", p.1).
 
 ---
@@ -182,13 +183,13 @@ Mechanics (all EXPLICIT):
 
 ## 24. Observation-weight update
 
-- Statement: "weight of each incorrectly classified stock is increased and the weight of each correctly classified stock is decreased" after each round; initial weights equal (p.10).
+- Statement: "weight of each incorrectly classified stock is increased" after each round, while correctly classified stocks have their weights reduced (paraphrase of the same p.10 sentence); initial weights equal (p.10).
 - Formula: NOT_DISCLOSED as text in P2 (Figure 7 image, UNREADABLE_EXHIBIT p.11).
 - Class: EXPLICIT (qualitative); formula must come from P1.
 
 ## 25. Smoothing constants
 
-- NOT_DISCLOSED. Searched pp.10–11 (algorithm), p.40–41 (model definition); the word smoothing appears only for chart moving averages. Presumed inside Figure 7 image.
+- NOT_DISCLOSED. Searched pp.10–11 (algorithm), p.40–41 (model definition); whole-document search yields only "smoother wealth curve" (p.20) and "12-month moving average" chart labels — no smoothing parameter anywhere. Presumed inside Figure 7 image.
 
 ## 26. Number of boosting rounds
 

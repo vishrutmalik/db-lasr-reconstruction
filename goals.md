@@ -52,7 +52,7 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G038 | Full synthetic experiment + reproducibility check | verifier | G029–G037 | BLOCKED | [#37](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/37) | |
 | G039 | Real-data integration guide (AlphaSense adapter spec) | data-researcher | G013, G018 | BLOCKED | [#38](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/38) | |
 | G040 | Final clean-clone audit + release tag | verifier | all | BLOCKED | [#39](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/39) | |
-| G041 | Quote-length compliance pass on merged evidence (P1/P3/P4) | paper-researcher | G007, G009, G010 | IN_PROGRESS | [#46](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/46) | |
+| G041 | Quote-length compliance pass on merged evidence (P1/P3/P4) | paper-researcher | G007, G009, G010 | IN_VERIFICATION | [#46](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/46) | [#47](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/47) |
 
 Deferred by design (MASTER_PROMPT §31/§32): LASR-HF beyond modular stubs, deep
 learning, live brokerage, distributed infra.

@@ -44,6 +44,7 @@ Cross-cutting orchestrator rows:
 | ID | Contradiction | Sources | Resolution | Config | Test |
 |----|--------------|---------|-----------|--------|------|
 | CR-001 | Filename date `20140101` vs title-page date 1 Dec 2014 for P3 | filename vs P3 p.1 | Use title-page date (D-003) | n/a | n/a |
+| CR-002..CR-031 | Full resolved register (14 REAL / 9 ERRATA / 7 APPARENT from 42 candidates) | P1–P4 | see `docs/methodology/contradiction_register.md` (G011, verified PR #50) | per-entry | per-entry |
 
 Cross-paper contradiction candidates collected by research goals (14 from P1,
 9 from P2, 9 from P3, 10 from P4, in each dir's contradiction_candidates.md)

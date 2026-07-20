@@ -44,3 +44,27 @@ sensitivity test, status-on-real-data, related goal.
 - **Config:** `risk_model:` block in portfolio configs.
 - **Sensitivity test:** compare Level-1/2 portfolios (risk-model-free) vs Level-3.
 - **Goal:** G035.
+
+---
+
+## Federated assumption sets (single source of truth, per D-005 pattern)
+
+### A-G011-01..66 — model-version parameter assumptions (G011, merged PR #50)
+Defined with config parameter + required sensitivity test in the provenance
+tables of `docs/methodology/versions/*.md` and indexed in
+`docs/methodology/contradiction_register.md`. Highest-priority (per G011 +
+verifier):
+
+| ID | Subject | Config | Version(s) |
+|----|---------|--------|------------|
+| A-G011-27 | P2/P3 boosting-engine parameters imported from P1 | flagged IMPORTED_FROM_P1 per param | nlasr2_2013, lasr_2014 |
+| A-G011-08 | USD total-return labels | `label_currency`, `return_type` | all |
+| A-G011-38 | Overlapping-label handling | `overlap_mode` | lasr_hc_2014, nlasr_2020 |
+| A-G011-54 | P4 target pipeline order (CR-029) | `target_pipeline_order` | nlasr_2020 |
+| A-G011-57 | P4 beta<0 gate action (CR-030) | `beta_negative_action` | nlasr_2020 |
+| A-G011-48/50 | P4 liquidity screen / 114-feature reconstruction | provider flags + feature registry | nlasr_2020 |
+
+### CI/LT presupposed assumptions (G014, merged PR #49)
+CI-044/CI-048 presuppose: borrow=0 for P1–P3 reconstructions (P1-39/P3-36);
+epsilon & rounds inheritance (P3 Q5, OQ-P4-02/04); deterministic tie-breaking
+conventions (OQ-P1-01, P1-14). Same federated definitions.

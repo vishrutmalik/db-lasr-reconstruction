@@ -2,23 +2,6 @@
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
 active:
-  G011:
-    agent_role: quant-reviewer
-    objective: Cross-paper contradiction register (resolved) + 7 independently configurable model-version specs
-    github_issue: 11
-    branch: agent/quant-reviewer/G011-contradictions-model-specs
-    worktree: .worktrees/G011-quant-reviewer
-    status: IN_VERIFICATION (PR #50)
-    dependencies: [G007, G008, G009, G010]
-    owned_paths: ["docs/methodology/versions/**", "docs/methodology/contradiction_register.md"]
-    read_only_paths: ["docs/evidence/**", "docs/verification/G007.md..G010.md", "evidence_matrix.md", "assumptions_register.md"]
-    shared_interfaces: ["version spec format feeds configs/models/* (G015+)"]
-    started_at: 2026-07-20
-    last_updated_at: 2026-07-20
-    latest_commit: bea427d (final; CR-002..031, 7 specs, 66 assumption candidates)
-    verification_required: true
-    red_team_required: false
-    notes: 42 candidates triaged (14 REAL / 9 ERRATA / 7 APPARENT).
   G006:
     agent_role: implementer
     objective: Author the remaining 15 project skills (evidence-informed)
@@ -38,6 +21,13 @@ active:
     notes: Model-specific skills may forward-reference docs/methodology/versions/ (G011, in verification).
 
 history:
+  - goal_id: G011
+    agent_role: quant-reviewer
+    branch: agent/quant-reviewer/G011-contradictions-model-specs (deleted after merge)
+    final_commit: bea427d (register+specs) + 8c69149 (verification PASS)
+    pr: 50
+    verification: PASS (docs/verification/G011.md; 0 blocking, 5 non-blocking)
+    worktree: removed
   - goal_id: G014
     agent_role: quant-reviewer
     branch: agent/quant-reviewer/G014-correctness-criteria (deleted after merge)

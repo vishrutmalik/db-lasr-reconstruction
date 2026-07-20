@@ -2,23 +2,6 @@
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
 active:
-  G008:
-    agent_role: paper-researcher
-    objective: Evidence extraction from P2 (N-LASR2, 2013-01-23, 61pp)
-    github_issue: 8
-    branch: agent/paper-researcher/G008-p2-nlasr2-2013-evidence
-    worktree: .worktrees/G008-paper-researcher
-    status: IN_VERIFICATION round 2 (remediated 210722a; re-verification dispatched)
-    dependencies: [G005]
-    owned_paths: ["docs/evidence/p2_nlasr2_2013/**"]
-    read_only_paths: ["inputs/papers/20130123_Rise of the Machines II.pdf (main checkout)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
-    shared_interfaces: ["evidence_rows.md format"]
-    started_at: 2026-07-19
-    last_updated_at: 2026-07-19
-    latest_commit: 497efc3 (final, pushed, worktree clean)
-    verification_required: true
-    red_team_required: false
-    notes: Figure 7 image-only; boosting params import-from-P1 flagged.
   G012:
     agent_role: data-researcher
     objective: Exhaustive workbook schema extraction + data dictionary + PIT assessment
@@ -56,6 +39,13 @@ active:
     notes: G008 dir excluded (own remediation branch). Trims only; citations preserved.
 
 history:
+  - goal_id: G008
+    agent_role: paper-researcher
+    branch: agent/paper-researcher/G008-p2-nlasr2-2013-evidence (deleted after merge)
+    final_commit: 497efc3 (evidence) + 4c1fdc3 (verify r1 FAIL) + 210722a (remediation) + abfc6f6 (verify r2 PASS)
+    pr: 42
+    verification: PASS round 2 (docs/verification/G008.md; r1 FAIL on quote lengths, remediated, r2 clean)
+    worktree: removed
   - goal_id: G010
     agent_role: paper-researcher
     branch: agent/paper-researcher/G010-p4-nlasr2020-evidence (deleted after merge)

@@ -2,26 +2,26 @@
 
 Session-independent status. Update at every session end and major milestone.
 
-- **Last orchestrator update:** 2026-07-19 (session 1, research phase launched)
-- **Current milestone:** M1 — research extraction (papers + workbooks)
-- **Current `main` commit:** f8e942d
+- **Last orchestrator update:** 2026-07-20 (session 1 continued)
+- **Current milestone:** M2 — methodology consolidation (research phase M1 complete)
 - **Remote:** git@github.com:vishrutmalik/db-lasr-reconstruction.git (PRIVATE)
 
 ## Completed & merged
-- G001 bootstrap (aa71c7e), G002 private repo + push, G003 labels/templates
-  (6ebe98f), G004 verified input manifest, G005 agents + 5 core skills.
-  Issues #1–#5 closed. Control-plane exception D-004.
+- M0 bootstrap: G001–G005 (issues #1–#5 closed, D-004).
+- M1 research (ALL VERIFIED + MERGED, reports in docs/verification/):
+  - G007 P1 evidence — PR #41, PASS (28/28 spot-checks)
+  - G008 P2 evidence — PR #42, PASS round 2 (r1 FAIL on quote lengths, remediated)
+  - G009 P3 evidence — PR #43, PASS (24/24, tail-leakage math recomputed)
+  - G010 P4 evidence — PR #44, PASS (20/20)
+  - G012 workbook schema — PR #45, PASS round 2 (r1 FAIL on TM code count, remediated)
+- Evidence matrix federated over per-source row files (D-005).
 
-## Implemented, pre-verification
-- (none)
-
-## Active assignments (5 parallel research agents, non-overlapping paths)
-- G007 P1 evidence → branch agent/paper-researcher/G007-p1-nlasr2012-evidence,
-  worktree .worktrees/G007-paper-researcher, owns docs/evidence/p1_nlasr_2012/
-- G008 P2 evidence → .worktrees/G008-paper-researcher, owns docs/evidence/p2_nlasr2_2013/
-- G009 P3 evidence → .worktrees/G009-paper-researcher, owns docs/evidence/p3_lasr_2014/
-- G010 P4 evidence → .worktrees/G010-paper-researcher, owns docs/evidence/p4_nlasr_2020/
-- G012 workbook schema → .worktrees/G012-data-researcher, owns docs/data/
+## Active assignments
+- G011 contradiction register + 7 model-version specs → quant-reviewer,
+  .worktrees/G011-quant-reviewer, owns docs/methodology/versions/** + contradiction_register.md
+- G014 correctness & leakage criteria → quant-reviewer,
+  .worktrees/G014-quant-reviewer, owns docs/methodology/correctness_criteria.md + leakage_tests.md
+- G041 quote-compliance (P1/P3/P4 trims) → IN_VERIFICATION, PR #47
 - Full detail: `coordination/agent_assignments.yaml`
 
 ## Blockers
@@ -42,13 +42,12 @@ Session-independent status. Update at every session end and major milestone.
   No poppler (PDF text extraction only, no rendering). No brew, no uv.
 - GitHub: SSH auth OK as `vishrutmalik`; `~/.local/bin/gh` authenticated.
 
-## Next dependency-ready goals (after active research completes)
-1. Verify + merge G007–G010, G012 (fresh-context verifier per goal)
-2. G011 contradiction register + 7 model-version specs (quant-reviewer)
-3. G014 correctness & leakage criteria (quant-reviewer, parallel with G011)
-4. G013 field mapping (data-researcher, needs G011+G012)
-5. G006 remaining skills library (deferred until research evidence exists)
-6. G015 architecture (needs G011/G012/G013)
+## Next dependency-ready goals
+1. Merge G011, G014, G041 after verification
+2. G013 field mapping (data-researcher; needs G011+G012 — G012 done)
+3. G015 architecture (needs G011/G012/G013)
+4. G006 remaining skills library (now evidence-informed)
+5. Then implementation wave G016+ per goals.md
 
 ## Major open risks
 - Workbooks appear current-vintage only → PIT reconstruction for backtests will

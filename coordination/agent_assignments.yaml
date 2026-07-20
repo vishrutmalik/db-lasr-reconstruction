@@ -26,17 +26,17 @@ active:
     github_issue: 55
     branch: agent/quant-reviewer/G042-doc-cleanup
     worktree: .worktrees/G042-quant-reviewer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #56)
     dependencies: [G006, G011, G014, G015]
     owned_paths: ["docs/methodology/**", "skills/**", "docs/evidence/p2_nlasr2_2013/extraction.md (one cross-ref line)"]
     read_only_paths: ["docs/evidence/**", "docs/verification/**", "docs/architecture/**"]
     shared_interfaces: ["correctness_criteria.md consumed by G017+ tests"]
     started_at: 2026-07-20
     last_updated_at: 2026-07-20
-    latest_commit: null
+    latest_commit: 91e9e20 (final; CI-046 -> /mo with P1 p.36 evidence)
     verification_required: true
     red_team_required: false
-    notes: Runs parallel to G016 verification (disjoint paths). Sourced from integration_queue deferred list.
+    notes: G006 finding #4 (P3 p.59 referent) deliberately left open in queue.
 
 history:
   - goal_id: G016

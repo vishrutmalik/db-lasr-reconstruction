@@ -161,7 +161,9 @@ One module per scenario in `tests/leakage/`, each consuming
 `SyntheticProvider.generate(ScenarioConfig("LT-###", ...))` + sidecar +
 teeth-check ablations (`provider_contract.md` §6). Generator-side scenario
 coverage is itself a G019 test (`scenario_catalog() ⊇ {LT-001..021}`).
-Owner goals: LT-001..008 → G024/G025/G030/G031/G033 as their features land;
+Owner goals: LT-001..006 + LT-008 → G024/G025/G030/G031/G033 as their
+features land; LT-007 (horizon-dependent decay: prediction-decay diagnostics
++ HC-vs-1M IC contrast) → G023/G028/G032;
 LT-009/010/013/016/018/021 → G020/G021/G027; LT-011/012 → G023/G026;
 LT-014/015/017 → G025/G030/G033; LT-019/020 → G029 (gates); LT-004 → G028 +
 G029 gate. G037 (red-team) re-runs the full battery against the integrated

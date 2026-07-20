@@ -20,6 +20,24 @@ active:
     red_team_required: false
     notes: Runs parallel to G042 (disjoint paths). Must resolve G015-verification N-1/N-2/N-6/N-7 + N-4 holding_period + TID251 policy call.
 
+  G017:
+    agent_role: implementer
+    objective: Typed canonical schemas + core time vocabulary + import-rule enforcement (see goals.md detail block)
+    github_issue: 17
+    branch: agent/implementer/G017-canonical-schemas
+    worktree: .worktrees/G017-implementer
+    status: IN_PROGRESS
+    dependencies: [G015, G016]
+    owned_paths: ["src/lasr/core/**", "src/lasr/data/schemas/**", "tests/unit/test_schemas*.py", "tests/unit/test_import_rules.py"]
+    read_only_paths: ["docs/architecture/**", "docs/methodology/**", "pyproject.toml"]
+    shared_interfaces: ["schemas consumed by G018-G029; TimingRecord by G023/G026"]
+    started_at: 2026-07-20
+    last_updated_at: 2026-07-20
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: Runs parallel to G042 (disjoint paths). Must resolve G015-verification N-1/N-2/N-6/N-7 + N-4 holding_period + TID251 policy call.
+
   G042:
     agent_role: quant-reviewer
     objective: Deferred doc cleanup incl. CI-046 turnover-unit reconciliation (pre-G027 blocker)
@@ -39,6 +57,13 @@ active:
     notes: G006 finding #4 (P3 p.59 referent) deliberately left open in queue.
 
 history:
+  - goal_id: G042
+    agent_role: quant-reviewer
+    branch: agent/quant-reviewer/G042-doc-cleanup (deleted after merge)
+    final_commit: 91e9e20 (cleanup) + f7ffcaf (verification PASS)
+    pr: 56
+    verification: PASS (docs/verification/G042.md; CI-046 /mo ruling confirmed from P1 pp.36/39)
+    worktree: removed
   - goal_id: G016
     agent_role: implementer
     branch: agent/implementer/G016-toolchain-ci (deleted after merge)

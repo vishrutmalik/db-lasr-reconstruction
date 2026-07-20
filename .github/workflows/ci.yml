@@ -1,0 +1,133 @@
+# G016 — PR gate per docs/architecture/toolchain_proposal.md §5.
+#
+# Env rules (proposal §5): `uv sync --locked` only (no ad-hoc installs);
+# PYTHONHASHSEED=0; BLAS single-threaded for test jobs; no credentials —
+# synthetic/local providers only.
+#
+# Jobs e2e-smoke / leakage-fast / determinism are wired but disabled
+# (`if: false`) until the suites they run exist; see ACTIVATION notes below.
+# nightly.yml (full LT battery, G038 double-run) lands with those suites.
+
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONHASHSEED: "0"
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  # Match the version used to produce uv.lock (dev_setup runbook).
+  UV_VERSION: "0.11.29"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv publishes no floating major tag from v8 — pin the exact tag.
+      - uses: astral-sh/setup-uv@v8.3.2
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff format --check .
+      - run: uv run ruff check .
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv publishes no floating major tag from v8 — pin the exact tag.
+      - uses: astral-sh/setup-uv@v8.3.2
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run mypy src/lasr
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.11"
+          - os: ubuntu-latest
+            python: "3.12"
+          - os: macos-latest
+            python: "3.12"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv publishes no floating major tag from v8 — pin the exact tag.
+      - uses: astral-sh/setup-uv@v8.3.2
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - run: uv sync --locked
+      # Includes the provider contract suite CT-01..15 once G018 lands.
+      - run: uv run pytest -m "unit or integration"
+
+  # ── Disabled placeholders: workflow wiring only, no fake tests ─────────────
+
+  e2e-smoke:
+    # ACTIVATION: G029 (CLI vertical slice on small synthetic data,
+    # testing_strategy.md §6 PR gate). Flip `if:` to true when `-m e2e`
+    # collects the vertical-slice test.
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv publishes no floating major tag from v8 — pin the exact tag.
+      - uses: astral-sh/setup-uv@v8.3.2
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run pytest -m e2e
+
+  leakage-fast:
+    # ACTIVATION: G019 (leakage harness). Fast subset per
+    # testing_strategy.md §6: LT-005, LT-010, LT-013, LT-019-smoke, LT-020;
+    # the exact `-k` selection is finalized when those scenario modules land.
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv publishes no floating major tag from v8 — pin the exact tag.
+      - uses: astral-sh/setup-uv@v8.3.2
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run pytest -m leakage -k "lt005 or lt010 or lt013 or lt019_smoke or lt020"
+
+  determinism:
+    # ACTIVATION: G029 (vertical-slice CLI) — double-run hash comparison,
+    # CI-042 gate per toolchain_proposal.md §5; full-experiment version at
+    # G038 moves to nightly.
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv publishes no floating major tag from v8 — pin the exact tag.
+      - uses: astral-sh/setup-uv@v8.3.2
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      - run: echo "double-run hash comparison lands with the G029 vertical slice"

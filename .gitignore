@@ -5,10 +5,12 @@ inputs/data_templates/*
 !inputs/data_templates/README.md
 
 # ── Data layers (generated / raw / proprietary) ──────────────────────────────
+# Root-anchored: src/lasr/artifacts and src/lasr/models are tracked packages.
 /data/
 !/data/.gitkeep
-artifacts/
-models/
+/artifacts/
+/models/
+/runs/
 reports/generated/
 
 # ── Secrets & credentials ────────────────────────────────────────────────────
@@ -35,7 +37,7 @@ build/
 dist/
 .venv/
 venv/
-.python-version
+# NOTE: .python-version is committed (uv interpreter pin, toolchain_proposal.md §1)
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/

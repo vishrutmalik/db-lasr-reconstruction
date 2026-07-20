@@ -20,6 +20,24 @@ active:
     red_team_required: false
     notes: Model-specific skills may forward-reference docs/methodology/versions/ (G011, in verification).
 
+  G013:
+    agent_role: data-researcher
+    objective: Map AlphaSense provider fields to model-version requirements (direct/renamed/derivable/ambiguous/unavailable)
+    github_issue: 13
+    branch: agent/data-researcher/G013-field-mapping
+    worktree: .worktrees/G013-data-researcher
+    status: IN_PROGRESS
+    dependencies: [G011, G012]
+    owned_paths: ["docs/data/field_mapping.md", "docs/data/feature_coverage.md"]
+    read_only_paths: ["docs/data/** (G012 outputs)", "docs/methodology/versions/**", "docs/evidence/**", "inputs/data_templates/*.xlsx (main checkout)"]
+    shared_interfaces: ["availability classes feed G018 capability flags + G022 feature registry"]
+    started_at: 2026-07-20
+    last_updated_at: 2026-07-20
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: New files only within docs/data/ (G012 outputs are read-only inputs now).
+
 history:
   - goal_id: G011
     agent_role: quant-reviewer

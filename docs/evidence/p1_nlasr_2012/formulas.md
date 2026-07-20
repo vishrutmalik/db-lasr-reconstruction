@@ -12,8 +12,8 @@ possible — verified numerically against the paper's own worked example
   training data (pooled over all months in the training window).
 - xᵢ = factor-score vector of stock i (each entry a normalized cross-sectional
   rank in (0,1], see extraction item 8).
-- yᵢ ∈ {+1, −1}: "yi =1 if a stock has a top 30% forward return, yi =-1 if …
-  bottom 30%" (p.13). Middle 40% excluded.
+- yᵢ ∈ {+1, −1}: "yi =1 if a stock has a top 30% forward return", and −1 for
+  the bottom 30% (p.13). Middle 40% excluded.
 - Factor pool F; f_k(xᵢ) = value of factor k for stock i.
 - w(xᵢ) = observation weight of stock i; initialized 1/N (p.11, p.15) so
   Σᵢ w(xᵢ) = 1.
@@ -41,8 +41,8 @@ with smoothing pseudocount
 
     ε = 1/N
 
-"ε is a small value set as 1/N to make the function robust (so that the
-nominator and denominator won't be 0)" (p.13). ε is added to BOTH numerator
+"ε is a small value set as 1/N to make the function robust" — i.e. so that
+the nominator and denominator won't be 0 (p.13). ε is added to BOTH numerator
 and denominator (verified numerically in §5). h is a piecewise-constant
 function of the factor value; positive when outperformer mass dominates the
 bin (p.13).
@@ -170,8 +170,8 @@ Ultra N-LASR: equal-weighted sum of z-scored standard-factor N-LASR and
 Technical N-LASR scores (p.48).
 
 Rank IC definition used throughout: "correlation between the ranks of stocks
-on the factor at the start of each month, versus the rank of the stock returns
-over the subsequent month" (p.20) — Spearman rank IC (figure captions say
+on the factor at the start of each month" versus the rank of the stock
+returns over the subsequent month (p.20) — Spearman rank IC (figure captions say
 "Spearman rank IC", p.21).
 
 ## 9. Technical-factor formulas (EXPLICIT, p.43 Fig 74; parameters p.44)

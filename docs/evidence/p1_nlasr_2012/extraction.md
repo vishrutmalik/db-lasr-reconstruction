@@ -59,8 +59,8 @@ N-LASR** (61 factors, equal-weighted ensemble, country-neutral target).
 
 ## 4. Rebalance frequency
 
-- Statement: monthly; "we get the factor score at the end of the month and
-  assume rebalance on the same day" (p.50). Realistic variants: rebalance on
+- Statement: monthly; "we get the factor score at the end of the month" and
+  assume rebalance on the same day (p.50). Realistic variants: rebalance on
   day 1 of next month with 1-day lag (p.50), or at next month's open price
   (p.53).
 - Class: EXPLICIT.
@@ -151,7 +151,7 @@ N-LASR** (61 factors, equal-weighted ensemble, country-neutral target).
 ## 11. Neutralization method
 
 - Statement: no signal-level sector/size/beta neutralization for the US model.
-  For regional models: "backtested … based on the country neutral returns,
+  For regional models: backtested "based on the country neutral returns,
   which is the stock returns minus the country average" and "we train the
   model also using country neutral forward returns" (p.58). Portfolio level:
   "Beta neutral" optimization constraint (p.39, p.48).
@@ -243,9 +243,9 @@ N-LASR** (61 factors, equal-weighted ensemble, country-neutral target).
 
 ## 19. Seasonal samples
 
-- Statement: second classifier "uses the trailing 12 years (if there is less
-  than 12 years historical data, just use all the available years) in the same
-  month" (p.29).
+- Statement: second classifier "uses the trailing 12 years … in the same
+  month", falling back to all the available years when there is less than
+  12 years of historical data (p.29).
 - Class: EXPLICIT.
 - Consequence: seasonal classifier trains on up to 12 same-calendar-month
   cross-sections; graceful degradation to available history.
@@ -274,8 +274,8 @@ N-LASR** (61 factors, equal-weighted ensemble, country-neutral target).
 
 - Statement: "a weak classifier is simply defined by a factor. We divide the
   factor into quantiles" (p.10); value per quantile j: h(x) = ½·ln((W⁺ⱼ+ε)/(W⁻ⱼ+ε))
-  with "ε is a small value set as 1/N" (p.13); Q=5: "we set it to be five
-  because setting this number too large increases the risk of overfitting"
+  with "ε is a small value set as 1/N" (p.13); Q=5, chosen because "setting
+  this number too large increases the risk of overfitting"
   (p.11, p.13 "in our experiments we set Q=5", p.20). W±ⱼ is "the sum of the
   weights in quantile j" over stocks of class ±1 whose factor value falls in
   quantile j (p.13).
@@ -347,9 +347,9 @@ N-LASR** (61 factors, equal-weighted ensemble, country-neutral target).
 
 - Statement: combine the three strong classifiers by first normalizing scores
   ("subtract the mean and divide by the standard deviation" at each date,
-  p.30), then either (a) equal weight (p.30), or (b) "the weight of each
-  strong classifier is determined by the average rank IC of each of the three
-  classifiers in that month in the past"; "For the first year … we equally
+  p.30), then either (a) equal weight (p.30), or (b) the weight of each
+  strong classifier is "determined by the average rank IC of each of the three
+  classifiers in that month" in the past; "For the first year … we equally
   weighted" (p.31). US N-LASR uses rank-IC weighting; global models use equal
   weights "because other countries may not have the similar seasonality"
   (p.32). Ultra N-LASR: "equally-weighted the z-score of the N-LASR and
@@ -446,8 +446,8 @@ N-LASR** (61 factors, equal-weighted ensemble, country-neutral target).
 
 - Statement: baseline assumes trading at the same month-end close as the
   signal (acknowledged look-ahead, p.50); conservative variant lags factors
-  one day ("rebalance on the first day of each month using factor values from
-  the last day of the previous month", p.50) with the model retrained on
+  one day ("rebalance on the first day of each month" using factor values
+  from the last day of the previous month, p.50) with the model retrained on
   matching lagged forward returns; realistic variant trades at next month's
   open — open prices available only from 2006, model backtested "from 2007 to
   2012 using open price" (p.53). Effects: standard-factor model barely

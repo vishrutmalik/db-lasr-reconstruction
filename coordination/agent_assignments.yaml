@@ -8,7 +8,7 @@ active:
     github_issue: 8
     branch: agent/paper-researcher/G008-p2-nlasr2-2013-evidence
     worktree: .worktrees/G008-paper-researcher
-    status: FAILED_VERIFICATION (verifier 4c1fdc3, 1 blocking: quote lengths; remediation in progress)
+    status: IN_VERIFICATION round 2 (remediated 210722a; re-verification dispatched)
     dependencies: [G005]
     owned_paths: ["docs/evidence/p2_nlasr2_2013/**"]
     read_only_paths: ["inputs/papers/20130123_Rise of the Machines II.pdf (main checkout)", "MASTER_PROMPT.md", "input_manifest.md", "skills/paper-evidence-extraction/SKILL.md"]
@@ -25,7 +25,7 @@ active:
     github_issue: 12
     branch: agent/data-researcher/G012-workbook-schema
     worktree: .worktrees/G012-data-researcher
-    status: IN_VERIFICATION (PR #45)
+    status: FAILED_VERIFICATION (verifier 604feed, 1 blocking: TM distinct-code count 24->25; remediation dispatched)
     dependencies: [G005]
     owned_paths: ["docs/data/**"]
     read_only_paths: ["inputs/data_templates/*.xlsx (main checkout, git-ignored)", "MASTER_PROMPT.md", "input_manifest.md", "skills/excel-schema-mapping/SKILL.md"]

@@ -38,8 +38,8 @@ N-LASR/N-LASR2 weak learner (piecewise-constant per bin).
 
 $$h(x) = \sum_{j=1}^{Q} \tfrac{1}{2}\,\ln\!\left(\frac{W_+^{\,j} + \epsilon}{W_-^{\,j} + \epsilon}\right)\cdot \max\bigl(0,\; 1 - \mathrm{dist}(f(x), j)\bigr)$$
 
-where $\mathrm{dist}(f(x), j)$ = "distance between x and the center of quintile j,
-normalized by the width of the quintile" (p.17) — i.e., with percentile rank
+where $\mathrm{dist}(f(x), j)$ = "distance between x and the center of quintile j",
+normalized by the quintile's width (p.17) — i.e., with percentile rank
 $p(x) \in [0,100]$, bin centers $c_j$ and bin width $\omega = 100/Q$:
 
 $$\mathrm{dist}(f(x), j) = \frac{|p(x) - c_j|}{\omega}, \qquad c_j = \frac{100}{Q}\left(j - \tfrac{1}{2}\right).$$

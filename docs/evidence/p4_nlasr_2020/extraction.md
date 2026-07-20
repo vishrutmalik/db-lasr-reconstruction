@@ -67,7 +67,7 @@
 - **Ambiguity:** de-meaning is stated on rank scores (not raw values); whether re-ranking restores exact [0,1] uniform per week is implied but not stated; treatment of missing values NOT_DISCLOSED.
 
 ### 9. Outlier treatment
-- **Statement:** ranking is the outlier control: "cross-sectionally ranked in order to reduce outlier effects" (p.3, §2.1). The linear forecast kernel "is also less sensitive to outlier effects, albeit not immune. We address that through corner case rules" (p.18, fn 47) — the rules themselves are not given; also fn 46 (p.18): "carefully address the corner case when any of the 10 ψk is equal to 0".
+- **Statement:** ranking is the outlier control: "cross-sectionally ranked in order to reduce outlier effects" (p.3, §2.1). The linear forecast kernel "is also less sensitive to outlier effects, albeit not immune", addressed "through corner case rules" (p.18, fn 47) — the rules themselves are not given; also fn 46 (p.18): "carefully address the corner case when any of the 10 ψk is equal to 0".
 - **Citation:** p.3 §2.1; p.18 fn 46, 47.
 - **Class:** EXPLICIT (ranking); NOT_DISCLOSED (corner-case rules and zero-ψ handling). Searched Appendix A fully.
 - **Consequence:** implementation must define zero-count bin handling (e.g. additive smoothing) — mark ASSUMED and configurable; earlier papers' smoothing constants (P1/P2) are candidate defaults but must not be silently imported.
@@ -122,7 +122,7 @@
 - **Consequence:** 30/40/30 split (sums to 1 — invariant OK); labels from ranked residualized vol-scaled returns.
 
 ### 18. Training-window definitions
-- **Statement:** "4 different training models: long-term, short-term, seasonal and hedge. They only differ in regards to training window"; long-term 5 years, short-term 1 year of rolling history (p.4, §2.1).
+- **Statement:** "4 different training models: long-term, short-term, seasonal and hedge", which "only differ in regards to training window"; long-term 5 years, short-term 1 year of rolling history (p.4, §2.1).
 - **Citation:** p.4 §2.1.
 - **Class:** EXPLICIT.
 - **Consequence:** one learner spec instantiated over 4 sample-selector configs; all four share hyperparameters (p.5, §2.2).
@@ -141,7 +141,7 @@
 - **Consequence:** 52 weekly cross-sections × ~720 labeled stocks.
 
 ### 21. Hedge or adverse-environment samples
-- **Statement:** "the worst 50% of the weeks in the previous 10 years, ranked according to the P&L of the aggregate of the other 3 models" (p.4, §2.1).
+- **Statement:** "the worst 50% of the weeks in the previous 10 years", "ranked according to the P&L of the aggregate of the other 3 models" (p.4, §2.1).
 - **Citation:** p.4 §2.1.
 - **Class:** EXPLICIT.
 - **Consequence:** hedge sample requires running the other 3 models first (dependency ordering in the pipeline) and a stored weekly aggregate-P&L history; selection at every calibration date.
@@ -155,7 +155,7 @@
 - **Ambiguity:** whether the OLS fit is weighted (e.g. by bin mass) — design matrix shown is unweighted (p.18, Step 9): ASSUMED unweighted.
 
 ### 23. Factor-selection objective
-- **Statement:** "Find the alpha whose weighted correlation between ranked scores … and rank-adjusted returns … is the highest" (p.18, Step 6); weights are the boosting observation weights.
+- **Statement:** "Find the alpha whose weighted correlation … is the highest", between ranked scores and rank-adjusted returns (p.18, Step 6); weights are the boosting observation weights.
 - **Citation:** p.18 §9.2 Step 6.
 - **Class:** EXPLICIT.
 - **Consequence:** selection = argmax weighted correlation (weighted IC) between feature rank and target rank — NOT the classic AdaBoost weighted-error minimization. Contradiction candidate vs P1/P2 (see contradiction_candidates.md CC-P4-01); both objectives must be separately configurable.
@@ -181,14 +181,14 @@
 - **Consequence:** default `n_rounds = 30`; verify against P1–P3 disclosed round counts (P4 defers to "original research reports").
 
 ### 27. Stopping conditions
-- **Statement:** (a) max iterations (p.18, Step 12); (b) monotonicity gate: "If β < 0, exit the algorithm as at the current iteration we predict a non-monotonic relationship" (p.18, Step 10).
+- **Statement:** (a) max iterations (p.18, Step 12); (b) monotonicity gate: "If β < 0, exit the algorithm", as at the current iteration a non-monotonic relationship is predicted (p.18, Step 10).
 - **Citation:** p.18 §9.2 Steps 10, 12.
 - **Class:** EXPLICIT (both); AMBIGUOUS (semantics of "exit").
 - **Consequence:** two readings: (i) terminate the whole boosting loop at first β<0; (ii) skip/reject that alpha and continue. Literal text says exit the algorithm; but rejecting one alpha then continuing is the natural monotonic-constraint reading. Must be a config flag (`beta_negative_action: stop | skip`). Recorded as open question OQ-P4-03 and contradiction-adjacent ambiguity.
 - **Ambiguity:** also unstated whether convergence-based early stop exists ("until a convergence criterion is met", p.17 §9 intro, vs "maximum number of iterations", Step 12).
 
 ### 28. Ensemble weighting
-- **Statement:** within a model: predictions from all selected alphas are averaged — "Average all the predictions for each individual stock"; "does not imply the alphas are equally weighted. The slope β … acts as a weight" (p.19, §9.3 Step II). Across training models: "final signal is the equally-weighted average of signals from the 4 models" (p.4, §2.1).
+- **Statement:** within a model: predictions from all selected alphas are averaged — "Average all the predictions for each individual stock"; this "does not imply the alphas are equally weighted" since "The slope β … acts as a weight" (p.19, §9.3 Step II). Across training models: "final signal is the equally-weighted average of signals from the 4 models" (p.4, §2.1).
 - **Citation:** p.4 §2.1; p.19 §9.3.
 - **Class:** EXPLICIT.
 - **Consequence:** no per-round α_i weights; plain mean of per-alpha linear forecasts, then equal-weight mean over {long-term, short-term, seasonal, hedge}.
@@ -237,13 +237,13 @@
 - **Consequence:** short-leg borrow accrual at 50bp p.a. (100bp regional), configurable.
 
 ### 36. Execution delay
-- **Statement:** "signal computed after the close of day t is traded market-on-close on day t + 2" (p.6, §2.2). Sensitivity: "delaying execution from t + 2 … all the way to t + 20 business days"; "deterioration is linear, as we assume no market impact"; Sharpe ratio still >1.0 at worst (p.9, §4.2; Figure 14 p.10, x-axis 2–20 business days).
+- **Statement:** "signal computed after the close of day t" is traded market-on-close on day t + 2 (p.6, §2.2). Sensitivity: delaying execution from t + 2 "all the way to t + 20 business days"; "deterioration is linear, as we assume no market impact"; Sharpe ratio still >1.0 at worst (p.9, §4.2; Figure 14 p.10, x-axis 2–20 business days).
 - **Citation:** p.6 §2.2; p.9 §4.2; p.10 Figure 14.
 - **Class:** EXPLICIT.
 - **Consequence:** base execution lag = 2 business days MOC; delay-decay test t+2…t+20 is a required reproduction artifact; expect near-linear Sharpe decay from ~1.64 remaining >1.0 at t+20 (exact per-delay values are chart-only: UNREADABLE_EXHIBIT Figures 13–15, pp.10, values not recoverable from text).
 
 ### 37. Validation periods
-- **Statement:** "All relevant hyperparameters are trained over the 1996-2002 period, such that all posterior results (2003-2020) are out-of-sample. These are, respectively, our validation and test periods" (p.5, §2.2). Backtest window: "Jan'03 – Jan'20" throughout (p.6, §3 et passim). All 4 sub-portfolios share one hyperparameter configuration (p.5, §2.2).
+- **Statement:** "All relevant hyperparameters are trained over the 1996-2002 period", "such that all posterior results (2003-2020) are out-of-sample" — "respectively, our validation and test periods" (p.5, §2.2). Backtest window: "Jan'03 – Jan'20" throughout (p.6, §3 et passim). All 4 sub-portfolios share one hyperparameter configuration (p.5, §2.2).
 - **Citation:** p.5 §2.2; p.6 §3.
 - **Class:** EXPLICIT.
 - **Consequence:** reconstruction needs data from ~1991 (5y vol lookback + 1996 validation start); hyperparameter search must be confined to 1996–2002.

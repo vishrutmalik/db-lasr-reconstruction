@@ -107,7 +107,7 @@ Classification legend: EXPLICIT / INFERRED / ASSUMED / MODERNIZED; absent → NO
 - Consequence: label horizon per variant: 1M / 3M / 1W(open-to-close).
 
 ### Return definition
-- Statement: forward total returns; performance "computed from 1996 to 2014 YTD, in USD" (p.20). Rank IC = "correlation between the ranking of current factor scores and the ranking of subsequent one-month stock returns" (p.10). HF: close-to-close labelled "Unrealistic assumption"; next-day open-to-close "A more realistic assumption" (p.72 fn.18–19).
+- Statement: forward total returns; performance "computed from 1996 to 2014 YTD, in USD" (p.20). Rank IC = "correlation between the ranking of current factor scores" and that of subsequent one-month stock returns (p.10). HF: close-to-close labelled "Unrealistic assumption"; next-day open-to-close "A more realistic assumption" (p.72 fn.18–19).
 - Class: EXPLICIT (USD for performance; open-to-close for HF); NOT_DISCLOSED whether training labels use local-currency or USD returns.
 - Consequence: return engine needs both close-to-close and open-to-close modes.
 
@@ -166,7 +166,7 @@ Classification legend: EXPLICIT / INFERRED / ASSUMED / MODERNIZED; absent → NO
 - Class: EXPLICIT (qualitative); NOT_DISCLOSED (exact objective in P3 text — defer to P1 extraction; do not import silently).
 
 ### Observation-weight update
-- Statement: "weight of each incorrectly classified stock is increased and the weight of each correctly classified stock is decreased" (p.8); "each new classifier/factor's weight in the model also declines exponentially" (p.8).
+- Statement: "weight of each incorrectly classified stock is increased", with each correctly classified stock's weight decreased (p.8); "each new classifier/factor's weight in the model also declines exponentially" (p.8).
 - Exact update formula: in unreadable Figures 6/21. NOT_DISCLOSED in P3 readable text.
 - Class: EXPLICIT (qualitative); NOT_DISCLOSED (formula). How "correctly classified" is defined under CONTINUOUS weak predictions (sign? margin?) is not stated → open_questions.md Q2.
 
@@ -189,7 +189,7 @@ Classification legend: EXPLICIT / INFERRED / ASSUMED / MODERNIZED; absent → NO
 - Class: EXPLICIT (equal weight ex-US, average of 4); NOT_DISCLOSED (HF blend weights; US dynamic-weight formula).
 
 ### Prediction normalization
-- Statement: "output of the strong classifier … is the sum of all the weak classifiers – it is a real value confidence score" (p.8); used "as a new composite factor" (p.8). No cross-sectional re-scaling disclosed.
+- Statement: "output of the strong classifier … is the sum of all the weak classifiers", "a real value confidence score" (p.8); used "as a new composite factor" (p.8). No cross-sectional re-scaling disclosed.
 - Class: EXPLICIT (raw sum); NOT_DISCLOSED (any z-scoring before portfolio use).
 
 ### Portfolio mapping
@@ -249,10 +249,10 @@ Classification legend: EXPLICIT / INFERRED / ASSUMED / MODERNIZED; absent → NO
 ## Additional implementation-relevant items (beyond §13.1 list)
 
 ### Turnover/serial-correlation metric
-- "Serial correlation is defined as the correlation between the previous and current month model predicted alpha scores" (p.25). LASR autocorrelation "43% and 16% higher than the N-LASR1 and N_LASR2" (p.26, Figure 43). EXPLICIT — this is the acceptance metric for the linearization's turnover benefit.
+- Serial correlation is defined as "the correlation between the previous and current month model predicted alpha scores" (p.25). LASR autocorrelation "43% and 16% higher than the N-LASR1 and N_LASR2" (p.26, Figure 43). EXPLICIT — this is the acceptance metric for the linearization's turnover benefit.
 
 ### Low-turnover LASR (research intermediate)
-- "top 45 factors with the highest signal autocorrelation" from the 70, all with "serial correlation greater than 85%" (p.56). Rejected in favour of LASR-HC: "rather than pre-screening out … high turnover factors, we let the AdaBoost algorithm make the choice" (p.58). EXPLICIT.
+- "top 45 factors with the highest signal autocorrelation" from the 70, all with "serial correlation greater than 85%" (p.56). Rejected in favour of LASR-HC: rather than pre-screening out high-turnover factors, "we let the AdaBoost algorithm make the choice" (p.58). EXPLICIT.
 
 ### LASR-6M (research intermediate)
 - 6-month horizon raises serial correlation to ~80% (p.59) but 1-year predictive gain over HC "seems to be muted" (p.60) → "the LASR-HC, fitted with three-month forward returns, becomes our standard high capacity" model (p.60). EXPLICIT.

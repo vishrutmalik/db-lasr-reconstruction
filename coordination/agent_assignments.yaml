@@ -8,17 +8,17 @@ active:
     github_issue: 15
     branch: agent/architect/G015-system-architecture
     worktree: .worktrees/G015-architect
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #53)
     dependencies: [G011, G012, G013, G014]
     owned_paths: ["docs/architecture/**"]
     read_only_paths: ["docs/methodology/**", "docs/data/**", "docs/evidence/**", "MASTER_PROMPT.md", "goals.md"]
     shared_interfaces: ["all G016-G029 implementation contracts originate here"]
     started_at: 2026-07-20
     last_updated_at: 2026-07-20
-    latest_commit: null
+    latest_commit: 443e766 (final; 7 docs, 4 commits)
     verification_required: true
     red_team_required: false
-    notes: Toolchain proposal for G016 included in scope (D-002).
+    notes: Self-check 55 CI / 31 CR / 21 LT all bound.
 
 history:
   - goal_id: G013

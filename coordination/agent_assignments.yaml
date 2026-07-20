@@ -25,14 +25,14 @@ active:
     github_issue: 14
     branch: agent/quant-reviewer/G014-correctness-criteria
     worktree: .worktrees/G014-quant-reviewer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #49)
     dependencies: [G007, G008, G009, G010]
     owned_paths: ["docs/methodology/correctness_criteria.md", "docs/methodology/leakage_tests.md"]
     read_only_paths: ["docs/evidence/**", "MASTER_PROMPT.md"]
     shared_interfaces: ["invariants encoded as tests by G017-G029; scenarios feed G019/G037"]
     started_at: 2026-07-20
     last_updated_at: 2026-07-20
-    latest_commit: null
+    latest_commit: 3aa490c (final; CI-001..055 + LT-001..021)
     verification_required: true
     red_team_required: false
     notes: File-level split from G011 (same dir, disjoint files) documented here.

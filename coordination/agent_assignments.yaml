@@ -8,17 +8,17 @@ active:
     github_issue: 18
     branch: agent/implementer/G018-provider-contract
     worktree: .worktrees/G018-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #60)
     dependencies: [G017]
     owned_paths: ["src/lasr/data/providers/**", "src/lasr/data/schemas/raw*.py", "tests/unit/test_providers*.py", "tests/integration/test_provider_contract*.py", "tests/fixtures/provider/** (synthetic only)", ".env.example"]
     read_only_paths: ["docs/architecture/**", "docs/data/**", "src/lasr/core/**", "src/lasr/data/schemas/**"]
     shared_interfaces: ["contract suite consumed by G019 synthetic provider; adapter paths swept by G039 verification"]
     started_at: 2026-07-21
     last_updated_at: 2026-07-21
-    latest_commit: null
+    latest_commit: ff5a631 (final; 527 tests; CT-01..15; API stub descoped per D-013)
     verification_required: true
     red_team_required: false
-    notes: Parallel to G043 (disjoint paths). D-011 grading split + D-012 default fields are binding.
+    notes: Parallel to G043. Proposed contract amendments (UnknownProviderIdError, failed-basis downgrade) pending verification concurrence.
   G043:
     agent_role: implementer
     objective: Config schema slice per config_system.md (VersionSpec, guards, CI-044 completeness) + one-goal pyproject grant (pandas-stubs, TID251 additions)

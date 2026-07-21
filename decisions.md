@@ -88,3 +88,14 @@
   FieldUnavailableError (CT-07) until probe VP-01 passes.
 - **Evidence:** G039 contradiction 2; G013 FM-12/13/14.
 - **Reversibility:** EASY. **Date:** 2026-07-21. **Agent:** orchestrator. **Goal:** G039/G018.
+
+## D-013 — Generic API provider = the DataProvider Protocol; no fake HTTP skeleton
+- **Decision:** MASTER_PROMPT §16's "generic API-provider interface" is satisfied
+  by the typed DataProvider Protocol + capability records + contract suite +
+  .env.example auth surface (all landed in G018). A concrete HTTP adapter
+  skeleton is deliberately NOT built until a real API shape exists — MASTER_PROMPT
+  forbids fabricated endpoints. Real-adapter authoring is documented in the G039
+  guide (CT crosswalk) and gated on credentials/API docs arriving.
+- **Evidence:** provider_contract.md §4.3 vs MASTER_PROMPT §16 "Never create fake
+  production endpoints"; G018 deviation item 7.
+- **Reversibility:** EASY. **Date:** 2026-07-21. **Agent:** orchestrator. **Goal:** G018.

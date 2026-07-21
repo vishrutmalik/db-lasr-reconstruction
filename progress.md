@@ -28,6 +28,12 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-07-21: GitHub email re CI failure triaged — run 29747283743 (PR #54,
+  2026-07-20): all jobs failed at setup, 'Unable to resolve action
+  astral-sh/setup-uv@v8' (nonexistent floating tag). Already remediated in the
+  same branch 5 min later (1ab447d pins v8.3.2; run 29747600474 green),
+  independently verified (docs/verification/G016.md), merged. All subsequent
+  runs green incl. latest main push. NO ACTION REQUIRED; no new goal created.
 - 2026-07-20 (3): Second usage-limit interruption killed the G013 researcher
   (no commits yet; worktree clean) and the G006 verifier (report not started).
   Recovery per MASTER_PROMPT §6: state reconciled (main=origin/main=ae41048,

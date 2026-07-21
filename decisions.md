@@ -70,3 +70,21 @@
 - **Decision:** Per docs/architecture/toolchain_proposal.md; sklearn/xgboost
   quarantined to a challengers extra; system Python 3.9.6 not used.
 - **Reversibility:** MODERATE. **Date:** 2026-07-20. **Agent:** architect. **Goal:** G015/G016.
+
+## D-011 — pit_grade split: SNAPSHOT_STAMPED vs RETRO_WINDOW
+- **Decision:** supports_pit=false forces SNAPSHOT_STAMPED (knowledge_time =
+  retrieval_time) only for revision-prone families (fundamentals, estimates,
+  classifications). Market-price families retrieved as retrospective daily
+  windows grade RETRO_WINDOW with bar knowledge_time = close of event date
+  (D-009), conditional on adjustment-basis verification (VP-07/CT-15).
+- **Evidence:** G039 contradiction 1 (provider_contract §1 vs system_design §2);
+  prices are publicly knowable at bar close and not restated like filings.
+- **Consequence:** G018 grading logic + CT tests implement the split.
+- **Reversibility:** MODERATE. **Date:** 2026-07-21. **Agent:** orchestrator (ruling on G039 finding). **Goal:** G039/G018.
+
+## D-012 — fetch_prices default fields narrowed to evidence-demonstrated set
+- **Decision:** default fields = ("close", "market_cap") (FM-11/31 demonstrated);
+  open/high/low/volume are LISTED_ONLY and explicit requests raise
+  FieldUnavailableError (CT-07) until probe VP-01 passes.
+- **Evidence:** G039 contradiction 2; G013 FM-12/13/14.
+- **Reversibility:** EASY. **Date:** 2026-07-21. **Agent:** orchestrator. **Goal:** G039/G018.

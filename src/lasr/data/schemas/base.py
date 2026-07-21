@@ -152,7 +152,10 @@ class TableSchema:
 
     @property
     def event_key(self) -> tuple[str, ...]:
-        """Entity+event key of a vintaged table: PK minus ``vintage_seq`` (U2)."""
+        """Entity+event key: for a vintaged table, PK minus ``vintage_seq``
+        (U2); otherwise the primary key itself."""
+        if not self.vintaged:
+            return self.primary_key
         return tuple(c for c in self.primary_key if c != "vintage_seq")
 
 

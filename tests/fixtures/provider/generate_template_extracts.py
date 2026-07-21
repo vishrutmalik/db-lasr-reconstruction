@@ -285,7 +285,9 @@ def build_security(security: FakeSecurity, rng: np.random.Generator) -> None:
     days = weekdays(FIRST_TRADING_DAY, date(2025, 6, 27))  # last weekday <= window
     n = len(days)
     log_returns = rng.normal(loc=0.0003, scale=0.02, size=n - 1)
-    closes = security.base_price * np.exp(np.concatenate(([0.0], np.cumsum(log_returns))))
+    closes = security.base_price * np.exp(
+        np.concatenate(([0.0], np.cumsum(log_returns)))
+    )
     shares_mn = float(rng.uniform(200.0, 2000.0))
     net_debt_mn = float(rng.uniform(-500.0, 4000.0))
     pe_level = float(rng.uniform(12.0, 45.0))

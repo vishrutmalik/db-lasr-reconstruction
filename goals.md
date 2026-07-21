@@ -28,7 +28,7 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G014 | Quantitative correctness & leakage criteria | quant-reviewer | G007–G010 | MERGED | [#14](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/14) | [#49](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/49) |
 | G015 | System architecture design | architect | G011, G012, G013 | MERGED | [#15](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/15) | [#53](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/53) |
 | G016 | pyproject, dev tooling, CI workflow | implementer | G015 | MERGED | [#16](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/16) | [#54](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/54) |
-| G017 | Typed canonical schemas | implementer | G015, G016 | IN_PROGRESS | [#17](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/17) | |
+| G017 | Typed canonical schemas | implementer | G015, G016 | IN_VERIFICATION | [#17](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/17) | [#57](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/57) |
 | G018 | Provider interface + contract tests | implementer | G017 | BLOCKED | [#18](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/18) | |
 | G019 | Synthetic data generator + synthetic provider | implementer | G018 | BLOCKED | [#19](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/19) | |
 | G020 | Point-in-time data layer + as-of joins | implementer | G017, G018 | BLOCKED | [#20](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/20) | |

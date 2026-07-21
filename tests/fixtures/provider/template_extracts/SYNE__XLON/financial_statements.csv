@@ -1,0 +1,13 @@
+excel_code,label,unit,FY-5,FY-4,FY-3,FY-2,FY-1,FY0,FY1,FY2
+FINANCIAL_PERIOD_END_DATE,Financial Period End Date,,2020-03-31,2021-03-31,2022-03-31,2023-03-31,2024-03-31,2025-03-31,2026-03-31,2027-03-31
+REV,Revenue,millions_of_selected_currency,2882.51,3180.87,4553.51,4863.43,6373.71,7412.24,8045.5043,11033.3318
+EBITDA,EBITDA,millions_of_selected_currency,5313.88,5607.65,7203.96,8920.97,9869.06,12198.08,12697.0011,16013.0502
+EBIT,EBIT,millions_of_selected_currency,1911.44,2435.53,2701.87,3527.24,4629.17,5128.54,,
+NI_BASIC,Net Income to Common Shareholders,millions_of_selected_currency,925.29,1020.53,1080.94,1022.57,1034.45,1138.50,,
+EPS_WAD,Earnings Per Share - WAD,selected_currency_per_share,3722.88,3632.99,4060.83,4606.31,5469.81,6226.54,6290.8559,8276.5979
+DPS,Dividends Per Share,selected_currency_per_share,4869.39,4981.70,4999.44,4927.35,5337.18,5014.64,,
+TOT_ASSET,Total Assets,millions_of_selected_currency,595.12,611.19,678.59,658.94,653.28,714.24,,
+DEBT_TOTAL,Total Debt,millions_of_selected_currency,3556.73,3350.32,4152.92,4200.47,4680.47,6002.46,,
+OCF,Operating Cash Flow,millions_of_selected_currency,4906.15,4903.15,5331.42,5873.48,6341.37,7924.17,,
+CAPEX,Capex,millions_of_selected_currency,1126.13,1360.96,1560.85,1667.64,1878.39,1770.19,,
+BOOK_VALUE,Book Value,millions_of_selected_currency,,,,,,,,

@@ -1,0 +1,10 @@
+excel_code,label,value
+NAME,Company Name,Synthetic Cascade PLC
+COUNTRY_HQ,Country of Headquaters,Ireland
+TRADING_CURR,Trading Currency,USD
+SECTOR_GICS,Sector (GICS L1),Health Care
+SUB_INDUSTRY_GICS,Sub-Sector (GICS L4),Synthetic Biotech
+REPORTING_CURR,Reporting Currency,USD
+COUNTRY_EXCH,Country of Stock Exchange,US
+EXCH,Stock Exchange,Synthetic Nasdaq
+FINANCIAL_PERIOD_END_DATE,Financial Period End Date,2024-12-31

@@ -1,0 +1,10 @@
+excel_code,label,value
+NAME,Company Name,Synthetic Ember Group
+COUNTRY_HQ,Country of Headquaters,United Kingdom
+TRADING_CURR,Trading Currency,GBP
+SECTOR_GICS,Sector (GICS L1),Consumer Staples
+SUB_INDUSTRY_GICS,Sub-Sector (GICS L4),Synthetic Beverages
+REPORTING_CURR,Reporting Currency,GBP
+COUNTRY_EXCH,Country of Stock Exchange,GB
+EXCH,Stock Exchange,Synthetic London
+FINANCIAL_PERIOD_END_DATE,Financial Period End Date,2025-03-31

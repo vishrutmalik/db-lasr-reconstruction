@@ -8,14 +8,14 @@ active:
     github_issue: 38
     branch: agent/data-researcher/G039-real-data-guide
     worktree: .worktrees/G039-data-researcher
-    status: IN_PROGRESS
+    status: IMPLEMENTED_AWAITING_G018 (PR #59 held; drift-check verification after G018 merge)
     dependencies: [G013 (merged), provider_contract.md (G015, merged); consistency-check vs G018 at verification]
     owned_paths: ["docs/data/real_data_integration.md", "docs/runbooks/real_data_onboarding.md"]
     read_only_paths: ["docs/architecture/provider_contract.md", "docs/data/**", "docs/methodology/**", "inputs/data_templates/*.xlsx (main checkout)"]
     shared_interfaces: ["guide must match G018 adapter on merge (drift-check at verification)"]
     started_at: 2026-07-21
     last_updated_at: 2026-07-21
-    latest_commit: null
+    latest_commit: b4fa015 (final; 8 ADAPTER_PATH_PENDING_G018 markers)
     verification_required: true (deferred until after G018 merges)
     red_team_required: false
     notes: Parallel to G017 (disjoint paths). Verification deliberately sequenced after G018.

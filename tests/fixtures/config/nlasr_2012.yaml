@@ -1,0 +1,155 @@
+# Worked nlasr_2012 (enhanced US) VersionSpec — transcribed verbatim from
+# docs/architecture/config_system.md §6 ("Worked example — FULL nlasr_2012"),
+# the architecture's own example, covering every row of the spec's
+# provenance table (docs/methodology/versions/nlasr_2012.md §12, 39 params).
+#
+# ONE documented deviation (G015 verification finding N-3): the §6 block
+# tags base_bps `prov: EXPLICIT, src: "P1-38 grid midpoint convention"`.
+# 20 bps is NOT explicit in P1 (P1-38 gives the grid 5–30 and no base; 20
+# is P2/P3's base, and 20 is not even the grid midpoint 17.5) — re-tagged
+# ASSUMED with a register candidate, per the G043 ruling in the PR report.
+version_id: nlasr_2012
+paper: p1_nlasr_2012
+variant: enhanced_us            # baseline|technical|ultra|global selectable (P1-01)
+
+universe:
+  scheme:            {value: p1_regions, prov: EXPLICIT, src: P1-31, cr: CR-015}
+  train_universe:    {value: russell3000, prov: EXPLICIT, src: P1-31}
+  score_universe:    {value: russell3000, prov: EXPLICIT, src: "P1-31 (S&P500 screen selectable)"}
+  membership_vintage: {value: point_in_time, prov: ASSUMED, src: "P1-31 ambiguity", assumption: A-G011-02}
+  eligibility_screens: {value: [], prov: EXPLICIT_ABSENCE, src: P1-32, assumption: A-G011-01}
+  global_gate_min_stocks: {value: 100, prov: EXPLICIT, src: P1-32}
+  country_basis:     {value: exchange_country, prov: ASSUMED, src: FM-35}
+
+clocks:
+  rebalance: {value: monthly_month_end, prov: EXPLICIT, src: P1-34, cr: CR-006}
+  refit:     {value: monthly, prov: EXPLICIT, src: P1-22}
+
+execution:
+  mode: {value: same_close, prov: EXPLICIT, src: P1-34, cr: CR-018}
+  sensitivity_modes: {value: [one_day_lag, next_open], prov: EXPLICIT, src: P1-34}
+
+features:
+  list_id: {value: p1_fig11_us70, prov: EXPLICIT, src: P1-27, cr: CR-016}
+  # variant overrides: global -> p1_fig106_61; technical -> p1_fig74_tech
+  formula_basis: {value: our_documented_definitions, prov: ASSUMED,
+                  src: "P1-27 names only", assumption: A-G011-03}
+  technical_deviation_transform: {value: ts_zscore, prov: ASSUMED,
+                  src: OQ-P1-07, assumption: A-G011-04}
+
+preprocessing:
+  rank_method: {value: rank_over_covered_count, prov: EXPLICIT, src: P1-08}
+  rank_direction: {value: ascending_raw_higher_rank, prov: ASSUMED,
+                   src: OQ-P1-02, assumption: A-G011-05}
+  tie_rule: {value: average_rank_stable_sort, prov: ASSUMED,
+             src: OQ-P1-01, assumption: A-G011-06}
+  winsorization: {value: none, prov: EXPLICIT, src: P1-09}
+  missing_at_predict: {value: h_zero, prov: ASSUMED, src: OQ-P1-05,
+                       assumption: A-G011-07}
+
+neutralization:
+  mechanism: {value: none, prov: EXPLICIT_ABSENCE, src: "extraction §11", cr: CR-004}
+  beta_stage: {value: none, prov: EXPLICIT_ABSENCE, src: "CR-004"}
+
+target:
+  horizon: {value: 1M, prov: EXPLICIT, src: P1-03, cr: CR-006}
+  grid: {value: month_end, prov: EXPLICIT, src: P1-34}
+  return_type: {value: total, prov: INFERRED, src: OQ-P1-14, assumption: A-G011-08}
+  currency_basis: {value: usd, prov: INFERRED, src: "P1 extraction §13"}
+  comparison_group: {value: universe, prov: EXPLICIT, src: P1-06, cr: CR-017}
+  # global variant: comparison_group -> country_demeaned (P1-33), with
+  country_demean_weighting: {value: equal, prov: ASSUMED, src: OQ-P1-11,
+                             assumption: A-G011-09}
+  vol_scaling: {value: none, prov: EXPLICIT_ABSENCE, src: "extraction §15"}
+  overlap_mode: {value: pooled_as_paper, prov: EXPLICIT, src: "1M=1M no overlap (spec §4)"}
+
+labels:
+  fractions: {value: {top: 0.30, middle: 0.40, bottom: 0.30},
+              prov: EXPLICIT, src: P1-04, cr: CR-017}
+  boundary_tie_rule: {value: stable_sort, prov: ASSUMED, src: "spec §4"}
+
+kernel:
+  type: piecewise_constant                       # CR-007 discriminator
+  n_bins: {value: 5, prov: EXPLICIT, src: P1-11, cr: CR-012}
+  bin_scheme: {value: equal_count, prov: ASSUMED, src: OQ-P1-01, assumption: A-G011-06}
+  epsilon_mode: {value: one_over_n, prov: EXPLICIT, src: P1-13, cr: CR-011}
+  epsilon_scope: {value: h_only, prov: INFERRED, src: OQ-P1-03, assumption: A-G011-11}
+  n_definition: {value: labeled_pooled, prov: INFERRED, src: OQ-P1-15,
+                 assumption: A-G011-10}
+
+selection:
+  type: min_z                                    # CR-008 discriminator
+  smooth_z: {value: false, prov: INFERRED, src: OQ-P1-03, assumption: A-G011-11}
+  tie_break: {value: registry_order, prov: ASSUMED, src: "P1-14 ambiguity",
+              assumption: A-G011-12}
+  allow_repeats: {value: true, prov: EXPLICIT, src: P1-14}
+
+boosting:
+  n_rounds: {value: 30, prov: EXPLICIT, src: P1-17, cr: CR-010}
+  early_stopping: {value: none, prov: EXPLICIT, src: P1-18}
+  init_weights: {value: uniform_one_over_n, prov: EXPLICIT, src: P1-15}
+  # weight update is the shared primitive w*exp(-y*h): no knob by design (CR-009)
+  composition: {value: sum, prov: EXPLICIT, src: P1-16}
+
+ensemble:
+  components:
+    - {type: trailing_window, periods: {value: 12, prov: EXPLICIT, src: P1-19}}
+    - {type: seasonal_same_month,
+       years: {value: 12, prov: EXPLICIT, src: P1-20},
+       lag_years: {value: 0, prov: EXPLICIT, src: "P1-20; CR-027", cr: CR-027},
+       min_history: {value: use_all_drop_if_none, prov: ASSUMED,
+                     src: OQ-P1-16, assumption: A-G011-14}}
+    - {type: previous_period, periods: {value: 1, prov: EXPLICIT, src: P1-21}}
+    # NO hedge component: guard rejects one for this version (CR-002)
+  pooling_weights: {value: equal_per_observation, prov: INFERRED,
+                    src: OQ-P1-04, assumption: A-G011-13}
+  component_zscore: {value: per_date_cross_sectional, prov: EXPLICIT, src: P1-23}
+  zscore_universe: {value: scoring, prov: ASSUMED, src: OQ-P1-17,
+                    assumption: A-G011-15}
+  weighting: {value: seasonal_rank_ic, prov: EXPLICIT, src: P1-25, cr: CR-005}
+  # variant overrides: global/ultra -> equal (P1-24/26)
+  ic_window: {value: expanding, prov: ASSUMED, src: OQ-P1-06, assumption: A-G011-16}
+  negative_ic_floor: {value: 0.0, prov: ASSUMED, src: OQ-P1-06, assumption: A-G011-16}
+  first_year_weighting: {value: equal, prov: EXPLICIT, src: P1-25}
+  hedge_weight_rule: null
+
+portfolio:
+  signal_mapping: {value: fractile_ls, prov: EXPLICIT, src: P1-35}
+  fractiles: {value: {us: 10, global: 5}, prov: EXPLICIT, src: P1-35}
+  fractile_weighting: {value: equal, prov: ASSUMED, src: OQ-P1-13,
+                       assumption: A-G011-17}
+  turnover_limit_one_way_monthly: {value: 0.30, prov: EXPLICIT, src: P1-36, cr: CR-014}
+  optimizer:            # secondary variant (P1-36)
+    constraints: {value: {market_neutral: true, leverage: 2.0,
+                          target_vol: 0.04, beta_neutral: true},
+                  prov: EXPLICIT, src: P1-36}
+    risk_model: {value: substitute_shrinkage, prov: ASSUMED, src: OQ-P1-12,
+                 assumption: A-004}
+    internal_cost_bps: {value: 0, prov: ASSUMED, src: "P1-36 ambiguity",
+                        assumption: A-G011-18}
+
+costs:
+  model: {value: linear_one_way_bps, prov: EXPLICIT, src: P1-38, cr: CR-013}
+  scenario_grid_bps: {value: [5, 10, 15, 20, 25, 30], prov: EXPLICIT, src: P1-38}
+  # N-3 fix: was `prov: EXPLICIT, src: "P1-38 grid midpoint convention"` in
+  # the §6 block — see file header.
+  base_bps: {value: 20, prov: ASSUMED,
+             src: "P1-38 grid (5-30) names no base; 20 chosen as the base scenario",
+             assumption: A-G043-01}
+  borrow_bps_pa: {value: null, prov: EXPLICIT_ABSENCE, src: P1-39,
+                  assumption: A-G011-19}
+
+validation:
+  windows:
+    full: {value: {start: 1988-01-31, end: 2012-04-30}, prov: EXPLICIT, src: P1-40}
+    strategy_comparison: {value: {start: 1998-01-31, end: 2012-04-30},
+                          prov: EXPLICIT, src: P1-40}
+    recent: {value: {start: 2008-01-31, end: 2012-04-30}, prov: EXPLICIT, src: P1-40}
+
+acceptance:   # bands, never equalities (CI-055); data-difference caveat P1-41
+  rank_ic_monthly: {target: 0.0864, band: 0.02, src: P1-41}
+  decile_spread_monthly: {target: 0.031, band: 0.01, src: P1-41}
+  ls_sharpe: {target: 1.89, band: 0.5, src: P1-41}
+  baseline_ic_dual_reference: {primary: 0.0654, alternate: 0.0756,
+                               src: "CR-019/OQ-P1-08 — keep both"}
+  turnover_two_way_monthly_min: {target: 2.50, src: P1-37}

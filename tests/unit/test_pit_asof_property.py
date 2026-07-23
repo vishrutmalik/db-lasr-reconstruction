@@ -147,6 +147,120 @@ def test_join_latest_known_matches_brute_force(rows, query_hours):
             assert row["vintage_seq"] == expected["vintage_seq"]
 
 
+class TestB1NaiveDatetimeRejection:
+    """RT-G020-B1 promoted reproduction: naive datetimes must RAISE, never
+    be silently localized as UTC. Before the fix, a naive JST decision time
+    (15:00 JST == 06:00 UTC) was read as 15:00 UTC, joining a value
+    published 2h AFTER the true decision instant — a CI-001 leak through
+    the sanctioned join kernel. Also closes verifier NB-4."""
+
+    def test_b1_reproduction_naive_left_raises_instead_of_leaking(self):
+        from lasr.core.errors import TimeSemanticsError
+
+        # true decision instant: 2020-06-15 15:00 JST == 06:00 UTC
+        left = pd.DataFrame(
+            {
+                "security_id": ["SEC-JP"],
+                "as_of": [datetime(2020, 6, 15, 15, 0)],  # naive JST
+            }
+        )
+        right = pd.DataFrame(
+            {
+                "security_id": ["SEC-JP"],
+                "knowledge_time": [datetime(2020, 6, 15, 8, 0, tzinfo=UTC)],
+                "value": [42.0],  # published 2h AFTER the decision instant
+            }
+        )
+        with pytest.raises(TimeSemanticsError, match="naive"):
+            join_latest_known(left, right, by=["security_id"], left_time="as_of")
+
+    def test_b1_naive_right_knowledge_time_raises(self):
+        from lasr.core.errors import TimeSemanticsError
+
+        left = pd.DataFrame(
+            {
+                "security_id": ["SEC-A"],
+                "as_of": [datetime(2020, 6, 15, 6, 0, tzinfo=UTC)],
+            }
+        )
+        right = pd.DataFrame(
+            {
+                "security_id": ["SEC-A"],
+                "knowledge_time": [datetime(2020, 6, 15, 5, 0)],  # naive
+                "value": [1.0],
+            }
+        )
+        with pytest.raises(TimeSemanticsError, match="naive"):
+            join_latest_known(left, right, by=["security_id"], left_time="as_of")
+
+    def test_b1_object_dtype_mixed_naive_raises(self):
+        """A naive value hidden in an object-dtype column (mixed with
+        aware ones) is caught per element."""
+        from lasr.core.errors import TimeSemanticsError
+
+        left = pd.DataFrame(
+            {
+                "security_id": ["SEC-A", "SEC-B"],
+                "as_of": pd.Series(
+                    [
+                        datetime(2020, 6, 15, 6, 0, tzinfo=UTC),
+                        datetime(2020, 6, 15, 6, 0),  # naive, smuggled
+                    ],
+                    dtype=object,
+                ),
+            }
+        )
+        right = pd.DataFrame(
+            {
+                "security_id": ["SEC-A"],
+                "knowledge_time": [datetime(2020, 6, 15, 5, 0, tzinfo=UTC)],
+                "value": [1.0],
+            }
+        )
+        with pytest.raises(TimeSemanticsError, match="naive"):
+            join_latest_known(left, right, by=["security_id"], left_time="as_of")
+
+    def test_b1_non_datetime_join_key_raises(self):
+        from lasr.core.errors import TimeSemanticsError
+
+        left = pd.DataFrame({"security_id": ["SEC-A"], "as_of": ["2020-06-15"]})
+        right = pd.DataFrame(
+            {
+                "security_id": ["SEC-A"],
+                "knowledge_time": [datetime(2020, 6, 15, 5, 0, tzinfo=UTC)],
+                "value": [1.0],
+            }
+        )
+        with pytest.raises(TimeSemanticsError, match="non-datetime"):
+            join_latest_known(left, right, by=["security_id"], left_time="as_of")
+
+    def test_b1_aware_non_utc_zones_convert_correctly(self):
+        """tz-aware non-UTC inputs are legal and convert: 15:00 JST is
+        06:00 UTC, so a value published 06:30 UTC must NOT join."""
+        from zoneinfo import ZoneInfo
+
+        tokyo = ZoneInfo("Asia/Tokyo")
+        left = pd.DataFrame(
+            {
+                "security_id": ["SEC-JP"],
+                "as_of": [datetime(2020, 6, 15, 15, 0, tzinfo=tokyo)],
+            }
+        )
+        right = pd.DataFrame(
+            {
+                "security_id": ["SEC-JP", "SEC-JP"],
+                "knowledge_time": [
+                    datetime(2020, 6, 15, 5, 0, tzinfo=UTC),  # knowable
+                    datetime(2020, 6, 15, 6, 30, tzinfo=UTC),  # future
+                ],
+                "value": [1.0, 42.0],
+            }
+        )
+        joined = join_latest_known(left, right, by=["security_id"], left_time="as_of")
+        (row,) = joined.to_dict("records")
+        assert row["value"] == 1.0  # the 06:30 UTC row must not leak
+
+
 def test_join_tie_break_is_deterministic_max_vintage():
     """CI-043 tie rule, pinned: among right rows with IDENTICAL
     knowledge_time (degenerate input — U2 forbids it within an event key),

@@ -20,17 +20,13 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import timedelta
-from typing import TYPE_CHECKING, Any, TypeAlias
 
-import pandas as pd  # type: ignore[import-untyped]
+import pandas as pd
 
 from lasr.core.errors import TimeSemanticsError
 
-if TYPE_CHECKING:
-    #: Placeholder alias until pandas-stubs lands (G043 follow-up).
-    DataFrame: TypeAlias = Any
-else:
-    DataFrame = pd.DataFrame
+#: Real stubbed type (pandas-stubs is a dev dependency since G043).
+DataFrame = pd.DataFrame
 
 __all__ = ["join_latest_known"]
 
@@ -65,9 +61,9 @@ def join_latest_known(
     # merge_asof requires the ON key sorted GLOBALLY (not just per group);
     # sorting ties after __kt keeps the max-tiebreak row last among equal
     # knowledge times within a group, which backward search then picks.
-    right_frame = right_frame.sort_values(
-        ["__kt", *ties], kind="stable"
-    ).reset_index(drop=True)
+    right_frame = right_frame.sort_values(["__kt", *ties], kind="stable").reset_index(
+        drop=True
+    )
     left_order = left_frame.sort_values(["__cutoff", *by], kind="stable").reset_index(
         drop=True
     )

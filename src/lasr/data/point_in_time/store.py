@@ -36,9 +36,9 @@ import logging
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import Any
 
-import pandas as pd  # type: ignore[import-untyped]
+import pandas as pd
 
 from lasr.core.errors import LasrError, TimeSemanticsError
 from lasr.core.time_semantics import DateInterval, ensure_utc
@@ -46,11 +46,8 @@ from lasr.data.canonical.store import CanonicalStore
 from lasr.data.schemas.base import Row, TableSchema
 from lasr.data.schemas.registry import get_schema
 
-if TYPE_CHECKING:
-    #: Placeholder alias until pandas-stubs lands (G043 follow-up).
-    DataFrame: TypeAlias = Any
-else:
-    DataFrame = pd.DataFrame
+#: Real stubbed type (pandas-stubs is a dev dependency since G043).
+DataFrame = pd.DataFrame
 
 __all__ = [
     "KeyFilter",

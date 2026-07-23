@@ -17,29 +17,24 @@ scalars → Python scalars) and then applies BOTH validation surfaces:
 Every problem found is collected into one ``SchemaValidationError`` —
 quarantine (G021, LT-021) needs the full list, not the first failure.
 
-pandas ships no inline types and pandas-stubs is not yet in the dev group
-(the G043 grant did not land on main — see the G020 report); the untyped
-import is isolated here per the ``lasr.data.providers._frames`` pattern.
+``DataFrame`` is the real stubbed type (pandas-stubs is a dev dependency
+since the G043 grant landed on main).
 """
 
 from __future__ import annotations
 
 import math
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, TypeAlias, cast
+from typing import cast
 
-import pandas as pd  # type: ignore[import-untyped]
+import pandas as pd
 from pydantic import ValidationError
 
 from lasr.core.errors import SchemaValidationError
 from lasr.core.time_semantics import ensure_utc
 from lasr.data.schemas.base import TableSchema, validate_rows
 
-if TYPE_CHECKING:
-    #: Placeholder alias until pandas-stubs lands (G043 follow-up).
-    DataFrame: TypeAlias = Any
-else:
-    DataFrame = pd.DataFrame
+DataFrame = pd.DataFrame
 
 __all__ = ["DataFrame", "records_from_frame", "validate_frame"]
 

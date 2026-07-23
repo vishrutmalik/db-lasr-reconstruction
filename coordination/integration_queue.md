@@ -57,5 +57,18 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
 - system_design.md §5: canonical/<table>/ vs sketch's canonical/<family>/ (G020
   deviation, family recorded in manifests) — next architecture-docs pass.
 
+## Follow-ups from G020 remediation (documented-not-fixed, owner-routed)
+- N3: raw sort-key ties -> append PK columns to raw schema sort keys (owner:
+  next goal touching schemas/raw_*.py; candidate G021).
+- N9: naive bar_close_time contract (StampingConfig/bar_knowledge_time,
+  touches providers/base.py) -> fold into next provider-touching goal.
+- N11: retrieval-time truthfulness cross-check -> G021 charter (with G020
+  verifier NB items already queued above).
+- CT-15 wording update ('basis matches' -> 'basis known; ADJUSTED refused at
+  canonical build per B3') -> provider_contract.md owner edit (orchestrator
+  control-plane on G020 merge).
+- N2 universe listing-intersection default -> G026 universe consumers.
+- N10 raw CA PK / fundamentals event-key representability -> G021/G023 review.
+
 ## Conflicts requiring resolution
 - (none)

@@ -71,20 +71,11 @@ def test_surviving_rows_carry_no_post_asof_interval_closures() -> None:
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "RT-G019-2 (BLOCKING for weekly worlds): corporate actions are "
-        "announced at effective_date - 14d and delisting/merger rows carry "
-        "terminal_return, which the generator writes verbatim as the "
-        "security's ENTIRE effective-period return. On weekly grids the "
-        "announcement always precedes the prior decision close, so an "
-        "honest PIT consumer of the CLEAN dataset knows next period's "
-        "return exactly. Prices must react at announcement, or the "
-        "announcement lead must stay inside one decision period."
-    ),
-)
 def test_terminal_returns_are_not_knowable_at_the_prior_decision_close() -> None:
+    """RT-G019-2 remediation ratchet (was a strict xfail): terminal-return
+    rows are now stamped at the effective period's own publication instant,
+    so no terminal event is knowable at the prior decision close — on any
+    grid, including weekly (the 22/22 case)."""
     cfg = ScenarioConfig(
         scenario_id="baseline",
         seed=7,

@@ -183,14 +183,23 @@ def _action_rows(b: _Builder, events: list[_ActionEvent]) -> tuple[Row, ...]:
     rows: list[Row] = []
 
     def base(i: int, t: int) -> Row:
+        # RT-G019-2: an announcement may pre-disclose the EVENT, never a
+        # realized value. Two guards on the lead time:
+        # (a) never earlier than the PRIOR period's publication instant —
+        #     on weekly grids a flat 14-day lead would precede the prior
+        #     decision close, and dividend amounts embed the prior close;
+        # (b) terminal rows (delisting/merger) carry terminal_return — the
+        #     realized effective-period return — so THOSE rows are stamped
+        #     at the effective period's own publication instant (see the
+        #     overrides below), never in advance.
+        scheduled = _at(b.periods[t] - timedelta(days=14), _PUBLICATION_UTC)
+        prior_knowable = _at(b.periods[max(t - 1, 0)], _PUBLICATION_UTC)
         return {
             "ticker": b.ticker_at(i, t - 1) if t > 0 else b.tickers[i],
             "exchange": b.exchange_of(i),
             "effective_date": b.periods[t],
             "ex_date": b.periods[t],
-            "announcement_time": _at(
-                b.periods[t] - timedelta(days=14), _PUBLICATION_UTC
-            ),
+            "announcement_time": max(scheduled, prior_knowable),
         }
 
     # regular cash dividends from the dividend-yield schedule
@@ -232,6 +241,9 @@ def _action_rows(b: _Builder, events: list[_ActionEvent]) -> tuple[Row, ...]:
             row["ticker"] = b.ticker_at(i, t)
             row["successor_ticker"] = b.successor[i]
             row["terminal_return"] = float(b.terminal_return[i])
+            # RT-G019-2: terminal_return IS the realized effective-period
+            # return — knowable only once that period completes.
+            row["announcement_time"] = _at(b.periods[t], _PUBLICATION_UTC)
         else:  # pragma: no cover - schedule builder controls the vocabulary
             raise GeneratorError(f"unknown scheduled action kind {event.kind!r}")
         row["provider_action_id"] = f"ACT-{counter:05d}"
@@ -247,6 +259,8 @@ def _action_rows(b: _Builder, events: list[_ActionEvent]) -> tuple[Row, ...]:
         row["action_type"] = "delisting"
         row["provider_action_id"] = f"DEL-{i:04d}"
         row["terminal_return"] = float(b.terminal_return[i])
+        # RT-G019-2: realized terminal return — post-effective stamp only.
+        row["announcement_time"] = _at(b.periods[t], _PUBLICATION_UTC)
         rows.append(row)
 
     rows.sort(

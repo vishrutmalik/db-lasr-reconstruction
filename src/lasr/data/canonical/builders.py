@@ -44,7 +44,12 @@ from lasr.data.canonical.stamping import (
     stamp_observation,
 )
 from lasr.data.canonical.store import CanonicalStore, DatasetRef
-from lasr.data.providers.base import FamilyCapability, FieldFamily, grade_dataset
+from lasr.data.providers.base import (
+    CorporateActionBasis,
+    FamilyCapability,
+    FieldFamily,
+    grade_dataset,
+)
 from lasr.data.schemas.base import Row
 from lasr.data.schemas.estimates import EstimateStat
 from lasr.data.schemas.registry import get_schema
@@ -384,7 +389,30 @@ def build_prices_daily(
     ctx: BuildContext,
 ) -> BuildResult:
     """``prices_daily`` rows (§2): unadjusted bars, D-009/D-011 stamping,
-    D-015 downgrade recording on a failed basis check."""
+    D-015 downgrade recording on a failed basis check.
+
+    Basis reconciliation (RT-G020-B3): ``prices_daily`` is documented
+    UNADJUSTED ground truth (canonical_schemas.md §2) and the derived
+    ``adjustment_factors`` are only correct on top of unadjusted closes —
+    landing a provider's already-adjusted series here would double-adjust
+    (a +100.8% phantom return across a 2:1 split instead of the true
+    +0.4%). A provider declaring ``corporate_action_basis=ADJUSTED`` is
+    therefore REFUSED with a typed error: de-adjustment needs explicit
+    provider factors, a surface that does not exist yet — never a silent
+    transformation. ``UNKNOWN`` basis remains governed by the D-011/D-015
+    acknowledge-or-downgrade table; ``UNADJUSTED`` passes.
+    """
+    if ctx.capability.corporate_action_basis is CorporateActionBasis.ADJUSTED:
+        raise SchemaValidationError(
+            "prices_daily",
+            (
+                "provider declares corporate_action_basis=adjusted: "
+                "prices_daily stores UNADJUSTED ground truth "
+                "(canonical_schemas.md §2, FM-17) and adjustment_factors "
+                "would double-adjust (CI-049; RT-G020-B3) — refused; "
+                "de-adjustment requires explicit provider factors",
+            ),
+        )
     if len(ctx.source_snapshot_ids) != 1:
         raise SchemaValidationError(
             "prices_daily",

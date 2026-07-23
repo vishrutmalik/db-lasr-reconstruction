@@ -132,6 +132,15 @@ class CanonicalDatasetManifest(DatasetManifest):
         grade of their inputs and are recorded with the same capability
         snapshot, so the same decision table applies.
         """
+        if (
+            self.table_name == "prices_daily"
+            and self.capability.corporate_action_basis is CorporateActionBasis.ADJUSTED
+        ):
+            raise ValueError(
+                "prices_daily stores UNADJUSTED ground truth; an "
+                "ADJUSTED-basis capability cannot have produced it — the "
+                "build refuses such payloads (RT-G020-B3, CI-049)"
+            )
         expected = grade_dataset(
             self.family,
             self.capability.to_capability(),

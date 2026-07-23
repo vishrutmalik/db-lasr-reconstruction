@@ -143,6 +143,48 @@ class TestCi049AdjustmentFactorHandLedger:
         assert set(row["derived_from_action_ids"]) == {"act-split", "act-div"}
 
 
+class TestB3AdjustedBasisDoubleAdjustment:
+    """RT-G020-B3 promoted ledger: the +0.4%-not-+100.8% case.
+
+    A 2:1 split with a true economic move of +0.4%:
+
+    - UNADJUSTED closes (ground truth): 100.0 (day before) -> 50.2 (split
+      date; half of 100.4). Factor pipeline: split_factor_cum = 2.0, so the
+      adjusted return = (50.2 x 2.0)/(100.0 x 1.0) - 1 = +0.4%. CORRECT.
+    - A provider serving split-ADJUSTED closes (100.0 -> 100.4) landed in
+      prices_daily pre-fix; the same factor then double-adjusts:
+      (100.4 x 2.0)/(100.0 x 1.0) - 1 = +100.8% phantom return. That path
+      is now unreachable: the ADJUSTED-basis build is refused
+      (test_b3_adjusted_basis_payload_refused), so factors only ever meet
+      unadjusted closes.
+    """
+
+    SPLIT_04: ClassVar[dict[str, object]] = {
+        "action_id": "act-split-04",
+        "security_id": SEC,
+        "action_type": "split",
+        "announcement_time": ANNOUNCE_SPLIT,
+        "ex_date": date(2024, 3, 4),
+        "effective_date": date(2024, 3, 4),
+        "ratio_num": 2.0,
+        "ratio_den": 1.0,
+    }
+
+    UNADJUSTED_PRICES: ClassVar[list[dict[str, object]]] = [
+        {"security_id": SEC, "event_date": date(2024, 3, 1), "close": 100.0},
+        {"security_id": SEC, "event_date": date(2024, 3, 4), "close": 50.2},
+    ]
+
+    def test_b3_unadjusted_pipeline_yields_the_true_return(self):
+        (row,) = compute_adjustment_factors([self.SPLIT_04], self.UNADJUSTED_PRICES)
+        factor = float(row["split_factor_cum"])
+        adjusted_return = (50.2 * factor) / (100.0 * 1.0) - 1.0
+        assert adjusted_return == pytest.approx(0.004, abs=1e-12)  # +0.4%
+        # and the double-adjusted phantom the refusal now prevents:
+        phantom = (100.4 * factor) / (100.0 * 1.0) - 1.0
+        assert phantom == pytest.approx(1.008, abs=1e-12)  # +100.8%, forbidden
+
+
 class TestDelistingReturnDerivation:
     LISTING: ClassVar[dict[str, object]] = {
         "security_id": SEC,

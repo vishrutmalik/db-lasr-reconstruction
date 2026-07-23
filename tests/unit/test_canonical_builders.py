@@ -31,6 +31,7 @@ from lasr.data.canonical.stamping import StampingConfig
 from lasr.data.providers.base import (
     CorporateActionBasis,
     FamilyCapability,
+    FieldFamily,
 )
 from lasr.data.schemas.estimates import EstimateStat
 
@@ -240,6 +241,50 @@ class TestPricesBuilder:
         with pytest.raises(SchemaValidationError, match="one raw snapshot"):
             build_prices_daily(
                 self.RAW_PRICES, _minted(), _ctx(snapshots=("snap-1", "snap-2"))
+            )
+
+    def test_b3_adjusted_basis_payload_refused(self):
+        """RT-G020-B3 promoted reproduction: a provider legally declaring
+        corporate_action_basis=ADJUSTED must be REFUSED — before the fix
+        its split-adjusted closes graded RETRO_WINDOW and landed silently
+        in prices_daily (documented UNADJUSTED ground truth), where the
+        derived factors double-adjust (CI-049)."""
+        adjusted_cap = _cap(corporate_action_basis=CorporateActionBasis.ADJUSTED)
+        with pytest.raises(
+            SchemaValidationError, match="corporate_action_basis=adjusted"
+        ):
+            build_prices_daily(self.RAW_PRICES, _minted(), _ctx(adjusted_cap))
+
+    def test_b3_adjusted_basis_manifest_unrepresentable(self):
+        """Belt-and-braces: the manifest model rejects an ADJUSTED-basis
+        prices_daily dataset, so the forbidden state cannot be persisted or
+        parsed back either."""
+        from lasr.core.enums import RevisionSupport as _RS
+        from lasr.data.canonical.manifests import (
+            CanonicalDatasetManifest,
+            CapabilitySnapshot,
+        )
+
+        with pytest.raises(ValueError, match="RT-G020-B3"):
+            CanonicalDatasetManifest(
+                schema_version="1",
+                provider="future_api",
+                pit_grade=PitGrade.RETRO_WINDOW,
+                source_snapshot_ids=("snap-1",),
+                content_hash="0" * 64,
+                table_name="prices_daily",
+                family=FieldFamily.MARKET_DAILY,
+                provider_version="1.0.0",
+                row_count=1,
+                retrieval_time=RETRIEVAL,
+                max_knowledge_time=RETRIEVAL,
+                capability=CapabilitySnapshot(
+                    available=True,
+                    supports_pit=False,
+                    revision_support=_RS.LATEST_ONLY,
+                    corporate_action_basis=CorporateActionBasis.ADJUSTED,
+                    notes="future API provider (RT-G020-B3 fixture)",
+                ),
             )
 
 

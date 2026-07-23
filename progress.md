@@ -2,8 +2,8 @@
 
 Session-independent status. Update at every session end and major milestone.
 
-- **Last orchestrator update:** 2026-07-20 (session 1 continued)
-- **Current milestone:** M3 — architecture (M1 research + M2 methodology complete)
+- **Last orchestrator update:** 2026-07-22
+- **Current milestone:** M4 — implementation wave, data layer (M0-M3 complete)
 - **Remote:** git@github.com:vishrutmalik/db-lasr-reconstruction.git (PRIVATE)
 
 ## Completed & merged
@@ -17,10 +17,11 @@ Session-independent status. Update at every session end and major milestone.
 - Evidence matrix federated over per-source row files (D-005).
 
 ## Active assignments
-- G015 system architecture → architect, .worktrees/G015-architect,
-  owns docs/architecture/** (7 deliverables incl. toolchain proposal for G016)
-- Merged in M2: G011 (PR #50), G014 (PR #49), G041 (PR #47), G006 (PR #51),
-  G013 (PR #52) — all with PASS verification reports
+- G019 synthetic generator+provider → implementer, .worktrees/G019-implementer (red-team required)
+- G020 ingestion/canonical/PIT layer → implementer, .worktrees/G020-implementer (red-team required)
+- G039 integration guide → IMPLEMENTED at 5ba8eea; drift-check verification dispatching; PR #59 held
+- Merged in M3/M4 so far: G015 (#53), G016 (#54), G017 (#57), G018 (#60),
+  G042 (#56), G043 (#61) — all PASS verification reports in docs/verification/
 - Full detail: `coordination/agent_assignments.yaml`
 
 ## Blockers
@@ -62,17 +63,19 @@ Session-independent status. Update at every session end and major milestone.
 
 ## Environment facts (for session resumption)
 - Project root: `/Users/admin/Library/CloudStorage/OneDrive-KlayCapitalLimited/Documents/stock_model`
-  (⚠️ inside OneDrive — avoid huge untracked artifact churn; data/ is ignored)
-- Python 3.9.6 (system). `openpyxl` available; `pypdf` 6.14.2 user-installed.
-  No poppler (PDF text extraction only, no rendering). No brew, no uv.
+  (⚠️ inside OneDrive — venvs live OUTSIDE the tree: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name>)
+- Toolchain: uv 0.11.29 at ~/.local/bin/uv, CPython 3.12.13 pinned; gates =
+  uv run {ruff format --check, ruff check, mypy src/lasr, pytest}. System
+  Python 3.9.6 still has openpyxl+pypdf for workbook/PDF inspection.
 - GitHub: SSH auth OK as `vishrutmalik`; `~/.local/bin/gh` authenticated.
+  ALWAYS verify gh pr merge with `gh pr view --json state,mergedAt` before
+  deleting branches (see 2026-07-22 incident).
 
 ## Next dependency-ready goals
-1. Merge G011, G014, G041 after verification
-2. G013 field mapping (data-researcher; needs G011+G012 — G012 done)
-3. G015 architecture (needs G011/G012/G013)
-4. G006 remaining skills library (now evidence-informed)
-5. Then implementation wave G016+ per goals.md
+1. Verify+merge G019, G020 (both need red-team review too), G039 (PR #59)
+2. On G020 merge: G021 (quality) ∥ G022 (features) ∥ G023 (targets) in parallel
+3. On G023(+G043 done): G024 N-LASR 2012 kernel; G026 backtester parallel
+4. Then G025/G027/G028 → G029 vertical slice → variants + red-team audit
 
 ## Major open risks
 - Workbooks appear current-vintage only → PIT reconstruction for backtests will

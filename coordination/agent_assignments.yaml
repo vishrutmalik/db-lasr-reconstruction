@@ -8,17 +8,17 @@ active:
     github_issue: 19
     branch: agent/implementer/G019-synthetic-provider
     worktree: .worktrees/G019-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #63; verifier + red-team parallel)
     dependencies: [G018]
     owned_paths: ["src/lasr/data/synthetic/**", "src/lasr/data/providers/synthetic*.py", "tests/unit/test_synthetic*.py", "tests/leakage/**", "tests/fixtures/synthetic/**", "PROVIDER_CASES line in tests/integration/test_provider_contract.py (explicit grant)", "NB-1 dedupe helper in providers/base.py + local_file.py (explicit grant)"]
     read_only_paths: ["docs/methodology/leakage_tests.md", "docs/architecture/**", "src/lasr/core/**", "src/lasr/data/schemas/**"]
     shared_interfaces: ["ScenarioBundle consumed by G037 red-team + tests/leakage; provider joins CT suite"]
     started_at: 2026-07-22
     last_updated_at: 2026-07-22
-    latest_commit: null
+    latest_commit: 036c742 (final; 1081 tests; 21 LT scenarios; NB-1 typed refusal D-017)
     verification_required: true
     red_team_required: true
-    notes: Parallel to G020/G039/G043-verify. Red-team required (synthetic truth underpins all leakage evidence).
+    notes: CT-suite shared-file edits (CT-10/CT-07 PIT-true accommodations) need verifier sign-off.
   G020:
     agent_role: implementer
     objective: Ingestion -> canonical -> point-in-time layer with as-of joins (D-006 query API), incl. D-015 manifest downgrade recording + typed validate(frame) wrapper

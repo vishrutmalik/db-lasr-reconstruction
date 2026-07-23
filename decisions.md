@@ -83,7 +83,7 @@
 - **Reversibility:** MODERATE. **Date:** 2026-07-21. **Agent:** orchestrator (ruling on G039 finding). **Goal:** G039/G018.
 
 ## D-012 — fetch_prices default fields narrowed to evidence-demonstrated set
-- **Decision:** default fields = ("close", "market_cap") (FM-11/31 demonstrated);
+- **Decision:** default fields = ("close", "market_cap") (FM-11/FM-25 demonstrated; citation corrected from FM-11/31 per G039 drift finding 3 — FM-31 is float-adjusted cap, needs-additional-data);
   open/high/low/volume are LISTED_ONLY and explicit requests raise
   FieldUnavailableError (CT-07) until probe VP-01 passes.
 - **Evidence:** G039 contradiction 2; G013 FM-12/13/14.
@@ -113,3 +113,19 @@
   requirement binds G020/G021 acceptance criteria.
 - **Evidence:** G018 verification (docs/verification/G018.md) amendment analysis.
 - **Reversibility:** EASY. **Date:** 2026-07-22. **Agent:** orchestrator (concurring with verifier). **Goal:** G018/G020.
+
+## D-016 — mypy targets 3.12; runtime 3.11 covered by test matrix
+- **Decision:** mypy python_version = "3.12" (was 3.11): numpy>=2.5 stubs use
+  PEP 695 `type` statements that mypy only parses when targeting >=3.12.
+  Runtime 3.11 compatibility remains tested by the CI pytest matrix.
+  Companion fix: removed the now-unused pandas type-ignore + placeholder alias
+  in providers/_frames.py exactly per G018's documented plan, plus one sound
+  cast (Hashable->str record keys, guaranteed by TableSchema).
+- **Root cause class:** cross-branch semantic conflict — G018 (pandas import,
+  no stubs) and G043 (stubs, no pandas import) were each green; merged main
+  was first gate-checked only by CI. Rule adopted: after merging two
+  code-bearing PRs in sequence, run local gates on merged main (or watch the
+  first main CI run) before dispatching goals branched from it.
+- **Reversibility:** EASY. **Date:** 2026-07-23. **Agent:** orchestrator
+  (integration duty per MP §10.1; CI is the verification instrument).
+  **Goal:** G043/G018 integration.

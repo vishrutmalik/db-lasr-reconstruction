@@ -101,6 +101,11 @@ dataset manifest — binds G020/G021 (D-015; G018 verification amendment 2).
 must raise, never return an empty frame (empty-frame-as-absence is the silent
 failure §3 forbids). Accepted by G018 verification.
 
+> **D-013 note (2026-07-22):** §4.3's concrete API-stub/replay description is
+> descoped — the Protocol + capability records + CT suite are the generic API
+> interface; replay mode is a design REQUIREMENT on future real adapters, not
+> shipped code. §5's suite path is `tests/integration/test_provider_contract.py`.
+
 ## 2. Provider interface (typed stub)
 
 Methods mirror MP §16's capability list one-to-one. All return raw-shaped

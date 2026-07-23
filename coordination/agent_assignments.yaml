@@ -2,60 +2,63 @@
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
 active:
-  G018:
+  G019:
     agent_role: implementer
-    objective: Provider protocol + capability records + typed errors + raw schemas + local-file template adapter + contract tests CT-01..15 (per provider_contract.md incl. D-011/D-012)
-    github_issue: 18
-    branch: agent/implementer/G018-provider-contract
-    worktree: .worktrees/G018-implementer
-    status: IN_VERIFICATION (PR #60)
-    dependencies: [G017]
-    owned_paths: ["src/lasr/data/providers/**", "src/lasr/data/schemas/raw*.py", "tests/unit/test_providers*.py", "tests/integration/test_provider_contract*.py", "tests/fixtures/provider/** (synthetic only)", ".env.example"]
-    read_only_paths: ["docs/architecture/**", "docs/data/**", "src/lasr/core/**", "src/lasr/data/schemas/**"]
-    shared_interfaces: ["contract suite consumed by G019 synthetic provider; adapter paths swept by G039 verification"]
-    started_at: 2026-07-21
-    last_updated_at: 2026-07-21
-    latest_commit: ff5a631 (final; 527 tests; CT-01..15; API stub descoped per D-013)
+    objective: Synthetic data generator + synthetic provider + LT scenario bundles (MP SS17, leakage_tests.md interface)
+    github_issue: 19
+    branch: agent/implementer/G019-synthetic-provider
+    worktree: .worktrees/G019-implementer
+    status: IN_PROGRESS
+    dependencies: [G018]
+    owned_paths: ["src/lasr/data/synthetic/**", "src/lasr/data/providers/synthetic*.py", "tests/unit/test_synthetic*.py", "tests/leakage/**", "tests/fixtures/synthetic/**", "PROVIDER_CASES line in tests/integration/test_provider_contract.py (explicit grant)", "NB-1 dedupe helper in providers/base.py + local_file.py (explicit grant)"]
+    read_only_paths: ["docs/methodology/leakage_tests.md", "docs/architecture/**", "src/lasr/core/**", "src/lasr/data/schemas/**"]
+    shared_interfaces: ["ScenarioBundle consumed by G037 red-team + tests/leakage; provider joins CT suite"]
+    started_at: 2026-07-22
+    last_updated_at: 2026-07-22
+    latest_commit: null
     verification_required: true
-    red_team_required: false
-    notes: Parallel to G043. Proposed contract amendments (UnknownProviderIdError, failed-basis downgrade) pending verification concurrence.
-  G043:
+    red_team_required: true
+    notes: Parallel to G020/G039/G043-verify. Red-team required (synthetic truth underpins all leakage evidence).
+  G020:
     agent_role: implementer
-    objective: Config schema slice per config_system.md (VersionSpec, guards, CI-044 completeness) + one-goal pyproject grant (pandas-stubs, TID251 additions)
-    github_issue: 58
-    branch: agent/implementer/G043-config-schemas
-    worktree: .worktrees/G043-implementer
-    status: IN_VERIFICATION (PR #61)
-    dependencies: [G017]
-    owned_paths: ["src/lasr/config/**", "tests/unit/test_config*.py", "pyproject.toml (one-goal grant)", "uv.lock"]
-    read_only_paths: ["docs/architecture/config_system.md", "docs/methodology/**", "src/lasr/core/**", "src/lasr/data/schemas/**"]
-    shared_interfaces: ["VersionSpec consumed by G023-G033; pyproject grant exclusive until merge"]
-    started_at: 2026-07-21
-    last_updated_at: 2026-07-21
-    latest_commit: 6a41c08 (final; 702 tests; 158-knob CI-044 table; base_bps->ASSUMED ruling)
+    objective: Ingestion -> canonical -> point-in-time layer with as-of joins (D-006 query API), incl. D-015 manifest downgrade recording + typed validate(frame) wrapper
+    github_issue: 20
+    branch: agent/implementer/G020-pit-layer
+    worktree: .worktrees/G020-implementer
+    status: IN_PROGRESS
+    dependencies: [G017, G018]
+    owned_paths: ["src/lasr/data/ingestion/**", "src/lasr/data/canonical/**", "src/lasr/data/point_in_time/**", "src/lasr/data/quality/manifest*.py (D-015 recording)", "tests/unit/test_ingestion*.py", "tests/unit/test_canonical*.py", "tests/unit/test_pit*.py", "tests/integration/test_pit_asof*.py"]
+    read_only_paths: ["docs/architecture/**", "docs/methodology/correctness_criteria.md", "src/lasr/core/**", "src/lasr/data/schemas/**", "src/lasr/data/providers/**"]
+    shared_interfaces: ["PitStore API consumed by G022/G023; manifest consumed by G021"]
+    started_at: 2026-07-22
+    last_updated_at: 2026-07-22
+    latest_commit: null
     verification_required: true
-    red_team_required: false
-    notes: pyproject grant closed (D-014). config_system.md doc drift queued.
-
-  G039:
-    agent_role: data-researcher
-    objective: Real-data (AlphaSense) integration guide against the verified provider contract
-    github_issue: 38
-    branch: agent/data-researcher/G039-real-data-guide
-    worktree: .worktrees/G039-data-researcher
-    status: IMPLEMENTED_AWAITING_G018 (PR #59 held; drift-check verification after G018 merge)
-    dependencies: [G013 (merged), provider_contract.md (G015, merged); consistency-check vs G018 at verification]
-    owned_paths: ["docs/data/real_data_integration.md", "docs/runbooks/real_data_onboarding.md"]
-    read_only_paths: ["docs/architecture/provider_contract.md", "docs/data/**", "docs/methodology/**", "inputs/data_templates/*.xlsx (main checkout)"]
-    shared_interfaces: ["guide must match G018 adapter on merge (drift-check at verification)"]
-    started_at: 2026-07-21
-    last_updated_at: 2026-07-21
-    latest_commit: b4fa015 (final; 8 ADAPTER_PATH_PENDING_G018 markers)
-    verification_required: true (deferred until after G018 merges)
-    red_team_required: false
-    notes: Parallel to G017 (disjoint paths). Verification deliberately sequenced after G018.
+    red_team_required: true
+    notes: Parallel to G019 (disjoint paths). CI-001..011 bind here; red-team required (PIT correctness).
 
 history:
+  - goal_id: G039
+    agent_role: data-researcher
+    branch: agent/data-researcher/G039-real-data-guide (deleted after merge)
+    final_commit: 5ba8eea (guide+sweep) + 959ff75 (verification PASS) + cd9175a (main refresh)
+    pr: 59 (closed manually; content merged via ed5d246 after GitHub sync lag)
+    verification: PASS (docs/verification/G039.md; 0 blocking; E-1 workbook-drift escalation)
+    worktree: removed
+  - goal_id: G043
+    agent_role: implementer
+    branch: agent/implementer/G043-config-schemas (deleted after merge)
+    final_commit: 6a41c08 (config slice) + 7182de0 (verification PASS)
+    pr: 61
+    verification: PASS (docs/verification/G043.md; 0 blocking, 5 non-blocking)
+    worktree: removed
+  - goal_id: G018
+    agent_role: implementer
+    branch: agent/implementer/G018-provider-contract (deleted after merge)
+    final_commit: ff5a631 (contract+adapter+CTs) + 5389497 (verification PASS)
+    pr: 60
+    verification: PASS (docs/verification/G018.md; 0 blocking, 8 non-blocking; amendments -> D-015)
+    worktree: removed
   - goal_id: G017
     agent_role: implementer
     branch: agent/implementer/G017-canonical-schemas (deleted after merge)

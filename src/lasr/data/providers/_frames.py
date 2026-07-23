@@ -1,10 +1,8 @@
 """Typed façade over pandas frame construction for provider adapters.
 
-pandas ships no inline types and ``pandas-stubs`` is not yet a dev
-dependency (pyproject is frozen until G043 grants it), so the untyped
-import is isolated here with a single targeted ignore. Once G043 lands
-pandas-stubs, ``DataFrame`` below becomes the real stubbed type and the
-ignore is deleted — no adapter code changes.
+``pandas-stubs`` is a dev dependency since G043, so ``DataFrame`` is the
+real stubbed type (the pre-G043 placeholder alias and its targeted ignore
+were removed when the stubs landed — no adapter code changes, as planned).
 
 Providers build frames exclusively through :func:`build_frame` so that:
 
@@ -19,17 +17,13 @@ Providers build frames exclusively through :func:`build_frame` so that:
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import Any, cast
 
-import pandas as pd  # type: ignore[import-untyped]
+import pandas as pd
 
 from lasr.data.schemas.base import TableSchema
 
-if TYPE_CHECKING:
-    #: Placeholder alias until pandas-stubs lands (G043).
-    DataFrame: TypeAlias = Any
-else:
-    DataFrame = pd.DataFrame
+DataFrame = pd.DataFrame
 
 __all__ = ["DataFrame", "build_frame", "frame_records"]
 
@@ -76,5 +70,7 @@ def build_frame(
 
 def frame_records(frame: DataFrame) -> list[dict[str, Any]]:
     """Return frame rows as plain dicts (validation/testing surface)."""
-    records: list[dict[str, Any]] = frame.to_dict("records")
+    # pandas-stubs types record keys as Hashable; build_frame guarantees str
+    # column names (TableSchema.column_names), so the narrowing is sound.
+    records = cast("list[dict[str, Any]]", frame.to_dict("records"))
     return records

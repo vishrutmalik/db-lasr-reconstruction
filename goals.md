@@ -50,7 +50,7 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G036 | Modern challenger models (same folds/costs) | implementer | G029, G033 | BLOCKED | [#35](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/35) | |
 | G037 | Red-team leakage & survivorship audit | red-team | G029 | BLOCKED | [#36](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/36) | |
 | G038 | Full synthetic experiment + reproducibility check | verifier | G029–G037 | BLOCKED | [#37](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/37) | |
-| G039 | Real-data integration guide (AlphaSense adapter spec) | data-researcher | G013, G018 | IN_PROGRESS | [#38](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/38) | |
+| G039 | Real-data integration guide (AlphaSense adapter spec) | data-researcher | G013, G018 | MERGED | [#38](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/38) | [#59](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/59) |
 | G040 | Final clean-clone audit + release tag | verifier | all | BLOCKED | [#39](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/39) | |
 | G041 | Quote-length compliance pass on merged evidence (P1/P3/P4) | paper-researcher | G007, G009, G010 | MERGED | [#46](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/46) | [#47](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/47) |
 | G042 | Methodology/doc cleanup: CI-046 unit reconcile + verifier nits | quant-reviewer | G006, G011, G014, G015 | MERGED | [#55](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/55) | [#56](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/56) |

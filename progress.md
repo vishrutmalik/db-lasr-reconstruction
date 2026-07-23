@@ -29,6 +29,13 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-07-22 (2): E-1 DATA-INTEGRITY — proprietary input workbooks drifted from
+  manifested hashes (login-prompt cache corruption; mtimes Jul 21 16:31/16:52,
+  after all extractions/verifications). No merged work invalidated (timeline
+  verified by G039 verifier; 6/7 spot items still reproduce). Restore-or-
+  re-manifest decision escalated to user; gate on G040. Also: GitHub PR-head
+  sync lag blocked gh pr merge for #59 -> local merge push (ed5d246), PR
+  closed manually with explanation.
 - 2026-07-22: PR #61 near-miss — `gh pr merge` failed silently (output was
   grep-filtered), then branch deletions auto-CLOSED the unmerged PR. Caught by
   post-merge verification (main lacked src/lasr/config; PR state CLOSED with

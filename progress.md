@@ -29,6 +29,13 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-07-23: CI typecheck red on main since the PR #61 merge (many emails) —
+  cross-branch semantic conflict (numpy 2.5 PEP-695 stubs vs mypy
+  python_version=3.11, surfaced only when G018's pandas import met G043's
+  pandas-stubs on merged main). Fixed on main (D-016): mypy targets 3.12,
+  unused ignore removed per G018's own plan, one sound cast. Local gates
+  green (855 tests); CI confirmation tracked. Lint/test legs were never
+  affected. No goal created (orchestrator integration duty, CI verifies).
 - 2026-07-22 (2): E-1 DATA-INTEGRITY — proprietary input workbooks drifted from
   manifested hashes (login-prompt cache corruption; mtimes Jul 21 16:31/16:52,
   after all extractions/verifications). No merged work invalidated (timeline

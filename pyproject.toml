@@ -147,7 +147,10 @@ select = [
 # ── mypy: strict on src/lasr, relaxed on tests (proposal §4) ─────────────────
 
 [tool.mypy]
-python_version = "3.11"
+# 3.12, not 3.11: numpy>=2.5 stubs use PEP 695 `type` statements, which mypy
+# only parses when targeting >=3.12. Runtime 3.11 compatibility remains covered
+# by the pytest matrix (ubuntu 3.11 leg). See decisions.md D-016.
+python_version = "3.12"
 mypy_path = "src"
 files = ["src/lasr"]
 strict = true

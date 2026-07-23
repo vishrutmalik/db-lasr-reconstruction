@@ -55,7 +55,7 @@ class TestScenarioConfig:
 class TestCatalog:
     def test_catalog_covers_all_21_lt_scenarios_plus_baseline(self) -> None:
         expected = {"baseline"} | {f"LT-{i:03d}" for i in range(1, 22)}
-        assert SCENARIO_IDS == expected
+        assert expected == SCENARIO_IDS
 
     @pytest.mark.parametrize("scenario_id", sorted(SCENARIO_IDS))
     def test_default_config_compiles_to_a_plan(self, scenario_id: str) -> None:

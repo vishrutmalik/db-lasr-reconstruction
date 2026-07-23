@@ -54,9 +54,7 @@ RULES: dict[str, frozenset[str]] = {
     # it emits raw-shaped ROWS (never frames) and may not import providers;
     # the synthetic provider adapter (lasr.data.providers.synthetic_provider)
     # wraps it, so providers gain the synthetic edge (one direction only).
-    "lasr.data.synthetic": frozenset(
-        {"lasr.core", "lasr.config", "lasr.data.schemas"}
-    ),
+    "lasr.data.synthetic": frozenset({"lasr.core", "lasr.config", "lasr.data.schemas"}),
     "lasr.data.providers": frozenset(  # Level 3
         {"lasr.core", "lasr.config", "lasr.data.schemas", "lasr.data.synthetic"}
     ),

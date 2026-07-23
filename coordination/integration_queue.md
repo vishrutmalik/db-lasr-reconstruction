@@ -39,6 +39,12 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   'hedge_backcast' discriminator, §6 base_bps provenance tag (N-3/A-G043-01)
   — G043 report; fold into next docs/architecture-owning goal.
 
+## Bindings on upcoming goals (from G020 verification)
+- G021 acceptance: defense-in-depth for manifest forgery on the WRITE side
+  (model_construct bypass persists via store.write; read/audit catch it —
+  NB-2, docs/verification/G020.md). Also NB-3 (typed PitQueryError for unknown
+  table), NB-4 (join_latest_known naive-datetime localization consistency).
+
 ## Bindings on upcoming goals (from G018 verification)
 - G019 grant note: fix NB-1 (duplicate ProviderIds -> PK-violating frame) via a
   shared dedupe/refusal helper in providers/base.py + local_file.py (explicit

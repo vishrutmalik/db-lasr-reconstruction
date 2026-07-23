@@ -102,15 +102,23 @@ class InclusionTruth(SchemaRow):
 
 class SeededErrorTruth(SchemaRow):
     """One deliberately seeded data error (LT-021): appears in the sidecar
-    exactly once, locatable by the quality layer's report."""
+    exactly once, locatable by the quality layer's report.
+
+    RT-G019-5: ``event_dates`` lists the ISO dates of EVERY row this error
+    actually anomalized (duplicated, value-changed, or timestamp-inverted)
+    — the registry and the data must correspond in both directions on
+    every seed, so multi-row errors (stale runs) are locatable without
+    parsing free-text ``detail``.
+    """
 
     error_class: str
     table: str
     ticker: str | None = None
     exchange: str | None = None
-    event_date: str | None = None  # ISO date of the corrupted row
+    event_date: str | None = None  # ISO date of the anchor row
     metric: str | None = None
     detail: str = ""
+    event_dates: tuple[str, ...] = ()
 
 
 class LedgerTruthRow(SchemaRow):

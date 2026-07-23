@@ -28,19 +28,12 @@ from lasr.data.synthetic.world import content_hash_rows
 pytestmark = pytest.mark.leakage
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "RT-G019-5 (BLOCKING for seed sweeps): STALE_PRICE anchored on a "
-        "ticker's final bar freezes the close to itself — the sidecar then "
-        "contains a seeded-error entry with no data anomaly, making 100%-"
-        "recall quality-layer contracts unsatisfiable on ~7% of seeds. The "
-        "seeder must re-draw (or record the realized run) when the run "
-        "length is 1."
-    ),
-)
 @pytest.mark.parametrize("seed", [10, 15, 17, 54, 55, 78])
 def test_every_stale_registry_entry_has_a_real_anomaly(seed: int) -> None:
+    """RT-G019-5 remediation ratchet (was a strict xfail over the six
+    known-bad seeds): the seeder re-draws stale anchors until at least two
+    same-ticker follower bars actually change, so every registry entry
+    corresponds to a real anomaly."""
     world = generate_world(default_config("LT-021", seed))
     clean_rows = world.ablations["clean"]["raw_market_daily"]
     clean_bars = {(r["ticker"], r["exchange"], r["event_date"]): r for r in clean_rows}

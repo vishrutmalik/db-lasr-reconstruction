@@ -15,6 +15,7 @@ each seeded error lands in the sidecar exactly once (skill invariant).
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from datetime import date, datetime, timedelta
 
 import numpy as np
@@ -754,14 +755,31 @@ def build_tables(b: _Builder, events: list[_ActionEvent]) -> dict[str, tuple[Row
 def seed_errors(
     b: _Builder, tables: dict[str, tuple[Row, ...]]
 ) -> dict[str, tuple[Row, ...]]:
-    """Apply the planned deliberate-error classes (LT-021), recording each
-    seeded error in the sidecar exactly once."""
+    """Apply the planned deliberate-error classes (LT-021).
+
+    RT-G019-5 collision-safety contract, guaranteed across seeds:
+
+    - every registry entry corresponds to a REAL data anomaly (a stale
+      anchor is re-drawn until it has at least two same-ticker follower
+      bars whose closes actually change), and every anomaly to a registry
+      entry (each error class draws only untouched rows, so no corruption
+      overwrites or mutates another's rows — in particular duplicated
+      pairs stay verbatim);
+    - ``event_dates`` records the ISO dates of every anomalized row, so
+      the registry is diffable against the data without free-text parsing.
+    """
     if not b.plan.seeded_errors:
         return tables
     rng = b.rng("errors")
     corrupted = {name: list(rows) for name, rows in tables.items()}
 
-    def record(error: ErrorClass, table: str, row: Row, detail: str) -> None:
+    def record(
+        error: ErrorClass,
+        table: str,
+        row: Row,
+        detail: str,
+        event_dates: list[str],
+    ) -> None:
         b.seeded_errors.append(
             SeededErrorTruth(
                 error_class=error.value,
@@ -771,60 +789,133 @@ def seed_errors(
                 event_date=_event_iso(row),
                 metric=str(row["metric"]) if "metric" in row else None,
                 detail=detail,
+                event_dates=tuple(event_dates),
             )
         )
 
     bars = corrupted["raw_market_daily"]
     fundamentals = corrupted["raw_fundamentals"]
+    n_bars = len(bars)  # draws never target rows appended by DUPLICATE_BAR
+    bars_touched: set[int] = set()
+    funds_touched: set[int] = set()
+
+    def draw(n: int, ok: Callable[[int], bool]) -> int:
+        for _ in range(500):
+            pos = int(rng.integers(0, n))
+            if ok(pos):
+                return pos
+        raise GeneratorError(
+            "could not place a seeded error without collision (LT-021); "
+            "table too small for the configured errors_per_class"
+        )
+
+    def iso(row: Row) -> str:
+        value = row["event_date"]
+        if not isinstance(value, date):  # pragma: no cover - bar rows carry it
+            raise GeneratorError("bar row lacks an event_date")
+        return value.isoformat()
+
+    def stale_followers(pos: int) -> list[int]:
+        """Same-ticker follower indices (up to 5) eligible for freezing."""
+        anchor = bars[pos]
+        followers = []
+        for offset in range(1, 6):
+            nxt = pos + offset
+            if nxt >= n_bars:
+                break
+            row = bars[nxt]
+            if (row["ticker"], row["exchange"]) != (
+                anchor["ticker"],
+                anchor["exchange"],
+            ):
+                break
+            followers.append(nxt)
+        return followers
+
+    def stale_ok(pos: int) -> bool:
+        if pos in bars_touched:
+            return False
+        followers = stale_followers(pos)
+        if len(followers) < 2:
+            return False  # a final-bar anchor would freeze nothing (RT-5)
+        anchor_close = bars[pos]["close"]
+        return all(
+            nxt not in bars_touched and bars[nxt]["close"] != anchor_close
+            for nxt in followers
+        )
+
     for error in b.plan.seeded_errors:
         for _ in range(b.plan.errors_per_class):
             if error is ErrorClass.DUPLICATE_BAR:
-                victim = bars[int(rng.integers(0, len(bars)))]
+                pos = draw(n_bars, lambda p: p not in bars_touched)
+                victim = bars[pos]
                 bars.append(dict(victim))
-                record(error, "raw_market_daily", victim, "row duplicated verbatim")
+                bars_touched.add(pos)  # keep the pair verbatim forever
+                record(
+                    error,
+                    "raw_market_daily",
+                    victim,
+                    "row duplicated verbatim",
+                    [iso(victim)],
+                )
             elif error is ErrorClass.NEGATIVE_PRICE:
-                pos = int(rng.integers(0, len(bars)))
+                pos = draw(n_bars, lambda p: p not in bars_touched)
                 victim = dict(bars[pos])
                 close = victim["close"]
                 if not isinstance(close, float):
                     raise GeneratorError("bar row lacks a float close")
                 victim["close"] = -abs(close)
                 bars[pos] = victim
-                record(error, "raw_market_daily", victim, "close negated")
+                bars_touched.add(pos)
+                record(
+                    error, "raw_market_daily", victim, "close negated", [iso(victim)]
+                )
             elif error is ErrorClass.STALE_PRICE:
-                idx = int(rng.integers(0, max(1, len(bars) - 6)))
-                anchor = bars[idx]
+                pos = draw(n_bars, stale_ok)
+                anchor = bars[pos]
                 frozen = anchor["close"]
                 if not isinstance(frozen, float):
                     raise GeneratorError("bar row lacks a float close")
-                run = 0
-                for offset, row in enumerate(bars[idx : idx + 6]):
-                    if row["ticker"] == anchor["ticker"]:
-                        stale = dict(row)
-                        stale["close"] = frozen
-                        bars[idx + offset] = stale
-                        run += 1
+                changed_dates: list[str] = []
+                for nxt in stale_followers(pos):
+                    stale = dict(bars[nxt])
+                    stale["close"] = frozen
+                    bars[nxt] = stale
+                    bars_touched.add(nxt)
+                    changed_dates.append(iso(stale))
+                bars_touched.add(pos)
                 record(
-                    error, "raw_market_daily", anchor, f"close frozen for {run} bars"
+                    error,
+                    "raw_market_daily",
+                    anchor,
+                    f"close frozen at {frozen} for {len(changed_dates)} bars "
+                    f"after {iso(anchor)}",
+                    changed_dates,
                 )
             elif error is ErrorClass.IMPOSSIBLE_VOLUME:
-                pos = int(rng.integers(0, len(bars)))
+                pos = draw(n_bars, lambda p: p not in bars_touched)
                 victim = dict(bars[pos])
                 victim["volume"] = -1000.0
                 bars[pos] = victim
-                record(error, "raw_market_daily", victim, "negative volume")
+                bars_touched.add(pos)
+                record(
+                    error, "raw_market_daily", victim, "negative volume", [iso(victim)]
+                )
             elif error is ErrorClass.MISSING_MANDATORY:
-                pos = int(rng.integers(0, len(bars)))
+                pos = draw(n_bars, lambda p: p not in bars_touched)
                 victim = dict(bars[pos])
                 victim["currency"] = None
                 bars[pos] = victim
-                record(error, "raw_market_daily", victim, "currency nulled")
+                bars_touched.add(pos)
+                record(
+                    error, "raw_market_daily", victim, "currency nulled", [iso(victim)]
+                )
             elif error is ErrorClass.INVERTED_TIMESTAMP:
                 if not fundamentals:
                     raise GeneratorError(
                         "INVERTED_TIMESTAMP needs fundamentals rows to corrupt"
                     )
-                pos = int(rng.integers(0, len(fundamentals)))
+                pos = draw(len(fundamentals), lambda p: p not in funds_touched)
                 victim = dict(fundamentals[pos])
                 period_end = victim["period_end"]
                 if not isinstance(period_end, date):
@@ -834,11 +925,13 @@ def seed_errors(
                 )
                 victim["report_date"] = period_end - timedelta(days=30)
                 fundamentals[pos] = victim
+                funds_touched.add(pos)
                 record(
                     error,
                     "raw_fundamentals",
                     victim,
                     "knowledge_time moved before observation (CI-001 violation)",
+                    [period_end.isoformat()],
                 )
             else:  # pragma: no cover - closed enum
                 raise GeneratorError(f"unhandled error class {error}")

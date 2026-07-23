@@ -46,6 +46,7 @@ class TestSidecarRegistry:
             assert error.table in RAW_SCHEMAS
             assert error.ticker and error.exchange
             assert error.detail
+            assert error.event_dates, "RT-5: realized anomaly dates recorded"
 
 
 class TestPlantedDefectsAreReal:
@@ -81,7 +82,7 @@ class TestPlantedDefectsAreReal:
             longest = max(
                 sum(1 for c in closes[i:] if c == closes[i]) for i in range(len(closes))
             )
-            assert longest >= 2, error.ticker
+            assert longest >= 3, error.ticker  # anchor + >=2 frozen (RT-5)
 
     def test_impossible_volumes_present(self) -> None:
         world = get_world("LT-021")
@@ -108,6 +109,72 @@ class TestPlantedDefectsAreReal:
             and r["knowledge_time"].date() < r["period_end"]
         ]
         assert len(inverted) >= 3
+
+
+#: RT-G019-5 sweep: >= 20 seeds including the red-team's six known-bad
+#: ones. The registry and the data must correspond in BOTH directions on
+#: every seed: each entry's event_dates map to real anomalies, each
+#: anomaly maps back to an entry, and duplicated pairs stay verbatim.
+SWEEP_SEEDS = sorted({*range(20), 10, 15, 17, 54, 55, 78})
+
+
+@pytest.mark.parametrize("seed", SWEEP_SEEDS)
+def test_registry_integrity_both_directions_across_seeds(seed: int) -> None:
+    from lasr.data.synthetic import generate_world
+    from lasr.data.synthetic.scenarios import default_config
+
+    world = generate_world(default_config("LT-021", seed))
+
+    # market table -----------------------------------------------------------
+    clean = world.ablations["clean"]["raw_market_daily"]
+    corrupted = world.table("raw_market_daily")
+    clean_by_key = {(r["ticker"], r["exchange"], r["event_date"]): r for r in clean}
+    corrupted_by_key: dict[tuple[object, ...], list[dict[str, object]]] = {}
+    for r in corrupted:
+        corrupted_by_key.setdefault(
+            (r["ticker"], r["exchange"], r["event_date"]), []
+        ).append(dict(r))
+    anomalies: set[tuple[object, ...]] = set()
+    for key, rows in corrupted_by_key.items():
+        if len(rows) > 1:
+            anomalies.add(key)
+            assert len(rows) == 2 and rows[0] == rows[1], (
+                f"seed={seed}: duplicated pair not verbatim at {key}"
+            )
+        elif rows[0] != clean_by_key[key]:
+            anomalies.add(key)
+    claimed: set[tuple[object, ...]] = set()
+    for entry in world.sidecar.seeded_errors:
+        if entry.table != "raw_market_daily":
+            continue
+        for day in entry.event_dates:
+            claimed.add((entry.ticker, entry.exchange, date.fromisoformat(day)))
+    assert anomalies == claimed, (
+        f"seed={seed}: registry/data mismatch — "
+        f"unclaimed={sorted(map(repr, anomalies - claimed))[:3]} "
+        f"phantom={sorted(map(repr, claimed - anomalies))[:3]}"
+    )
+
+    # fundamentals (positional compare: corruption replaces in place) --------
+    clean_f = world.ablations["clean"]["raw_fundamentals"]
+    corrupted_f = world.table("raw_fundamentals")
+    assert len(clean_f) == len(corrupted_f)
+    changed = {
+        (r["ticker"], r["exchange"], r["metric"], r["period_end"])
+        for a, r in zip(clean_f, corrupted_f, strict=True)
+        if a != r
+    }
+    claimed_f = {
+        (
+            entry.ticker,
+            entry.exchange,
+            entry.metric,
+            date.fromisoformat(entry.event_dates[0]),
+        )
+        for entry in world.sidecar.seeded_errors
+        if entry.table == "raw_fundamentals"
+    }
+    assert changed == claimed_f, f"seed={seed}: fundamentals registry mismatch"
 
 
 class TestTeeth:

@@ -309,16 +309,23 @@ class TestEstimates:
                 assert len(values) > 1, "revisions must actually revise"
         assert multi > 0, "estimate revision histories required (MP §17)"
 
-    def test_fy1_precedes_fy2(self, world: SyntheticWorld) -> None:
-        by_stamp: dict[tuple[object, ...], dict[str, date]] = {}
+    def test_series_labels_are_absolute_fiscal_years(
+        self, world: SyntheticWorld
+    ) -> None:
+        """RT-G019-3: the provider-native forecast_period label carries the
+        fiscal year, so distinct years never collide on the raw PK; every
+        revision stamp serves both an FY1- and an FY2-horizon series."""
+        by_stamp: dict[tuple[object, ...], set[str]] = {}
         for row in world.table("raw_estimates"):
-            key = (row["ticker"], row["metric"], row["knowledge_time"])
             end = row["period_end"]
             assert isinstance(end, date)
-            by_stamp.setdefault(key, {})[str(row["forecast_period"])] = end
-        for ends in by_stamp.values():
-            if "FY1" in ends and "FY2" in ends:
-                assert ends["FY1"] < ends["FY2"]
+            assert row["forecast_period"] == f"FY{end.year}"
+            stamp = row["knowledge_time"]
+            assert isinstance(stamp, datetime)
+            assert end.year in (stamp.year, stamp.year + 1)
+            key = (row["ticker"], row["metric"], stamp)
+            by_stamp.setdefault(key, set()).add(str(row["forecast_period"]))
+        assert all(len(labels) == 2 for labels in by_stamp.values())
 
 
 class TestActionMechanics:

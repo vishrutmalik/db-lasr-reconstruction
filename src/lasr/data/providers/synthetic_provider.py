@@ -321,7 +321,10 @@ class SyntheticProvider:
                 notes=(
                     "TRUE vintages: publication-lagged as-reported rows plus "
                     "restatements with later knowledge times (A-002 made "
-                    "literal; contrast A-001 latest_filing-only)"
+                    "literal; contrast A-001 latest_filing-only). WARNING "
+                    "(RT-G019-4): vintage='latest' is the vendor semantic — "
+                    "max-knowledge row even past the window end; PIT "
+                    "consumers must use vintage='all' (A-cand-4)"
                 ),
             ),
             FieldFamily.ESTIMATES: FamilyCapability(
@@ -587,6 +590,22 @@ class SyntheticProvider:
         end: date,
         vintage: Literal["latest", "as_reported", "all"] = "latest",
     ) -> DataFrame:
+        """Serve fundamentals per the requested vintage mode.
+
+        WARNING (RT-G019-4): ``vintage="latest"`` is the VENDOR
+        latest_filing semantic mandated by CT-11 ("latest equals
+        max-knowledge row") and deliberately mirrors A-001: it serves the
+        max-knowledge vintage per event key EVEN IF that vintage's
+        knowledge_time is after the window end, and the vintage that WAS
+        knowable at the window end is absent from the frame. The future
+        knowledge_time and ``version_type="restated"`` are carried
+        visibly (pinned by a red-team keeper test) so PIT consumers can
+        reject such rows — but post-hoc as-of filtering yields ABSENCE,
+        not the earlier vintage. PIT-safe consumption is
+        ``vintage="all"`` + canonical vintage assembly (G020). Note the
+        deliberate asymmetry with :meth:`fetch_estimates`, which applies
+        a window-end knowability cutoff (it has no vintage parameter).
+        """
         if vintage not in ("latest", "as_reported", "all"):
             raise CapabilityError(f"unknown vintage mode {vintage!r}")
         catalog = self._fundamental_codes()
@@ -647,11 +666,15 @@ class SyntheticProvider:
                 continue
             if row["knowledge_time"] > cutoff:  # type: ignore[operator]
                 continue  # revision not yet knowable at the window end
+            # RT-G019-3: period_end is part of the series identity — one
+            # (label, fiscal-year-end) series per key; collapsing across
+            # fiscal years was silent multi-year data loss (§3).
             key = (
                 row["ticker"],
                 row["exchange"],
                 row["metric"],
                 row["forecast_period"],
+                row["period_end"],
             )
             current = by_key.get(key)
             if current is None or row["knowledge_time"] > current["knowledge_time"]:  # type: ignore[operator]

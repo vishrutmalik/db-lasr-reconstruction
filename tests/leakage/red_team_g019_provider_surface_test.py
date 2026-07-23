@@ -34,18 +34,13 @@ def baseline_provider() -> SyntheticProvider:
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "RT-G019-3 (BLOCKING): fetch_estimates collapses all fiscal years in "
-        "the window onto one (metric, forecast_period) key — a 6-year window "
-        "returns 2 rows where 12 (ticker, metric, FY-label, period_end) "
-        "series exist. The dedup key must include period_end."
-    ),
-)
 def test_fetch_estimates_serves_every_fiscal_year_in_window(
     baseline_provider: SyntheticProvider,
 ) -> None:
+    """RT-G019-3 remediation ratchet (was a strict xfail): the dedup key
+    includes period_end, so every fiscal year's estimate series in the
+    window is served (a 6-year window used to return 2 rows where 12
+    series exist)."""
     provider = baseline_provider
     lo, hi = provider.available_history(FieldFamily.ESTIMATES)
     assert lo is not None and hi is not None

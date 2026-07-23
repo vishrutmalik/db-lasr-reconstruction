@@ -490,63 +490,70 @@ GENERIC_SET = frozenset({"BOOKEQ", "EPS", "NETINC", "REVENUE", "TOTASSET"})
 
 
 def _estimate_revision_rows(b: _Builder) -> tuple[Row, ...]:
+    """Consensus series with revision histories.
+
+    RT-G019-3: series identity is the FISCAL YEAR — the provider-native
+    ``forecast_period`` label is absolute (``FY2007``), so distinct fiscal
+    years never collide on the raw_estimates primary key. Each fiscal-year
+    series receives revisions from the year BEFORE its end (economically
+    "FY2") through its end year ("FY1"), converging toward that year's own
+    truth.
+    """
     plan = b.plan
     if not plan.estimate_metrics:
         return ()
     rng = b.rng("estimates")
     rows: list[Row] = []
     years = sorted({d.year for d in b.periods})
+    fiscal_years = [*years, years[-1] + 1]
     for i in range(b.n):
         shares_now = float(b.shares0[i])
         base_rev_annual = float(b.price0[i] * b.shares0[i] * 0.3)
         margin = 0.08 + 0.03 * float(rng.standard_normal())
-        for year in years:
-            fy_end = date(year, 12, 31)
+        # per-fiscal-year truths, drawn in fixed (i, year) order
+        truths_by_year: dict[int, dict[str, float]] = {}
+        for fiscal in fiscal_years:
             rev_truth = base_rev_annual * float(np.exp(0.1 * rng.standard_normal()))
-            truths = {
+            truths_by_year[fiscal] = {
                 "REVENUE": rev_truth / 1e6,
                 "EPS": margin * rev_truth / shares_now,
             }
-            bias0 = float(rng.normal(0.0, 0.08))
-            revision_periods = [
-                t for t, d in enumerate(b.periods) if d.year == year and b.alive(i, t)
-            ]
-            step = max(
-                1, len(revision_periods) // max(1, plan.estimate_revisions_per_year)
-            )
-            for k, t in enumerate(revision_periods[::step]):
-                d = b.periods[t]
+        bias_by_year = {fiscal: float(rng.normal(0.0, 0.08)) for fiscal in fiscal_years}
+        revision_periods = [t for t, d in enumerate(b.periods) if b.alive(i, t)]
+        step = max(
+            1,
+            b.config.periods_per_year // max(1, plan.estimate_revisions_per_year),
+        )
+        for t in revision_periods[::step]:
+            d = b.periods[t]
+            for fiscal in (d.year, d.year + 1):  # FY1- and FY2-horizon series
+                fy_end = date(fiscal, 12, 31)
                 frac_left = (fy_end - d).days / 365.0
+                truths = truths_by_year[fiscal]
                 for metric in plan.estimate_metrics:
                     if metric not in truths:
                         raise GeneratorError(
                             f"unknown estimate metric {metric!r} in plan"
                         )
                     consensus = truths[metric] * (
-                        1.0 + bias0 * frac_left + 0.01 * float(rng.standard_normal())
+                        1.0
+                        + bias_by_year[fiscal] * frac_left
+                        + 0.01 * float(rng.standard_normal())
                     )
-                    for label, end in (
-                        ("FY1", fy_end),
-                        ("FY2", date(year + 1, 12, 31)),
-                    ):
-                        value = (
-                            consensus if label == "FY1" else consensus * (1.0 + 0.05)
-                        )
-                        rows.append(
-                            {
-                                "ticker": b.ticker_at(i, t),
-                                "exchange": b.exchange_of(i),
-                                "metric": metric,
-                                "forecast_period": label,
-                                "value": float(value),
-                                "period_end": end,
-                                "stat": "mean",
-                                "currency": b.currency_of(i),
-                                "n_contributors": int(rng.integers(4, 25)),
-                                "knowledge_time": _at(d, _PUBLICATION_UTC),
-                            }
-                        )
-                del k
+                    rows.append(
+                        {
+                            "ticker": b.ticker_at(i, t),
+                            "exchange": b.exchange_of(i),
+                            "metric": metric,
+                            "forecast_period": f"FY{fiscal}",
+                            "value": float(consensus),
+                            "period_end": fy_end,
+                            "stat": "mean",
+                            "currency": b.currency_of(i),
+                            "n_contributors": int(rng.integers(4, 25)),
+                            "knowledge_time": _at(d, _PUBLICATION_UTC),
+                        }
+                    )
     rows.sort(
         key=lambda r: (
             r["ticker"],

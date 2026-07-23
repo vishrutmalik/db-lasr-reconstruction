@@ -224,6 +224,30 @@ class TestValidationAndErrors:
                 "test_provider", FieldFamily.FUNDAMENTALS, "snap-doesnotexist"
             )
 
+    def test_n4_manifestless_snapshot_directory_recovered_on_retry(self, tmp_path):
+        """RT-G020-N4: a crash between payload and manifest used to wedge
+        the snapshot directory forever; a manifest-less directory is now
+        treated as absent-and-removable and the retry completes."""
+        scratch = RawSnapshotStore(tmp_path / "scratch")
+        ref = _write(scratch, _raw_fundamental_rows())
+        wedged_root = tmp_path / "real"
+        wedged = (
+            wedged_root
+            / "test_provider"
+            / FieldFamily.FUNDAMENTALS.value
+            / ref.snapshot_id
+        )
+        wedged.mkdir(parents=True)
+        (wedged / "payload.parquet").write_bytes(b"partial garbage")
+        store = RawSnapshotStore(wedged_root)
+        retry = _write(store, _raw_fundamental_rows())
+        assert retry.created is True
+        assert retry.snapshot_id == ref.snapshot_id
+        (row,) = store.read_records(
+            "test_provider", FieldFamily.FUNDAMENTALS, retry.snapshot_id
+        )
+        assert row["value"] == 100.0
+
 
 class TestDeterminism:
     def test_payload_roundtrip_preserves_native_types(self, tmp_path):

@@ -31,9 +31,11 @@ from pydantic import ValidationError
 
 from lasr.core.errors import LasrError
 from lasr.data.canonical.manifests import CanonicalDatasetManifest
+from lasr.data.canonical.store import CanonicalStore, StoreError
 
 __all__ = [
     "ManifestVerificationError",
+    "audit_dataset",
     "require_valid_manifest_payload",
     "verify_manifest_payload",
 ]
@@ -103,3 +105,26 @@ def require_valid_manifest_payload(
     if problems:
         raise ManifestVerificationError(problems)
     return CanonicalDatasetManifest.model_validate(payload)
+
+
+def audit_dataset(
+    store: CanonicalStore, table_name: str, dataset_id: str
+) -> tuple[str, ...]:
+    """Full post-write artifact audit for one dataset (RT-G020-B4).
+
+    Combines the manifest-payload rules (U5 / D-011 / D-015 / CI-006) with
+    the store's payload-recomputed integrity checks: content hash and
+    ``max_knowledge_time`` re-derived from the parquet parts (payload
+    retro-dating detectable), directory-identity binding, and the
+    stamp-consistency check that ties a market dataset's grade to the
+    knowledge times actually persisted — so neither a rewritten payload
+    NOR a rewritten legal-state manifest audits clean. The G021 quality
+    battery iterates this over every dataset in the store.
+    """
+    try:
+        payload = store.manifest_payload(table_name, dataset_id)
+    except StoreError as exc:
+        return (str(exc),)
+    manifest_problems = verify_manifest_payload(payload)
+    integrity = store.integrity_problems(table_name, dataset_id)
+    return tuple(dict.fromkeys((*manifest_problems, *integrity)))

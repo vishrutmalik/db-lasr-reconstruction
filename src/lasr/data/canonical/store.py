@@ -17,6 +17,18 @@ the predecessor's — :func:`verify_vintage_append` rejects any mutation or
 retro-dating of existing vintages. Partitioning follows the schema's
 ``partition_keys`` (``year(event_date)`` for market data); plain
 directories, no framework (MP §26).
+
+Post-write artifact integrity (RT-G020-B4): write-time guarantees are not
+trusted at read time. ``integrity_problems`` RECOMPUTES the content hash,
+``max_knowledge_time``, and row count from the parquet payload and checks
+them against the manifest AND the directory's content-addressed id
+(payload retro-dating detectable), plus a payload-derived
+stamp-consistency check for market-bar datasets (a manifest rewritten into
+the legal RETRO_WINDOW+acknowledged state cannot validate against an
+unchanged retrieval-stamped payload — the D-015 record cannot be erased
+silently). ``verified_records`` is the read path the PIT layer uses;
+``write`` re-validates the manifest model (closing the ``model_construct``
+escape hatch) and runs the same stamp check before persisting.
 """
 
 from __future__ import annotations
@@ -24,8 +36,10 @@ from __future__ import annotations
 import json
 import logging
 import re
+import shutil
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +53,7 @@ from lasr.artifacts.serialization import (
     sort_records,
     write_parquet_records,
 )
+from lasr.core.enums import PitGrade
 from lasr.core.errors import LasrError, SchemaValidationError
 from lasr.data.canonical.frame_validation import collect_problems
 from lasr.data.canonical.manifests import CanonicalDatasetManifest
@@ -51,6 +66,72 @@ logger = logging.getLogger(__name__)
 
 _MANIFEST_FILE = "manifest.json"
 _PARTITION_PATTERN = re.compile(r"^year\((\w+)\)$")
+
+#: Market-bar tables under the D-011 RETRO_WINDOW/SNAPSHOT_STAMPED split,
+#: with their event-time column (the B4 stamp-consistency surface).
+_MARKET_BAR_TABLES: dict[str, str] = {
+    "prices_daily": "event_date",
+    "fx_rates": "event_date",
+}
+
+#: Bar knowledge times are anchored to their event date (D-009): close of
+#: the event date lands within [event_date 00:00 UTC, +48h) for any real
+#: exchange close convention. A retrieval stamp months later cannot pass.
+_BAR_ANCHOR_WINDOW = timedelta(hours=48)
+
+
+def _stamp_consistency_problems(
+    table_name: str,
+    family_value: str,
+    supports_pit: bool,
+    pit_grade_value: str,
+    retrieval_time: datetime | None,
+    records: Sequence[Row],
+    knowledge_column: str | None,
+) -> list[str]:
+    """Payload-derived D-009/D-015 stamp checks for market-bar datasets.
+
+    Enforced against the PAYLOAD, never against the manifest's own claims
+    (RT-G020-B4b): a SNAPSHOT_STAMPED dataset's knowledge times must all
+    equal the retrieval stamp; a RETRO_WINDOW dataset's knowledge times
+    must be anchored to their event dates. A manifest rewritten from the
+    downgraded state into RETRO_WINDOW+acknowledged therefore fails against
+    its unchanged retrieval-stamped payload.
+    """
+    event_column = _MARKET_BAR_TABLES.get(table_name)
+    if supports_pit or knowledge_column is None or event_column is None:
+        return []
+    if family_value not in ("market_daily", "fx"):
+        return []
+    problems: list[str] = []
+    if pit_grade_value == PitGrade.SNAPSHOT_STAMPED.value:
+        if retrieval_time is None:
+            return [f"{table_name}: SNAPSHOT_STAMPED without a retrieval_time"]
+        for i, record in enumerate(records):
+            kt = record.get(knowledge_column)
+            if kt != retrieval_time:
+                problems.append(
+                    f"row {i}: SNAPSHOT_STAMPED bar carries knowledge_time "
+                    f"{kt!r} != retrieval_time {retrieval_time.isoformat()} "
+                    "(D-009/D-015 payload check, RT-G020-B4)"
+                )
+    elif pit_grade_value == PitGrade.RETRO_WINDOW.value:
+        for i, record in enumerate(records):
+            kt = record.get(knowledge_column)
+            event = record.get(event_column)
+            if not (isinstance(kt, datetime) and isinstance(event, date)):
+                problems.append(f"row {i}: unusable knowledge/event time")
+                continue
+            anchor = datetime.combine(event, time(0), tzinfo=UTC)
+            if not timedelta(0) <= kt - anchor < _BAR_ANCHOR_WINDOW:
+                problems.append(
+                    f"row {i}: RETRO_WINDOW bar knowledge_time "
+                    f"{kt.isoformat()} is not anchored to its event date "
+                    f"{event.isoformat()} (D-009 close-of-event-date; "
+                    "RT-G020-B4: a rewritten manifest cannot validate "
+                    "against a retrieval-stamped payload)"
+                )
+    return problems
 
 
 class StoreError(LasrError):
@@ -71,6 +152,18 @@ class DatasetRef:
 
 def _column_defs(schema: TableSchema) -> tuple[ColumnDef, ...]:
     return tuple(ColumnDef(c.name, c.dtype, c.nullable) for c in schema.columns)
+
+
+def _parse_optional_datetime(value: object) -> datetime | None:
+    """ISO-8601 string (as persisted by canonical_json) → aware datetime;
+    unparseable values map to None so the comparison reports a mismatch."""
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None else None
 
 
 def _event_key(schema: TableSchema, record: Row) -> tuple[object, ...]:
@@ -160,9 +253,20 @@ class CanonicalStore:
         + row models), checks the manifest's content hash and row count
         against the actual records, and — for vintaged tables — enforces
         append discipline against the predecessor dataset(s) already in
-        the store (U2/CI-002).
+        the store (U2/CI-002). The manifest is round-tripped through
+        ``model_validate`` first, so a validation-skipping
+        ``model_construct`` forgery cannot persist (RT-G020-B4c), and the
+        payload-derived stamp-consistency check runs before anything lands
+        on disk (RT-G020-B4b).
         """
         schema = get_schema(table_name)
+        try:
+            manifest = type(manifest).model_validate(manifest.model_dump(mode="json"))
+        except ValidationError as exc:
+            raise StoreError(
+                f"manifest for {table_name!r} fails model validation "
+                f"(model_construct forgery is closed, RT-G020-B4c): {exc}"
+            ) from exc
         if manifest.table_name != table_name:
             raise StoreError(
                 f"manifest table_name {manifest.table_name!r} != {table_name!r}"
@@ -183,6 +287,20 @@ class CanonicalStore:
                 f"actual rows for {table_name!r}"
             )
         self._check_max_knowledge_time(schema, ordered, manifest)
+        stamp_problems = _stamp_consistency_problems(
+            table_name,
+            manifest.family.value,
+            manifest.capability.supports_pit,
+            manifest.pit_grade.value,
+            manifest.retrieval_time,
+            ordered,
+            schema.knowledge_time_column,
+        )
+        if stamp_problems:
+            raise StoreError(
+                f"stamp-consistency check failed for {table_name!r} "
+                "(RT-G020-B4): " + "; ".join(stamp_problems)
+            )
         if schema.vintaged:
             for predecessor_id in self.dataset_ids(table_name):
                 verify_vintage_append(
@@ -190,6 +308,14 @@ class CanonicalStore:
                 )
         dataset_id = f"ds-{digest[:16]}"
         directory = self._root / table_name / dataset_id
+        if directory.exists() and not (directory / _MANIFEST_FILE).is_file():
+            # RT-G020-N4: a crash between part files and manifest leaves a
+            # wedge; a manifest-less directory is not a dataset — remove it
+            # and let the retry complete.
+            logger.warning(
+                "removing partial dataset directory (no manifest): %s", directory
+            )
+            shutil.rmtree(directory)
         if directory.exists():
             existing = self.read_manifest(table_name, dataset_id)
             if existing.content_hash != digest:
@@ -244,7 +370,9 @@ class CanonicalStore:
         observed = max(
             (r[ktc] for r in records if r.get(ktc) is not None), default=None
         )  # type: ignore[type-var]
-        if records and manifest.max_knowledge_time != observed:
+        # unconditional — an EMPTY dataset must carry max_knowledge_time
+        # None, not arbitrary claims (verifier NB-5 / RT-G020-N6)
+        if manifest.max_knowledge_time != observed:
             raise StoreError(
                 f"manifest max_knowledge_time {manifest.max_knowledge_time!r} "
                 f"!= observed maximum {observed!r} (CI-006 lineage field)"
@@ -305,9 +433,8 @@ class CanonicalStore:
             )
         return directory
 
-    def read_manifest(
-        self, table_name: str, dataset_id: str
-    ) -> CanonicalDatasetManifest:
+    def manifest_payload(self, table_name: str, dataset_id: str) -> dict[str, Any]:
+        """The manifest JSON as persisted (pre-validation audit surface)."""
         directory = self._directory(table_name, dataset_id)
         try:
             payload = json.loads(
@@ -317,11 +444,19 @@ class CanonicalStore:
             raise StoreError(
                 f"unreadable canonical manifest under {directory}: {exc}"
             ) from exc
+        if not isinstance(payload, dict):
+            raise StoreError(f"manifest under {directory} is not a JSON object")
+        return payload
+
+    def read_manifest(
+        self, table_name: str, dataset_id: str
+    ) -> CanonicalDatasetManifest:
+        payload = self.manifest_payload(table_name, dataset_id)
         try:
             return CanonicalDatasetManifest.model_validate(payload)
         except ValidationError as exc:
             raise StoreError(
-                f"invalid canonical manifest under {directory}: {exc}"
+                f"invalid canonical manifest for {table_name}/{dataset_id}: {exc}"
             ) from exc
 
     def read_records(
@@ -340,6 +475,87 @@ class CanonicalStore:
             for row in rows
         ]
         return tuple(dict(r) for r in sort_records(normalized, schema.sort_key))
+
+    # -- post-write integrity (RT-G020-B4) --------------------------------------
+
+    def integrity_problems(self, table_name: str, dataset_id: str) -> tuple[str, ...]:
+        """Recompute payload-derived facts and compare them to the manifest
+        AND the directory identity — never trusting the manifest's own
+        claims (RT-G020-B4a/b). Returns EVERY problem found.
+        """
+        problems: list[str] = []
+        try:
+            payload = self.manifest_payload(table_name, dataset_id)
+        except StoreError as exc:
+            return (str(exc),)
+        try:
+            records = self.read_records(table_name, dataset_id)
+        except (StoreError, OSError) as exc:
+            return (f"unreadable payload for {table_name}/{dataset_id}: {exc}",)
+        digest = self.content_digest(table_name, records)
+        if payload.get("content_hash") != digest:
+            problems.append(
+                "payload does not hash to the manifest content_hash — "
+                "payload or manifest was modified after write (RT-G020-B4a)"
+            )
+        if dataset_id != f"ds-{digest[:16]}":
+            problems.append(
+                f"directory id {dataset_id!r} does not match the payload "
+                f"content hash ds-{digest[:16]} (RT-G020-B4a)"
+            )
+        if payload.get("row_count") != len(records):
+            problems.append(
+                f"manifest row_count {payload.get('row_count')!r} != "
+                f"{len(records)} payload rows"
+            )
+        schema = get_schema(table_name)
+        ktc = schema.knowledge_time_column
+        observed: datetime | None = None
+        if ktc is not None:
+            for record in records:
+                kt = record.get(ktc)
+                if isinstance(kt, datetime) and (observed is None or kt > observed):
+                    observed = kt
+        claimed = _parse_optional_datetime(payload.get("max_knowledge_time"))
+        if claimed != observed:
+            problems.append(
+                f"manifest max_knowledge_time {payload.get('max_knowledge_time')!r} "
+                f"disagrees with the payload maximum "
+                f"{observed.isoformat() if observed else None!r} — "
+                "retro-dating detectable (RT-G020-B4a)"
+            )
+        capability = payload.get("capability")
+        supports_pit = (
+            bool(capability.get("supports_pit"))
+            if isinstance(capability, dict)
+            else False
+        )
+        problems.extend(
+            _stamp_consistency_problems(
+                table_name,
+                str(payload.get("family")),
+                supports_pit,
+                str(payload.get("pit_grade")),
+                _parse_optional_datetime(payload.get("retrieval_time")),
+                records,
+                ktc,
+            )
+        )
+        return tuple(problems)
+
+    def verified_records(
+        self, table_name: str, dataset_id: str
+    ) -> tuple[dict[str, Any], ...]:
+        """Read path with integrity verification (the PIT layer's entry
+        point, RT-G020-B4): a dataset whose payload disagrees with its
+        manifest or directory identity is REFUSED, never served."""
+        problems = self.integrity_problems(table_name, dataset_id)
+        if problems:
+            raise StoreError(
+                f"dataset {table_name}/{dataset_id} failed integrity "
+                "verification (RT-G020-B4): " + "; ".join(problems)
+            )
+        return self.read_records(table_name, dataset_id)
 
     def dataset_ids(self, table_name: str) -> tuple[str, ...]:
         table_dir = self._root / table_name

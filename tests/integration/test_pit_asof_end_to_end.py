@@ -59,7 +59,7 @@ from lasr.data.providers.local_file import (
     PROVIDER_VERSION,
     LocalFileProvider,
 )
-from lasr.data.quality.manifest import verify_manifest_payload
+from lasr.data.quality.manifest import audit_dataset, verify_manifest_payload
 from lasr.data.schemas.estimates import EstimateStat
 
 pytestmark = pytest.mark.integration
@@ -308,12 +308,15 @@ class TestD015DowngradeRecording:
 
     def test_quality_audit_passes_all_manifests(self, pipeline: Pipeline):
         """The G021 audit surface accepts every persisted manifest and
-        catches a tampered grade (D-015 audit teeth)."""
-        for ref in pipeline.dataset_refs.values():
+        catches a tampered grade (D-015 audit teeth). The full B4 payload
+        audit (hash + max-kt recomputation + stamp consistency) is also
+        clean for every dataset the pipeline wrote."""
+        for table, ref in pipeline.dataset_refs.items():
             payload = json.loads(
                 (ref.directory / "manifest.json").read_text(encoding="utf-8")
             )
             assert verify_manifest_payload(payload) == ()
+            assert audit_dataset(pipeline.canonical, table, ref.dataset_id) == ()
         tampered = json.loads(
             (
                 pipeline.dataset_refs["prices_daily"].directory / "manifest.json"

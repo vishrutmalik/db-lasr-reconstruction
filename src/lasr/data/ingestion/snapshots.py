@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -238,6 +239,14 @@ class RawSnapshotStore:
         )
         snapshot_id = f"snap-{digest[:16]}"
         directory = self._root / provider_name / family.value / snapshot_id
+        if directory.exists() and not (directory / _MANIFEST_FILE).is_file():
+            # RT-G020-N4: a crash between payload and manifest leaves a
+            # wedge; a manifest-less directory is not a snapshot — remove
+            # it and let the retry complete.
+            logger.warning(
+                "removing partial snapshot directory (no manifest): %s", directory
+            )
+            shutil.rmtree(directory)
         if directory.exists():
             existing = self.read_manifest(provider_name, family, snapshot_id)
             if existing.content_sha256 != digest:

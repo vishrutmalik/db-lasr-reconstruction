@@ -203,7 +203,9 @@ class PitStore:
         dataset = self.dataset_id(table)
         key = (table, dataset)
         if key not in self._cache:
-            self._cache[key] = self._store.read_records(table, dataset)
+            # verified read: payload re-hashed + stamp-consistency checked
+            # against the manifest before anything is served (RT-G020-B4)
+            self._cache[key] = self._store.verified_records(table, dataset)
         return self._cache[key]
 
     def _effective_lag(self, table: str, lag: timedelta | None) -> timedelta:

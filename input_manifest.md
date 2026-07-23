@@ -54,6 +54,16 @@ branding present in workbook).
   liquidity fields observed in first pass — the `Trading Multiples` sheet may
   carry dated market-derived values (54 columns to be inventoried by G012).
 
+## ⚠️ Integrity drift notice (E-1, 2026-07-22)
+On-disk workbooks NO LONGER match the hashes above (detected by G039
+verification; mtimes 2026-07-21 16:31/16:52 — hours AFTER all extraction and
+verification passes). W2 now caches "Please Login to Continue" in FP D29:D44
+(opened with the AlphaSense add-in logged out and saved). All merged evidence
+was extracted and verified against the ORIGINAL hashes before the drift.
+REQUIRED before G040 or any real probe run: restore the manifested originals
+(OneDrive version history) or re-manifest with an erratum. Tracked in
+progress.md incident log; user decision requested.
+
 ## Git tracking policy
 
 | Path | Policy |

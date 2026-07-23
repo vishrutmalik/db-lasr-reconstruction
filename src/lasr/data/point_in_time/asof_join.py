@@ -62,8 +62,11 @@ def join_latest_known(
     )
     right_frame["__kt"] = pd.to_datetime(right_frame[right_time], utc=True)
     ties = [c for c in tiebreak if c in right_frame.columns]
+    # merge_asof requires the ON key sorted GLOBALLY (not just per group);
+    # sorting ties after __kt keeps the max-tiebreak row last among equal
+    # knowledge times within a group, which backward search then picks.
     right_frame = right_frame.sort_values(
-        [*by, "__kt", *ties], kind="stable"
+        ["__kt", *ties], kind="stable"
     ).reset_index(drop=True)
     left_order = left_frame.sort_values(["__cutoff", *by], kind="stable").reset_index(
         drop=True

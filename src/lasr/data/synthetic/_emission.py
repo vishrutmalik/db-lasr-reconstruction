@@ -389,20 +389,22 @@ def _fundamental_rows(b: _Builder) -> tuple[Row, ...]:
 
             if hindsight is not None:
                 # LT-013: the value IS the security's return over the period
-                # after the fiscal observation date, published with a lag —
-                # perfect hindsight, worthless once knowable.
-                t_next = b.period_index_on_or_after(q_end + timedelta(days=1))
+                # AFTER the fiscal observation date, published with a lag —
+                # perfect hindsight, worthless once knowable. Aligned to the
+                # observation-JOIN availability grid: a report-date joiner
+                # makes the value available at the first bar >= period_end
+                # (t_obs) and would "predict" the t_obs+1 return exactly.
+                t_obs = b.period_index_on_or_after(q_end)
                 if (
-                    t_next is not None
-                    and t_next < b.t
-                    and t_next > 0
-                    and (b.alive(i, t_next))
+                    t_obs is not None
+                    and t_obs + 1 < b.t
+                    and b.alive(i, t_obs + 1)
                 ):
                     emit(
                         i,
                         hindsight.name,
                         q_end,
-                        float(b.returns[i, t_next]),
+                        float(b.returns[i, t_obs + 1]),
                         "ratio",
                         q_end + timedelta(days=plan.hindsight_lag_days),
                         "as_reported",

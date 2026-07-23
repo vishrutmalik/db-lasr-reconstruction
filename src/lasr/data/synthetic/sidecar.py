@@ -152,6 +152,7 @@ class SidecarTruth(SchemaRow):
     #: "cross-sectional IC ... vs next-period residual return").
     return_basis: str = "cross_sectional_residual"
     label_horizon_periods: int = 1
+    mu_market: float
     sigma_market: float
     sigma_sector: float
     sigma_resid: float

@@ -251,6 +251,20 @@ def _oracle_values(b: _Builder) -> dict[str, float]:
     if b.inclusions:  # LT-016
         oracle["inclusion_runup_drift"] = b.plan.inclusion_runup_drift
         oracle["inclusion_runup_periods"] = float(b.plan.inclusion_runup_periods)
+    leaks = [s for s in b.plan.factors if s.leak_forward_corr is not None]
+    if leaks:  # LT-004: detector thresholds are sidecar data, not constants
+        oracle["leak_flag_threshold"] = float(
+            b.config.param("leak_flag_threshold", 0.30)
+        )
+        oracle["honest_ic_ceiling"] = float(
+            b.config.param("honest_ic_ceiling", 0.15)
+        )
+    if b.plan.boundary_jitter > 0:  # LT-008 embedded boundary population
+        window_pct = float(b.config.param("boundary_window_pct", 2.0))
+        oracle["boundary_window_pct"] = window_pct
+        # 4 interior quintile boundaries x (2 * window) percentiles, ranks
+        # uniform by construction.
+        oracle["expected_boundary_fraction"] = 4 * 2 * window_pct / 100.0
     return oracle
 
 
@@ -275,6 +289,7 @@ def _build_sidecar(b: _Builder) -> SidecarTruth:
         params={key: float(value) for key, value in sorted(config.params.items())},
         period_dates=tuple(d.isoformat() for d in b.periods),
         label_horizon_periods=plan.label_horizon_periods,
+        mu_market=plan.mu_market,
         sigma_market=plan.sigma_market,
         sigma_sector=plan.sigma_sector,
         sigma_resid=plan.sigma_resid,

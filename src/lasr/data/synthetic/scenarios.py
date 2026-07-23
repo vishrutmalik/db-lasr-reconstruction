@@ -334,9 +334,9 @@ def _lt016(config: ScenarioConfig) -> WorldPlan:
     return WorldPlan(
         **_stat_base(),  # type: ignore[arg-type]
         factors=(FactorSpec(name="FNOISE", rho_normal=0.0),),
-        inclusion_events=int(config.param("inclusion_events", 30.0)),
-        inclusion_runup_periods=int(config.param("inclusion_runup_periods", 6.0)),
-        inclusion_runup_drift=config.param("inclusion_runup_drift", 0.04),
+        inclusion_events=int(config.param("inclusion_events", 60.0)),
+        inclusion_runup_periods=int(config.param("inclusion_runup_periods", 9.0)),
+        inclusion_runup_drift=config.param("inclusion_runup_drift", 0.06),
         ablation_names=("current_membership",),
         notes="LT-016: names join the index after an embedded run-up",
     )

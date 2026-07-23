@@ -25,7 +25,7 @@ active:
     github_issue: 20
     branch: agent/implementer/G020-pit-layer
     worktree: .worktrees/G020-implementer
-    status: IN_VERIFICATION (PR #62; verifier PASS e4f795b; red-team pending)
+    status: FAILED_VERIFICATION (verifier PASS e4f795b; red-team 4 BLOCKING at 7f34c62; remediation in progress)
     dependencies: [G017, G018]
     owned_paths: ["src/lasr/data/ingestion/**", "src/lasr/data/canonical/**", "src/lasr/data/point_in_time/**", "src/lasr/data/quality/manifest*.py (D-015 recording)", "tests/unit/test_ingestion*.py", "tests/unit/test_canonical*.py", "tests/unit/test_pit*.py", "tests/integration/test_pit_asof*.py"]
     read_only_paths: ["docs/architecture/**", "docs/methodology/correctness_criteria.md", "src/lasr/core/**", "src/lasr/data/schemas/**", "src/lasr/data/providers/**"]

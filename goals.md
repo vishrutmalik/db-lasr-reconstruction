@@ -31,10 +31,10 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G017 | Typed canonical schemas | implementer | G015, G016 | MERGED | [#17](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/17) | [#57](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/57) |
 | G018 | Provider interface + contract tests | implementer | G017 | MERGED | [#18](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/18) | [#60](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/60) |
 | G019 | Synthetic data generator + synthetic provider | implementer | G018 | FAILED_VERIFICATION | [#19](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/19) | [#63](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/63) |
-| G020 | Point-in-time data layer + as-of joins | implementer | G017, G018 | IN_VERIFICATION | [#20](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/20) | [#62](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/62) |
-| G021 | Data-quality checks | implementer | G020 | BLOCKED | [#21](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/21) | |
-| G022 | Feature registry + small audited feature library | implementer | G020, G013 | BLOCKED | [#22](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/22) | |
-| G023 | Target & label engine (all 4 target families) | implementer | G020, G014 | BLOCKED | [#23](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/23) | |
+| G020 | Point-in-time data layer + as-of joins | implementer | G017, G018 | MERGED | [#20](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/20) | [#62](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/62) |
+| G021 | Data-quality checks | implementer | G020 | IN_PROGRESS | [#21](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/21) | |
+| G022 | Feature registry + small audited feature library | implementer | G020, G013 | IN_PROGRESS | [#22](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/22) | |
+| G023 | Target & label engine (all 4 target families) | implementer | G020, G014 | IN_PROGRESS | [#23](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/23) | |
 | G024 | N-LASR 2012 weak learner + AdaBoost loop (formula-level tests) | implementer | G007, G023 | BLOCKED | [#24](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/24) | |
 | G025 | Temporal ensemble framework | implementer | G024 | BLOCKED | [#25](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/25) | |
 | G026 | Walk-forward backtester (purge/embargo, event-time) | implementer | G023, G014 | BLOCKED | [#26](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/26) | |

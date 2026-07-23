@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 from lt_battery import Panel, activation, get_world
 
-from lasr.data.synthetic import SyntheticWorld
+from lasr.data.synthetic import SyntheticWorld, latest_vintage_view
 from lasr.data.synthetic.world import Row
 
 pytestmark = pytest.mark.leakage
@@ -26,6 +26,11 @@ def panel() -> Panel:
 
 def membership_matrix(panel: Panel, rows: tuple[Row, ...] | list[Row]) -> np.ndarray:
     member = np.zeros((len(panel.tickers), panel.n_periods), dtype=bool)
+    # RT-G019-1: intervals arrive as open + closure vintages; analysis-time
+    # (full-knowledge) view collapses to the max-knowledge row per key.
+    rows = latest_vintage_view(
+        list(rows), ("universe_id", "ticker", "exchange", "valid_from")
+    )
     for row in rows:
         i = panel.ticker_row(str(row["ticker"]))
         valid_from = row["valid_from"]

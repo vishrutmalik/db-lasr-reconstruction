@@ -5,7 +5,12 @@ data with ``knowledge_time > as_of`` and recomputes downstream artifacts.
 This module provides the data-layer half: given a world's raw tables,
 produce the truncated variant. Downstream layers (G020/G026/G029) apply it
 to their own artifacts; here we guarantee the generator side is exact:
-every surviving row was knowable at ``as_of``, every dropped row was not.
+every surviving row was knowable at ``as_of``, every dropped row was not —
+and, since RT-G019-1, this holds at FIELD level too: interval closures
+(``delisting_date``, ``valid_to``) live in separate later-stamped vintage
+rows, never inside the open-stamped row, so a surviving row cannot reveal
+a post-``as_of`` closure (tested by the LT-019 field-content probe and the
+red-team ratchet).
 
 Table knowledge columns follow the raw schemas: ``knowledge_time``
 everywhere it exists, ``announcement_time`` for corporate actions, and the

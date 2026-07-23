@@ -38,7 +38,7 @@ from lasr.data.synthetic.sidecar import (
     LedgerTruthRow,
     SeededErrorTruth,
 )
-from lasr.data.synthetic.world import Row
+from lasr.data.synthetic.world import Row, latest_vintage_view
 
 __all__ = ["build_ablations", "build_tables", "seed_errors"]
 
@@ -77,47 +77,77 @@ def _master_segments(b: _Builder) -> list[tuple[int, str, int, int, bool]]:
 
 
 def _security_master_rows(b: _Builder) -> tuple[Row, ...]:
+    """Master reference rows as TRUE vintages (RT-G019-1 fix).
+
+    The interval-OPEN row is stamped at listing and carries NO closure
+    (``delisting_date=None``); when a segment terminates, a SECOND,
+    superseding vintage row (same event key, later ``knowledge_time`` at
+    the closure's own publication instant) carries the ``delisting_date``.
+    FULL_VINTAGES semantics: knowledge-truncation of the world tables is
+    therefore honest at FIELD level, not just row level (LT-019).
+    """
     rows: list[Row] = []
     for i, ticker, start, term, terminated in _master_segments(b):
         listing = b.periods[start]
-        rows.append(
-            {
-                "ticker": ticker,
-                "exchange": b.exchange_of(i),
-                "name": f"Synthetic Concern {ticker[3:]}",
-                "security_type": "common",
-                "mic": b.exchange_of(i),
-                "country": b.country_of(i),
-                "trading_currency": b.currency_of(i),
-                "reporting_currency": b.currency_of(i),
-                "listing_date": listing,
-                "delisting_date": b.periods[term] if terminated else None,
-                "knowledge_time": _at(listing, _MIDNIGHT_UTC),
-            }
-        )
-    rows.sort(key=lambda r: (r["ticker"], r["exchange"]))
+        open_row: Row = {
+            "ticker": ticker,
+            "exchange": b.exchange_of(i),
+            "name": f"Synthetic Concern {ticker[3:]}",
+            "security_type": "common",
+            "mic": b.exchange_of(i),
+            "country": b.country_of(i),
+            "trading_currency": b.currency_of(i),
+            "reporting_currency": b.currency_of(i),
+            "listing_date": listing,
+            "delisting_date": None,
+            "knowledge_time": _at(listing, _MIDNIGHT_UTC),
+        }
+        rows.append(open_row)
+        if terminated:
+            closure_day = b.periods[term]
+            rows.append(
+                {
+                    **open_row,
+                    "delisting_date": closure_day,
+                    "knowledge_time": _at(closure_day, _PUBLICATION_UTC),
+                }
+            )
+    rows.sort(key=lambda r: (r["ticker"], r["exchange"], r["knowledge_time"]))  # type: ignore[arg-type,return-value]
     return tuple(rows)
 
 
 def _classification_rows(b: _Builder) -> tuple[Row, ...]:
+    """Classification intervals as TRUE vintages (RT-G019-1 fix): the open
+    row carries ``valid_to=None``; segment closures arrive as a later
+    vintage stamped at the closure's own publication instant."""
     rows: list[Row] = []
     for i, ticker, start, term, _terminated in _master_segments(b):
         for scheme, value in (
             ("country", b.country_of(i)),
             ("sector", b.sector_of(i)),
         ):
-            rows.append(
-                {
-                    "ticker": ticker,
-                    "exchange": b.exchange_of(i),
-                    "scheme": scheme,
-                    "value": value,
-                    "valid_from": b.periods[start],
-                    "valid_to": b.periods[term] if term < b.t - 1 else None,
-                    "knowledge_time": _at(b.periods[start], _MIDNIGHT_UTC),
-                }
-            )
-    rows.sort(key=lambda r: (r["ticker"], r["exchange"], r["scheme"]))
+            open_row: Row = {
+                "ticker": ticker,
+                "exchange": b.exchange_of(i),
+                "scheme": scheme,
+                "value": value,
+                "valid_from": b.periods[start],
+                "valid_to": None,
+                "knowledge_time": _at(b.periods[start], _MIDNIGHT_UTC),
+            }
+            rows.append(open_row)
+            if term < b.t - 1:
+                closure_day = b.periods[term]
+                rows.append(
+                    {
+                        **open_row,
+                        "valid_to": closure_day,
+                        "knowledge_time": _at(closure_day, _PUBLICATION_UTC),
+                    }
+                )
+    rows.sort(
+        key=lambda r: (r["ticker"], r["exchange"], r["scheme"], r["knowledge_time"])  # type: ignore[arg-type,return-value]
+    )
     return tuple(rows)
 
 
@@ -551,16 +581,27 @@ def _membership_rows(b: _Builder) -> tuple[Row, ...]:
         else:
             segments.append((ticker_from, from_t, to_t))
         for ticker, seg_from, seg_to in segments:
-            rows.append(
-                {
-                    "universe_id": UNIVERSE_ID,
-                    "ticker": ticker,
-                    "exchange": b.exchange_of(i),
-                    "valid_from": b.periods[seg_from],
-                    "valid_to": b.periods[seg_to] if seg_to is not None else None,
-                    "knowledge_time": _at(b.periods[seg_from], _MIDNIGHT_UTC),
-                }
-            )
+            # RT-G019-1: the OPEN row (stamped at valid_from) never carries
+            # the exit; the closure arrives as a later vintage stamped at
+            # the exit's own publication instant.
+            open_row: Row = {
+                "universe_id": UNIVERSE_ID,
+                "ticker": ticker,
+                "exchange": b.exchange_of(i),
+                "valid_from": b.periods[seg_from],
+                "valid_to": None,
+                "knowledge_time": _at(b.periods[seg_from], _MIDNIGHT_UTC),
+            }
+            rows.append(open_row)
+            if seg_to is not None:
+                closure_day = b.periods[seg_to]
+                rows.append(
+                    {
+                        **open_row,
+                        "valid_to": closure_day,
+                        "knowledge_time": _at(closure_day, _PUBLICATION_UTC),
+                    }
+                )
 
     included = {(truth.ticker, truth.exchange): truth for truth in b.inclusions}
     for i in range(b.n):
@@ -586,7 +627,13 @@ def _membership_rows(b: _Builder) -> tuple[Row, ...]:
             add(i, start, end)
 
     rows.sort(
-        key=lambda r: (r["universe_id"], r["ticker"], r["exchange"], r["valid_from"])
+        key=lambda r: (
+            r["universe_id"],
+            r["ticker"],
+            r["exchange"],
+            r["valid_from"],
+            r["knowledge_time"],
+        )  # type: ignore[arg-type,return-value]
     )
     return tuple(rows)
 
@@ -835,9 +882,13 @@ def build_ablations(
                 )
             }
         elif name == "current_membership":  # LT-016: backfilled membership
+            latest = latest_vintage_view(
+                clean["raw_universe_membership"],
+                ("universe_id", "ticker", "exchange", "valid_from"),
+            )
             final_members = {
                 (str(row["ticker"]), str(row["exchange"]))
-                for row in clean["raw_universe_membership"]
+                for row in latest
                 if row["valid_to"] is None
             }
             ablations[name] = {

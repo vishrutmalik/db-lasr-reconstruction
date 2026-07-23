@@ -57,6 +57,7 @@ from lasr.data.synthetic import (
     SidecarTruth,
     content_hash_rows,
     generate_world,
+    latest_vintage_view,
 )
 from lasr.data.synthetic.generator import CALENDAR_ID, UNIVERSE_ID
 from lasr.data.synthetic.scenarios import SCENARIO_IDS
@@ -87,7 +88,10 @@ _BAR_FIELDS = frozenset(
     }
 )
 
-_END_OF_DAY = time(23, 59, 59)
+#: Window-end knowability instant: the END date's bar close (RT-G019-8 —
+#: a consumer equating "window end" with "decision at D's close" must not
+#: receive data stamped after that close, e.g. 21:30 publications on D).
+_BAR_CLOSE = time(21, 0)
 
 
 # ── scenario bundle machinery (provider_contract.md §6) ──────────────────────
@@ -512,7 +516,12 @@ class SyntheticProvider:
     def fetch_security_master(
         self, ids: Sequence[ProviderId] | None = None
     ) -> DataFrame:
-        rows = self._world.table("raw_security_master")
+        # RT-G019-1: the world table carries open + closure VINTAGES per
+        # segment; the snapshot surface serves the max-knowledge view
+        # (retrieval-time semantics — closures are knowable by then).
+        rows = latest_vintage_view(
+            self._world.table("raw_security_master"), ("ticker", "exchange")
+        )
         if ids is not None:
             keys = self._resolve(ids)
             rows = tuple(row for row in rows if self._id_match(row, keys))
@@ -629,7 +638,7 @@ class SyntheticProvider:
         self._check_window(FieldFamily.ESTIMATES, start, end)
         keys = self._resolve(ids)
         wanted = set(metrics)
-        cutoff = datetime.combine(end, _END_OF_DAY, tzinfo=UTC)
+        cutoff = datetime.combine(end, _BAR_CLOSE, tzinfo=UTC)
         by_key: dict[tuple[object, ...], Row] = {}
         for row in self._world.table("raw_estimates"):
             if row["metric"] not in wanted or not self._id_match(row, keys):
@@ -673,9 +682,13 @@ class SyntheticProvider:
             )
         keys = self._resolve(ids)
         wanted = set(schemes)
+        # RT-G019-1: collapse open/closure vintages (snapshot semantics).
         rows = [
             row
-            for row in self._world.table("raw_classifications")
+            for row in latest_vintage_view(
+                self._world.table("raw_classifications"),
+                ("ticker", "exchange", "scheme"),
+            )
             if row["scheme"] in wanted and self._id_match(row, keys)
         ]
         return build_frame(RAW_SCHEMAS["raw_classifications"], rows)
@@ -689,9 +702,21 @@ class SyntheticProvider:
                 f"universe is {UNIVERSE_ID!r}"
             )
         self._check_window(FieldFamily.UNIVERSE_MEMBERSHIP, start, end)
-        rows = [
+        # RT-G019-1: PIT semantics on the windowed surface — only vintages
+        # knowable at the window end's bar close are considered, THEN the
+        # max-knowledge row per interval key is taken, so a closure dated
+        # beyond the window can never appear (the open row serves instead).
+        cutoff = datetime.combine(end, _BAR_CLOSE, tzinfo=UTC)
+        knowable = [
             row
             for row in self._world.table("raw_universe_membership")
+            if row["knowledge_time"] <= cutoff  # type: ignore[operator]
+        ]
+        rows = [
+            row
+            for row in latest_vintage_view(
+                knowable, ("universe_id", "ticker", "exchange", "valid_from")
+            )
             if row["valid_from"] <= end  # type: ignore[operator]
             and (row["valid_to"] is None or row["valid_to"] >= start)  # type: ignore[operator]
         ]

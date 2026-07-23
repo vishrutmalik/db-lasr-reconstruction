@@ -27,22 +27,13 @@ def _day_utc(d: date) -> datetime:
     return datetime(d.year, d.month, d.day, tzinfo=UTC)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "RT-G019-1 (BLOCKING): interval-closure payloads are stamped with the "
-        "interval-OPEN knowledge_time — raw_security_master.delisting_date, "
-        "raw_universe_membership.valid_to and raw_classifications.valid_to "
-        "carry post-knowledge_time dates, so knowledge-truncation (LT-019) "
-        "keeps rows that reveal future delistings/exits. FULL_VINTAGES "
-        "requires the closure to be a separate, later-stamped vintage row."
-    ),
-)
 def test_surviving_rows_carry_no_post_asof_interval_closures() -> None:
-    """After truncation at as_of, no surviving row may contain a date payload
-    beyond as_of in the interval-closure columns (forecast horizons like
-    raw_estimates.period_end and announced effective dates are exempt: those
-    are genuinely knowable-in-advance schedule content)."""
+    """RT-G019-1 remediation ratchet (was a strict xfail): after truncation
+    at as_of, no surviving row may contain a date payload beyond as_of in
+    the interval-closure columns — closures are now separate later-stamped
+    vintage rows (forecast horizons like raw_estimates.period_end and
+    announced effective dates remain exempt: genuinely knowable-in-advance
+    schedule content)."""
     cfg = ScenarioConfig(scenario_id="baseline", seed=1729, n_securities=40, n_years=6)
     world = generate_world(cfg)
     grid = [date.fromisoformat(d) for d in world.sidecar.period_dates]

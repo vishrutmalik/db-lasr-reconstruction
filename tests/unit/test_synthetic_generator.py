@@ -19,6 +19,7 @@ from lasr.data.synthetic import (
     SyntheticWorld,
     content_hash_rows,
     generate_world,
+    latest_vintage_view,
 )
 from lasr.data.synthetic.world import Row
 
@@ -29,20 +30,29 @@ SMALL_BASELINE = ScenarioConfig(
 )
 
 #: World tables that hold exactly one row per raw-schema primary key. The
-#: vintage-carrying tables (fundamentals, estimates) intentionally hold the
-#: FULL history — multiple knowledge times per event key — which the
-#: provider collapses for ``vintage="latest"`` fetches (raw_fundamentals
-#: docstring: vintages are disambiguated by non-null knowledge_time).
+#: vintage-carrying tables intentionally hold the FULL history — multiple
+#: knowledge times per event key: fundamentals/estimates (restatements,
+#: revisions) and, since RT-G019-1, the interval tables (master,
+#: classifications, membership) whose closures are separate later-stamped
+#: vintage rows. The provider collapses them on its fetch surface.
 PK_UNIQUE_TABLES = (
-    "raw_security_master",
     "raw_market_daily",
     "raw_market_metrics",
     "raw_corporate_actions",
-    "raw_classifications",
-    "raw_universe_membership",
     "raw_borrow_daily",
     "raw_fx_rates",
     "raw_trading_calendars",
+)
+
+#: Interval tables: (raw table, primary key columns).
+INTERVAL_VINTAGE_TABLES = (
+    ("raw_security_master", ("ticker", "exchange"), "delisting_date"),
+    ("raw_classifications", ("ticker", "exchange", "scheme"), "valid_to"),
+    (
+        "raw_universe_membership",
+        ("universe_id", "ticker", "exchange", "valid_from"),
+        "valid_to",
+    ),
 )
 
 
@@ -109,6 +119,34 @@ class TestSchemasAndRows:
         for row in rows[:: max(1, len(rows) // 50)]:
             RAW_SCHEMAS[table].row_model(**row)
 
+    @pytest.mark.parametrize(("table", "pk", "closure"), INTERVAL_VINTAGE_TABLES)
+    def test_interval_tables_validate_in_their_latest_view(
+        self, world: SyntheticWorld, table: str, pk: tuple[str, ...], closure: str
+    ) -> None:
+        validate_rows(RAW_SCHEMAS[table], latest_vintage_view(world.table(table), pk))
+
+    @pytest.mark.parametrize(("table", "pk", "closure"), INTERVAL_VINTAGE_TABLES)
+    def test_interval_closures_are_later_stamped_vintages(
+        self, world: SyntheticWorld, table: str, pk: tuple[str, ...], closure: str
+    ) -> None:
+        """RT-G019-1: the open-stamped row NEVER carries the closure; the
+        closure row's knowledge_time is at/after the closure date itself."""
+        groups: dict[tuple[object, ...], list[Row]] = {}
+        for row in world.table(table):
+            groups.setdefault(tuple(row.get(c) for c in pk), []).append(row)
+        closures = 0
+        for key, rows in groups.items():
+            rows.sort(key=lambda r: r["knowledge_time"])  # type: ignore[arg-type,return-value]
+            assert rows[0][closure] is None, (table, key)
+            assert len(rows) <= 2, (table, key)
+            if len(rows) == 2:
+                closures += 1
+                closed = rows[1][closure]
+                stamp = rows[1]["knowledge_time"]
+                assert isinstance(closed, date) and isinstance(stamp, datetime)
+                assert stamp.date() >= closed, (table, key)
+        assert closures > 0, f"{table}: baseline must contain closures"
+
     def test_every_family_table_is_populated(self, world: SyntheticWorld) -> None:
         for name, rows in world.tables.items():
             assert rows, f"baseline world must populate {name}"
@@ -117,7 +155,12 @@ class TestSchemasAndRows:
 class TestChurnIntervals:
     def test_no_bars_outside_listing_interval(self, world: SyntheticWorld) -> None:
         """Skill invariant: no price after delisting; none before listing."""
-        master = {str(r["ticker"]): r for r in world.table("raw_security_master")}
+        master = {
+            str(r["ticker"]): r
+            for r in latest_vintage_view(
+                world.table("raw_security_master"), ("ticker", "exchange")
+            )
+        }
         for ticker, bars in rows_by_ticker(world.table("raw_market_daily")).items():
             listing = master[ticker]["listing_date"]
             delisting = master[ticker]["delisting_date"]
@@ -129,8 +172,20 @@ class TestChurnIntervals:
     def test_membership_intervals_within_listing_and_non_overlapping(
         self, world: SyntheticWorld
     ) -> None:
-        master = {str(r["ticker"]): r for r in world.table("raw_security_master")}
-        by_ticker = rows_by_ticker(world.table("raw_universe_membership"))
+        master = {
+            str(r["ticker"]): r
+            for r in latest_vintage_view(
+                world.table("raw_security_master"), ("ticker", "exchange")
+            )
+        }
+        by_ticker = rows_by_ticker(
+            list(
+                latest_vintage_view(
+                    world.table("raw_universe_membership"),
+                    ("universe_id", "ticker", "exchange", "valid_from"),
+                )
+            )
+        )
         for ticker, intervals in by_ticker.items():
             listing = master[ticker]["listing_date"]
             assert isinstance(listing, date)
@@ -307,7 +362,12 @@ class TestActionMechanics:
         ]
         assert changes, "baseline schedules a symbol change"
         bars = rows_by_ticker(world.table("raw_market_daily"))
-        master = {str(r["ticker"]): r for r in world.table("raw_security_master")}
+        master = {
+            str(r["ticker"]): r
+            for r in latest_vintage_view(
+                world.table("raw_security_master"), ("ticker", "exchange")
+            )
+        }
         for action in changes:
             old, new = str(action["ticker"]), str(action["successor_ticker"])
             assert master[old]["delisting_date"] is not None

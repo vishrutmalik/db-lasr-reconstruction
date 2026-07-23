@@ -17,16 +17,53 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
 
 from lasr.data.synthetic.config import ScenarioConfig
 from lasr.data.synthetic.plan import WorldPlan
 from lasr.data.synthetic.sidecar import SidecarTruth
 
-__all__ = ["Row", "SyntheticWorld", "content_hash_rows"]
+__all__ = ["Row", "SyntheticWorld", "content_hash_rows", "latest_vintage_view"]
 
 #: One raw-shaped row (mutable while under construction, treated as frozen
 #: once the world is assembled).
 Row = dict[str, object]
+
+
+def latest_vintage_view(
+    rows: tuple[Row, ...] | list[Row],
+    key_columns: tuple[str, ...],
+    knowledge_column: str = "knowledge_time",
+) -> tuple[Row, ...]:
+    """Collapse vintage rows to the max-knowledge row per event key.
+
+    RT-G019-1: interval-shaped tables (master, classifications, universe
+    membership) carry open + closure VINTAGES — the open row is stamped at
+    the interval's opening and never contains the closure; the closure is
+    a later-stamped superseding row. Snapshot-style consumers collapse to
+    this view; PIT consumers filter by knowledge first, then collapse.
+    """
+    by_key: dict[tuple[object, ...], Row] = {}
+    for row in rows:
+        stamp = row.get(knowledge_column)
+        if not isinstance(stamp, datetime):
+            raise TypeError(
+                f"row lacks a datetime {knowledge_column!r}; cannot order vintages"
+            )
+        key = tuple(row.get(column) for column in key_columns)
+        current = by_key.get(key)
+        if current is None or stamp > current[knowledge_column]:  # type: ignore[operator]
+            by_key[key] = row
+
+    def sort_key(row: Row) -> tuple[Any, ...]:
+        # PK columns are non-null per the raw schemas, so direct value
+        # ordering is well-defined (str/date homogeneous per column).
+        return tuple(row[column] for column in key_columns)
+
+    ordered = list(by_key.values())
+    ordered.sort(key=sort_key)
+    return tuple(ordered)
 
 
 def _row_token(row: Mapping[str, object]) -> str:

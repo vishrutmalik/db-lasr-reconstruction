@@ -19,7 +19,12 @@ from lasr.data.synthetic.sidecar import (
     SidecarTruth,
 )
 from lasr.data.synthetic.truncation import truncate_tables
-from lasr.data.synthetic.world import Row, SyntheticWorld, content_hash_rows
+from lasr.data.synthetic.world import (
+    Row,
+    SyntheticWorld,
+    content_hash_rows,
+    latest_vintage_view,
+)
 
 __all__ = [
     "A003_BANNER",
@@ -37,5 +42,6 @@ __all__ = [
     "content_hash_rows",
     "default_config",
     "generate_world",
+    "latest_vintage_view",
     "truncate_tables",
 ]

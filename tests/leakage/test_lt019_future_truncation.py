@@ -8,7 +8,7 @@ the vertical slice (G029) and the full experiment (G038).
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, time
+from datetime import UTC, date, datetime, time
 
 import pytest
 from lt_battery import activation, get_world
@@ -75,6 +75,47 @@ class TestTruncationExactness:
         ]
         assert "raw_market_daily" in shrunk
         assert "raw_fundamentals" in shrunk or scenario_id == "LT-012"
+
+
+#: RT-G019-1 / LT-019 extension: row-deletion alone is structurally blind
+#: to closure payloads INSIDE surviving rows; the probe must also inspect
+#: field content. LT-009 is included because it actually contains closures
+#: (hazard delistings + membership exits) — teeth.
+CLOSURE_COLUMNS = {
+    "raw_security_master": ("delisting_date",),
+    "raw_universe_membership": ("valid_to",),
+    "raw_classifications": ("valid_to",),
+}
+
+
+@pytest.mark.parametrize("scenario_id", (*SCENARIOS, "LT-009"))
+def test_surviving_rows_reveal_no_post_asof_closures(scenario_id: str) -> None:
+    """Field-content half of LT-019: no surviving row may carry an
+    interval-closure date beyond as_of (closures are separate later-stamped
+    vintage rows since RT-G019-1)."""
+    world = get_world(scenario_id)
+    has_closures = any(
+        row.get(column) is not None
+        for table, columns in CLOSURE_COLUMNS.items()
+        for row in world.tables[table]
+        for column in columns
+    )
+    if scenario_id == "LT-009":
+        assert has_closures, "LT-009 must contain closures (probe teeth)"
+    for as_of in probe_dates(scenario_id):
+        truncated = truncate_tables(world.tables, as_of)
+        for table, columns in CLOSURE_COLUMNS.items():
+            for row in truncated[table]:
+                assert row["knowledge_time"] <= as_of  # type: ignore[operator]
+                for column in columns:
+                    value = row.get(column)
+                    if value is None:
+                        continue
+                    assert isinstance(value, date)
+                    assert value <= as_of.date(), (
+                        f"{scenario_id}/{table}.{column}: surviving row "
+                        f"reveals post-as_of closure {value}"
+                    )
 
 
 def test_unknown_table_is_refused() -> None:

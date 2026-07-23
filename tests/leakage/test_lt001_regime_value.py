@@ -8,9 +8,10 @@ selection frequency) activate with the learners.
 
 from __future__ import annotations
 
+import itertools
+
 import numpy as np
 import pytest
-
 from lt_battery import (
     Panel,
     activation,
@@ -50,7 +51,7 @@ class TestConstruction:
         spells = world.sidecar.regime_spells
         assert spells[0].start == 0
         assert spells[-1].end == len(world.sidecar.period_dates)
-        for prev, curr in zip(spells, spells[1:], strict=False):
+        for prev, curr in itertools.pairwise(spells):
             assert prev.end == curr.start
             assert prev.label != curr.label
         lengths = [s.end - s.start for s in spells]
@@ -66,9 +67,7 @@ class TestConstruction:
         assert np.all(path[b_mask] == 0.0)
 
     def test_regime_state_is_not_exposed_as_a_feature(self) -> None:
-        codes = {
-            str(r["metric"]) for r in WORLD().table("raw_market_metrics")
-        }
+        codes = {str(r["metric"]) for r in WORLD().table("raw_market_metrics")}
         assert codes == {"FVAL", "FNOISEA", "FNOISEB"}
 
 

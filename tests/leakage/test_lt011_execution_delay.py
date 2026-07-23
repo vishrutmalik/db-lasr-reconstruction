@@ -10,6 +10,8 @@ truth) is grain-independent.
 
 from __future__ import annotations
 
+import itertools
+
 import numpy as np
 import pytest
 from lt_battery import Panel, activation, band, get_world, ic_series, mean_ic, n_used
@@ -40,22 +42,16 @@ class TestPerLagTruth:
         truth = world.sidecar.feature("FFAST")
         embedded = truth.rho_path[0] * truth.persistence**lag
         ics = ic_series(panel.metric("FFAST"), panel.returns, lag=lag + 1)
-        assert abs(mean_ic(ics) - embedded) < band(
-            world, n_used(ics), embedded=True
-        )
+        assert abs(mean_ic(ics) - embedded) < band(world, n_used(ics), embedded=True)
 
-    def test_strict_monotone_decrease_across_the_lag_grid(
-        self, panel: Panel
-    ) -> None:
+    def test_strict_monotone_decrease_across_the_lag_grid(self, panel: Panel) -> None:
         """Leak symptom: performance flat in the delay (delay not applied)."""
         feature = panel.metric("FFAST")
         measured = [
-            mean_ic(ic_series(feature, panel.returns, lag=lag + 1))
-            for lag in LAG_GRID
+            mean_ic(ic_series(feature, panel.returns, lag=lag + 1)) for lag in LAG_GRID
         ]
         assert all(
-            earlier > later
-            for earlier, later in zip(measured, measured[1:], strict=False)
+            earlier > later for earlier, later in itertools.pairwise(measured)
         ), measured
         base = ic_series(feature, panel.returns, lag=1)
         far = ic_series(feature, panel.returns, lag=6)

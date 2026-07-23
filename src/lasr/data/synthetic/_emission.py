@@ -395,11 +395,7 @@ def _fundamental_rows(b: _Builder) -> tuple[Row, ...]:
                 # makes the value available at the first bar >= period_end
                 # (t_obs) and would "predict" the t_obs+1 return exactly.
                 t_obs = b.period_index_on_or_after(q_end)
-                if (
-                    t_obs is not None
-                    and t_obs + 1 < b.t
-                    and b.alive(i, t_obs + 1)
-                ):
+                if t_obs is not None and t_obs + 1 < b.t and b.alive(i, t_obs + 1):
                     emit(
                         i,
                         hindsight.name,

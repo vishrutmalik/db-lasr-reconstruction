@@ -43,9 +43,7 @@ class TestConstruction:
 
 
 class TestDetectorTruth:
-    def test_leaked_feature_ic_exceeds_the_flag_threshold(
-        self, panel: Panel
-    ) -> None:
+    def test_leaked_feature_ic_exceeds_the_flag_threshold(self, panel: Panel) -> None:
         world = get_world("LT-004")
         threshold = world.sidecar.oracle["leak_flag_threshold"]
         ics = ic_series(panel.metric("FLEAK"), panel.returns)

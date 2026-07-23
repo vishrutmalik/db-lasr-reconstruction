@@ -58,8 +58,10 @@ class TestMeasured:
         measured = quintile_means(panel.metric("FVEE"), panel.returns)
         # per-quintile mean over ~ (N/5 * T) observations of sigma_resid noise
         n_obs = (world.sidecar.n_securities / 5) * (len(panel.dates) - 1)
-        tolerance = world.sidecar.pass_bands["z"] * world.sidecar.sigma_resid / (
-            math.sqrt(n_obs)
+        tolerance = (
+            world.sidecar.pass_bands["z"]
+            * world.sidecar.sigma_resid
+            / (math.sqrt(n_obs))
         )
         assert np.all(np.abs(measured - expected) < tolerance), (
             measured,

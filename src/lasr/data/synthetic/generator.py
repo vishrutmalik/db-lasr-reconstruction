@@ -256,9 +256,7 @@ def _oracle_values(b: _Builder) -> dict[str, float]:
         oracle["leak_flag_threshold"] = float(
             b.config.param("leak_flag_threshold", 0.30)
         )
-        oracle["honest_ic_ceiling"] = float(
-            b.config.param("honest_ic_ceiling", 0.15)
-        )
+        oracle["honest_ic_ceiling"] = float(b.config.param("honest_ic_ceiling", 0.15))
     if b.plan.boundary_jitter > 0:  # LT-008 embedded boundary population
         window_pct = float(b.config.param("boundary_window_pct", 2.0))
         oracle["boundary_window_pct"] = window_pct

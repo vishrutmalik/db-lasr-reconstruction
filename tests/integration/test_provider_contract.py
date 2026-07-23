@@ -37,10 +37,10 @@ from lasr.data.providers import (
     UnknownProviderIdError,
     grade_dataset,
 )
-from lasr.data.synthetic import ScenarioConfig
 from lasr.data.schemas.base import validate_rows
 from lasr.data.schemas.market_data import FM17_FORBIDDEN_PRICE_COLUMNS
 from lasr.data.schemas.raw_registry import RAW_SCHEMAS
+from lasr.data.synthetic import ScenarioConfig
 
 pytestmark = pytest.mark.integration
 

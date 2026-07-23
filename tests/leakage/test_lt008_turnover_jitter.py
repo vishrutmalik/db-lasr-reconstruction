@@ -27,9 +27,7 @@ def panel() -> Panel:
 
 
 class TestConstruction:
-    def test_measured_exposure_autocorr_matches_embedded(
-        self, panel: Panel
-    ) -> None:
+    def test_measured_exposure_autocorr_matches_embedded(self, panel: Panel) -> None:
         world = get_world("LT-008")
         truth = world.sidecar.feature("FPERS")
         assert truth.exposure_autocorr is not None

@@ -43,7 +43,6 @@ def get_world(scenario_id: str, seed: int = BATTERY_SEED) -> SyntheticWorld:
     return _WORLD_CACHE[key]
 
 
-
 def activation(goal: str, what: str) -> pytest.MarkDecorator:
     """Model-dependent LT assertion awaiting its dependency: honest skip,
     loud failure if un-skipped early (no fake model assertions)."""
@@ -91,11 +90,7 @@ class Panel:
 
     def metric(self, code: str) -> np.ndarray:
         return self.matrix(
-            [
-                r
-                for r in self.world.table("raw_market_metrics")
-                if r["metric"] == code
-            ]
+            [r for r in self.world.table("raw_market_metrics") if r["metric"] == code]
         )
 
     def closes(self) -> np.ndarray:
@@ -130,9 +125,7 @@ def xs_corr(x: np.ndarray, y: np.ndarray, min_names: int = 10) -> float:
 def ic_series(feature: np.ndarray, returns: np.ndarray, lag: int = 1) -> np.ndarray:
     """Per-decision-period IC: corr(feature[:, t], returns[:, t + lag])."""
     t_max = feature.shape[1] - lag
-    return np.array(
-        [xs_corr(feature[:, t], returns[:, t + lag]) for t in range(t_max)]
-    )
+    return np.array([xs_corr(feature[:, t], returns[:, t + lag]) for t in range(t_max)])
 
 
 def mean_ic(ics: np.ndarray, mask: np.ndarray | None = None) -> float:

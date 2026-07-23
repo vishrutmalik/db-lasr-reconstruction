@@ -7,6 +7,8 @@ The decay curve is derivable from the sidecar (rho_path[0], persistence).
 
 from __future__ import annotations
 
+import itertools
+
 import pytest
 from lt_battery import Panel, band, get_world, ic_series, mean_ic, n_used
 
@@ -26,9 +28,7 @@ class TestMeasuredDecay:
         truth = world.sidecar.feature("FDECAY")
         embedded = truth.rho_path[0] * truth.persistence**k
         ics = ic_series(panel.metric("FDECAY"), panel.returns, lag=k + 1)
-        assert abs(mean_ic(ics) - embedded) < band(
-            world, n_used(ics), embedded=True
-        )
+        assert abs(mean_ic(ics) - embedded) < band(world, n_used(ics), embedded=True)
 
     def test_decay_is_monotone_not_flat(self, panel: Panel) -> None:
         """Leak symptom check: a flat curve at rho(0) means labels are not
@@ -48,8 +48,7 @@ class TestMeasuredDecay:
             mean_ic(ic_series(feature, panel.returns, lag=k + 1)) for k in range(4)
         ]
         assert all(
-            earlier > later - 0.02
-            for earlier, later in zip(measured, measured[1:], strict=False)
+            earlier > later - 0.02 for earlier, later in itertools.pairwise(measured)
         )
 
 

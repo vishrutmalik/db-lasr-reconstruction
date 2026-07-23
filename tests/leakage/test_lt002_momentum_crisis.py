@@ -55,9 +55,7 @@ class TestConstruction:
 
 
 class TestMeasuredIc:
-    def test_momentum_pays_normally_and_flips_in_crisis(
-        self, panel: Panel
-    ) -> None:
+    def test_momentum_pays_normally_and_flips_in_crisis(self, panel: Panel) -> None:
         world = get_world("LT-002")
         path = rho_path(world, "FMOM")
         ics = ic_series(panel.metric("FMOM"), panel.returns)

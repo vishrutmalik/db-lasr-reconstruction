@@ -69,9 +69,7 @@ class TestConstruction:
         assert profile is not None
         assert profile[0] == pytest.approx(0.0)
         for back in (2, 4):
-            assert overlap_corr(panel, back) == pytest.approx(
-                profile[back], abs=0.05
-            )
+            assert overlap_corr(panel, back) == pytest.approx(profile[back], abs=0.05)
         assert overlap_corr(panel, 4) > overlap_corr(panel, 2) > 0.1
 
     def test_unpurged_ablation_fold_spec_marker(self) -> None:

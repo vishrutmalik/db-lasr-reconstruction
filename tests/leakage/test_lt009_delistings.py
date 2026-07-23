@@ -74,9 +74,7 @@ class TestTeeth:
         """The ablation's return exceeds the unbiased one by the sidecar's
         analytic uplift (recomputed from the emitted datasets)."""
         world = get_world("LT-009")
-        dead_rows = {
-            panel.ticker_row(t.ticker) for t in world.sidecar.delistings
-        }
+        dead_rows = {panel.ticker_row(t.ticker) for t in world.sidecar.delistings}
         unbiased = equal_weight_mean(panel.returns)
         biased = equal_weight_mean(panel.returns, exclude=dead_rows)
         uplift = world.sidecar.survivorship_uplift_per_period

@@ -27,9 +27,7 @@ def obs_index(panel: Panel, period_end: date) -> int | None:
 
 
 class TestConstruction:
-    def test_value_is_the_return_after_the_observation_date(
-        self, panel: Panel
-    ) -> None:
+    def test_value_is_the_return_after_the_observation_date(self, panel: Panel) -> None:
         """|IC| ~ 1 against the period following the observation date."""
         world = get_world("LT-013")
         pairs = []

@@ -45,12 +45,13 @@ Governing rules, restated once:
 
 - Location: `.env` at the repo root. Git-ignores it by pattern (`.env`,
   `.env.*`, with only `!.env.example` allowed back in — `.gitignore`).
-- Variable NAMES (never values) are declared by the `config` module when
-  the API adapter lands — ADAPTER_PATH_PENDING_G018
-  (`provider_contract.md` §4.3: auth-from-environment, names declared in
-  config, values never logged). Until G018 lands, park credentials in
-  `.env` with clearly provisional names and record the names (only) in
-  `.env.example` via PR.
+- Variable NAMES (never values) are declared in the committed
+  `.env.example` (landed with G018): `LASR_LOCAL_TEMPLATE_ROOT` (root
+  directory of workbook template extracts for the local-file provider) and
+  the reserved future-API names `LASR_API_BASE_URL` / `LASR_API_KEY` /
+  `LASR_API_SECRET` — all unset until a real adapter lands
+  (`provider_contract.md` §4.3: auth-from-environment, values never
+  logged). Any new name goes into `.env.example` via PR before use.
 - Only `config` (and `cli`) may read environment variables
   (`system_design.md` §4 rule); CT-14 enforces that no credential value
   appears in frames, logs, or manifests.
@@ -73,9 +74,13 @@ Governing rules, restated once:
 
 Definitions, expected-if-true / expected-if-false, and gate consequences:
 integration guide §3. Probes are manual template operations (set controls,
-let the add-in populate, save-as) — there is no ingestion CLI for this yet;
-the local-file adapter that will read these files is
-ADAPTER_PATH_PENDING_G018 (`provider_contract.md` §4.2).
+let the add-in populate, save-as) — there is no ingestion CLI for this
+yet. The merged local-file adapter
+(`src/lasr/data/providers/local_file.py`, `LocalFileProvider`) reads
+CSV/JSON **template extracts**, not xlsx: probe workbooks are evidence
+files first; loading them through the adapter additionally requires the
+xlsx→extract conversion per the extract layout in the module docstring
+(shim deferred pending the openpyxl dependency grant, G043).
 
 Recommended order (cheapest, highest-gate first):
 
@@ -120,10 +125,11 @@ For every probe execution, in one PR (orchestrator-reviewed):
      upgrade path.
 4. **Capability record deltas** — `history_start`, field-coverage
    additions, `corporate_action_basis`, `supports_vintages`: change the
-   adapter's declared record (ADAPTER_PATH_PENDING_G018;
-   `provider_contract.md` §4.2 table is the normative source to amend in
-   the same PR) citing the manifest rows from step 1. CT-01 requires every
-   flag's note to cite a source — the probe row is that source.
+   adapter's declared record (`LocalFileProvider._build_capabilities()` in
+   `src/lasr/data/providers/local_file.py`; `provider_contract.md` §4.2
+   table is the normative source to amend in the same PR) citing the
+   manifest rows from step 1. CT-01 requires every flag's note to cite a
+   source — the probe row is that source.
 
 Never recorded = never happened: an unrecorded probe result licenses
 nothing.
@@ -177,13 +183,14 @@ data, and VP-03-demonstrated depth (integration guide §4.2).
 | `nlasr_2020` | MSCI World PIT 1996–2020; GICS history incl. 10→11; MSCI World TR; depth to ~1991; daily volume | VP-01/03 |
 | `modernized` | VP-04 true (as-reported vintages + publication timestamps) or a second provider; delisting returns; borrow history — M-05 contradicts `latest_filing` semantics, so AlphaSense-alone is a permanent no-go | VP-04 |
 
-Intermediate milestone that needs no external data: once the local-file
-adapter and ingestion land (ADAPTER_PATH_PENDING_G018 /G020), a **real-data
-plumbing run** — current snapshot + TM panel through
-L-RAW → L-CANON with `SNAPSHOT_STAMPED`/`RETRO_WINDOW` grades (integration
-guide §2.4) — is a valid "go" for plumbing only, and must be labelled as
-such (A-003 discipline applies to real snapshots too: plumbing, not
-investment merit).
+Intermediate milestone that needs no external data: the local-file adapter
+has landed (`src/lasr/data/providers/local_file.py`, G018); once ingestion
+(G020) and the xlsx→extract shim land, a **real-data plumbing run** —
+current snapshot + TM panel through L-RAW → L-CANON with
+`SNAPSHOT_STAMPED`/`RETRO_WINDOW` grades (integration guide §2.4, D-011)
+— is a valid "go" for plumbing only, and must be labelled as such (A-003
+discipline applies to real snapshots too: plumbing, not investment
+merit).
 
 ## 8. Failure handling
 

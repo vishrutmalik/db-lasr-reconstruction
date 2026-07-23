@@ -16,10 +16,15 @@ W1 sheet dimensions — all match the G012 catalogs.
 
 Conventions:
 
-- **ADAPTER_PATH_PENDING_G018** marks any concrete code path in G018's scope
-  (local-file adapter, API stub, contract-test suite) that does not exist
-  yet. Each marker cites the `provider_contract.md` section that fixes the
-  behavior; the post-G018 verifier sweeps and resolves these markers.
+- G018 has merged (PR #60; `docs/verification/G018.md`): this guide's
+  former adapter-path-pending markers are resolved to the real code paths —
+  `src/lasr/data/providers/base.py` (DataProvider protocol, capability
+  records, typed errors), `src/lasr/data/providers/local_file.py`
+  (`LocalFileProvider`), `tests/integration/test_provider_contract.py`
+  (CT-01..15). The generic API **HTTP stub was descoped** per D-013
+  (`decisions.md`): the Protocol + capability records + contract suite +
+  `.env.example` auth surface are the generic API-provider interface; no
+  HTTP skeleton exists until a real API shape does.
 - Nothing here upgrades a provider capability. Every "available" is
   latest-restatement / snapshot / retro-window per A-001
   (`assumptions_register.md`); `NOT_ESTABLISHED` means exactly that.
@@ -50,10 +55,13 @@ not enumeration (gap §1; E-G012-11).
 ### 1.2 Capability record the local-file adapter must declare
 
 Normative defaults, mirrored verbatim from `provider_contract.md` §4.2
-(evidence-fixed by G012/G013; G018 implements exactly this).
-Local-file adapter code path: ADAPTER_PATH_PENDING_G018
-(`provider_contract.md` §4.2; module level `data.providers` per
-`system_design.md` §4).
+(evidence-fixed by G012/G013). Implemented (G018):
+`src/lasr/data/providers/local_file.py` —
+`LocalFileProvider._build_capabilities()` constructs exactly this record.
+Note the adapter reads CSV/JSON **template extracts** (one
+`<TICKER>__<EXCHANGE>/` directory per security), not xlsx directly; the
+xlsx→extract conversion shim is deferred until openpyxl enters the
+dependency set (module docstring; G043 holds the pyproject grant).
 
 | Capability | Value | Source |
 |---|---|---|
@@ -118,8 +126,11 @@ per provider" (`provider_contract.md` Principle 3 / §7;
 ### 2.1 Direct and renamed fields → adapter field tables
 
 The adapter's field table maps canonical raw-field names to provider
-`excel_code`s and the W2 surface they are served from. Field-table config
-path: ADAPTER_PATH_PENDING_G018 (`provider_contract.md` §4.2). Servable
+`excel_code`s and the W2 surface they are served from. Implemented as the
+code tables in `src/lasr/data/providers/local_file.py`:
+`_PRICE_FIELD_CODES` (`close→CLOSE`, `market_cap→MCAP`),
+`_CLASSIFICATION_SCHEME_CODES`, `_SECURITY_MASTER_FIELDS`; fundamental and
+market-metric codes are read from the extracts themselves. Servable
 today, with their PIT tags (a field being listed here never implies
 backtest-usable history — field_mapping conventions):
 
@@ -149,8 +160,10 @@ Adapter obligations that follow directly:
   `field_coverage()`** until a §3 probe demonstrates retrieval (CT-07).
 - Reproduce the provider's per-cell error behavior as typed errors: an
   unknown-code response (the `FP!D37` VL40 pattern, E-G012-12) maps to
-  `FieldUnavailableError`, a malformed workbook to `IntegrityError`
-  (`provider_contract.md` §3).
+  `FieldUnavailableError`, a malformed workbook to `IntegrityError`, and an
+  unresolvable ticker+exchange to `UnknownProviderIdError` — added to the
+  closed error set by D-015: entity-resolution failures raise, never
+  return an empty frame (`provider_contract.md` §3 + §3 amendment).
 - Tolerate covered-but-empty series: 6 TM pairs returned 0 obs for NVDA and
   the 254-obs multiples have ~3-month holes (E-G012-10) — these are
   valid-empty results, not errors (CT-12).
@@ -206,16 +219,18 @@ stamping is ingestion's job. Canonical grades per `system_design.md` §2;
 | LISTED_ONLY | no dataset may be produced until the field's probe passes (§3) | n/a |
 | N/A (unavailable) | no dataset; family/flag stays false | n/a |
 
-**Flagged contradiction (do not resolve here; G018/verifier decision).**
-`provider_contract.md` §1 states `supports_pit=false` "forces the ingestion
-layer to stamp `knowledge_time = retrieval_time`" and grade
-`SNAPSHOT_STAMPED` — for *all* families. `system_design.md` §2 defines
-`RETRO_WINDOW` as a distinct grade and gives the AlphaSense TM panel as its
-example, and §1 sets the daily-bar knowledge convention to close of event
-date, not retrieval time. Both cannot be applied verbatim to MARKET_DAILY.
-The table above follows `system_design.md` (the more specific rule);
-the wording tension is recorded in the G039 final report for the
-post-G018 sweep.
+**Resolution (D-011/D-015 — this paragraph previously flagged the §1-vs-
+system_design §2 grading contradiction).** `provider_contract.md` §1 now
+encodes the split: `supports_pit=false` forces `SNAPSHOT_STAMPED` only for
+**revision-prone** families (fundamentals, estimates, classifications);
+market-price families retrieved as retrospective daily windows grade
+`RETRO_WINDOW` with bar knowledge_time = close of event date (D-009),
+CONDITIONAL on the adjustment basis passing VP-07/CT-15. If the basis
+check FAILS, the dataset downgrades to `SNAPSHOT_STAMPED` (leak-safe:
+retrieval stamping is strictly later than bar close) and the downgrade
+MUST be recorded in the dataset manifest — binding on G020/G021 (D-015).
+Grading helper: `grade_dataset()` in `src/lasr/data/providers/base.py`.
+The table above matches the ruling.
 
 Downstream teeth: `RETRO_WINDOW` price data may feed returns only after the
 CT-15 basis guard is satisfied (explicit action data or config
@@ -417,11 +432,17 @@ history to spec depths (unless VP-03 passes).
 
 ## 5. Contract-test crosswalk — real AlphaSense API adapter
 
-If/when API credentials arrive, the adapter is built on the generic API
-stub (auth-from-environment, replay mode — `provider_contract.md` §4.3;
-stub path: ADAPTER_PATH_PENDING_G018). Contract suite:
-`tests/integration/providers/` (`provider_contract.md` §5) —
-ADAPTER_PATH_PENDING_G018. "Every future provider must pass CT-01..15
+If/when API credentials arrive, the real adapter implements the
+`DataProvider` Protocol in `src/lasr/data/providers/base.py` directly: the
+generic API **HTTP stub described in `provider_contract.md` §4.3 was
+descoped** per D-013 — the Protocol + capability records + contract suite +
+the `.env.example` auth surface satisfy MP §16's generic-interface
+requirement without inventing endpoints. §4.3's replay mode is therefore a
+design requirement on the future real adapter (recorded raw snapshots
+served back through the contract, so CI never needs live credentials), not
+shipped code. Contract suite: `tests/integration/test_provider_contract.py`
+(parameterized over registered providers; capability-conditional skips
+verify the refusal path). "Every future provider must pass CT-01..15
 unmodified" (§5); the crosswalk below states what evidence each test
 requires from a real AlphaSense adapter specifically.
 
@@ -443,10 +464,10 @@ requires from a real AlphaSense adapter specifically.
 | CT-14 | credential hygiene | canary env var never appears in frames, logs, manifests; env read only by `config` (`system_design.md` §4 rule); no credential in the replay snapshots either |
 | CT-15 | corporate-action basis declared | `basis=UNKNOWN` until VP-07-class evidence; canonical layer requires explicit action data or config acknowledgment before return computation (FM-17 guard) |
 
-Flagged friction (do not resolve here): `fetch_prices`'s default `fields`
-tuple in the contract includes `open/high/low/volume`
-(`provider_contract.md` §2) — outside the local-file adapter's demonstrated
-coverage (FM-12/13/14). A default-argument call against the evidence-fixed
-record must raise `FieldUnavailableError` under CT-07; callers must pass
-`fields=("close","market_cap")` until VP-01 passes. Recorded for the
-post-G018 sweep.
+Resolution (D-012 — this paragraph previously flagged the `fetch_prices`
+default-fields friction): the contract default is now narrowed to
+`("close", "market_cap")`, the evidence-demonstrated set (FM-11/FM-25),
+and explicit requests for `open/high/low/volume` raise
+`FieldUnavailableError` until VP-01 passes (`provider_contract.md` §2
+note; enforced via `DEFAULT_PRICE_FIELDS` / `LISTED_ONLY_PRICE_FIELDS` in
+`src/lasr/data/providers/base.py` and exercised by CT-07).

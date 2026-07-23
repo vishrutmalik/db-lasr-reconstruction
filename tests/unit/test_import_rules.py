@@ -50,8 +50,15 @@ RULES: dict[str, frozenset[str]] = {
     "lasr.artifacts": frozenset({"lasr.core"}),
     "lasr.data": frozenset(),  # namespace only
     "lasr.data.schemas": frozenset({"lasr.core", "lasr.config"}),  # Level 2
-    "lasr.data.providers": frozenset(  # Level 3
+    # G019: the synthetic generator is a Level-3 sibling of providers —
+    # it emits raw-shaped ROWS (never frames) and may not import providers;
+    # the synthetic provider adapter (lasr.data.providers.synthetic_provider)
+    # wraps it, so providers gain the synthetic edge (one direction only).
+    "lasr.data.synthetic": frozenset(
         {"lasr.core", "lasr.config", "lasr.data.schemas"}
+    ),
+    "lasr.data.providers": frozenset(  # Level 3
+        {"lasr.core", "lasr.config", "lasr.data.schemas", "lasr.data.synthetic"}
     ),
     "lasr.data.ingestion": _L0_3,  # Level 4
     "lasr.data.canonical": _L0_3,

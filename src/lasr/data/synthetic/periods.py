@@ -32,10 +32,7 @@ _FRIDAY = 4  # date.weekday() convention
 
 
 def _last_weekday_of_month(year: int, month: int) -> date:
-    if month == 12:
-        nxt = date(year + 1, 1, 1)
-    else:
-        nxt = date(year, month + 1, 1)
+    nxt = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
     day = nxt - timedelta(days=1)
     while day.weekday() > 4:  # Saturday/Sunday
         day -= timedelta(days=1)

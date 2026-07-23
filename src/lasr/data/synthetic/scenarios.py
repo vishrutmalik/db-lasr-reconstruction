@@ -127,9 +127,7 @@ def _lt001(config: ScenarioConfig) -> WorldPlan:
         **_stat_base(),  # type: ignore[arg-type]
         regime_mean_duration=config.param("regime_mean_duration", 24.0),
         factors=(
-            FactorSpec(
-                name="FVAL", rho_normal=rho, rho_alt=0.0, regime_dependent=True
-            ),
+            FactorSpec(name="FVAL", rho_normal=rho, rho_alt=0.0, regime_dependent=True),
             FactorSpec(name="FNOISEA", rho_normal=0.0),
             FactorSpec(name="FNOISEB", rho_normal=0.0),
         ),
@@ -191,9 +189,7 @@ def _lt004(config: ScenarioConfig) -> WorldPlan:
 def _lt005(config: ScenarioConfig) -> WorldPlan:
     return WorldPlan(
         **_stat_base(),  # type: ignore[arg-type]
-        factors=(
-            FactorSpec(name="FMONO", rho_normal=config.param("mono_rho", 0.10)),
-        ),
+        factors=(FactorSpec(name="FMONO", rho_normal=config.param("mono_rho", 0.10)),),
         notes="LT-005: stable monotonic positive control",
     )
 
@@ -257,9 +253,7 @@ def _lt009(config: ScenarioConfig) -> WorldPlan:
 def _lt010(config: ScenarioConfig) -> WorldPlan:
     return WorldPlan(
         **_stat_base(),  # type: ignore[arg-type]
-        factors=(
-            FactorSpec(name="FREST", home="fundamental", restated_window=True),
-        ),
+        factors=(FactorSpec(name="FREST", home="fundamental", restated_window=True),),
         fundamental_lag_days=int(config.param("fundamental_lag_days", 75.0)),
         restatement_days=int(config.param("restatement_days", 180.0)),
         ablation_names=("latest_vintage",),
@@ -303,9 +297,7 @@ def _lt012(config: ScenarioConfig) -> WorldPlan:
 def _lt013(config: ScenarioConfig) -> WorldPlan:
     return WorldPlan(
         **_stat_base(),  # type: ignore[arg-type]
-        factors=(
-            FactorSpec(name="FHIND", home="fundamental", hindsight=True),
-        ),
+        factors=(FactorSpec(name="FHIND", home="fundamental", hindsight=True),),
         hindsight_lag_days=int(config.param("hindsight_lag_days", 90.0)),
         ablation_names=("observation_date_join",),
         notes="LT-013: perfect hindsight at observation, stale by publication",
@@ -466,7 +458,6 @@ def build_plan(config: ScenarioConfig) -> WorldPlan:
         builder = _BUILDERS[config.scenario_id]
     except KeyError:
         raise ScenarioConfigError(
-            f"unknown scenario {config.scenario_id!r}; known: "
-            f"{sorted(SCENARIO_IDS)}"
+            f"unknown scenario {config.scenario_id!r}; known: {sorted(SCENARIO_IDS)}"
         ) from None
     return builder(config)

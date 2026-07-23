@@ -15,21 +15,21 @@ each seeded error lands in the sidecar exactly once (skill invariant).
 from __future__ import annotations
 
 import math
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import numpy as np
 
 from lasr.data.synthetic._stages import (
+    _BAR_CLOSE_UTC,
+    _COUNTRIES,
     _MIDNIGHT_UTC,
     _PUBLICATION_UTC,
     CALENDAR_ID,
     UNIVERSE_ID,
+    GeneratorError,
     _ActionEvent,
     _at,
-    _BAR_CLOSE_UTC,
     _Builder,
-    _COUNTRIES,
-    GeneratorError,
 )
 from lasr.data.synthetic.periods import quarter_ends_between
 from lasr.data.synthetic.plan import ErrorClass
@@ -41,6 +41,15 @@ from lasr.data.synthetic.sidecar import (
 from lasr.data.synthetic.world import Row
 
 __all__ = ["build_ablations", "build_tables", "seed_errors"]
+
+
+def _event_iso(row: Row) -> str | None:
+    """ISO date of a row's event column (locator field for seeded errors)."""
+    for column in ("event_date", "period_end"):
+        value = row.get(column)
+        if isinstance(value, date):
+            return value.isoformat()
+    return None
 
 
 def _bar_knowledge(day: date) -> object:
@@ -86,7 +95,7 @@ def _security_master_rows(b: _Builder) -> tuple[Row, ...]:
                 "knowledge_time": _at(listing, _MIDNIGHT_UTC),
             }
         )
-    rows.sort(key=lambda r: (r["ticker"], r["exchange"]))  # type: ignore[arg-type]
+    rows.sort(key=lambda r: (r["ticker"], r["exchange"]))
     return tuple(rows)
 
 
@@ -108,7 +117,7 @@ def _classification_rows(b: _Builder) -> tuple[Row, ...]:
                     "knowledge_time": _at(b.periods[start], _MIDNIGHT_UTC),
                 }
             )
-    rows.sort(key=lambda r: (r["ticker"], r["exchange"], r["scheme"]))  # type: ignore[arg-type]
+    rows.sort(key=lambda r: (r["ticker"], r["exchange"], r["scheme"]))
     return tuple(rows)
 
 
@@ -139,7 +148,7 @@ def _bar_rows(b: _Builder) -> tuple[Row, ...]:
                     "knowledge_time": _bar_knowledge(day),
                 }
             )
-    rows.sort(key=lambda r: (r["ticker"], r["exchange"], r["event_date"]))  # type: ignore[arg-type]
+    rows.sort(key=lambda r: (r["ticker"], r["exchange"], r["event_date"]))
     return tuple(rows)
 
 
@@ -163,9 +172,7 @@ def _metric_rows(b: _Builder) -> tuple[Row, ...]:
                         "knowledge_time": _bar_knowledge(b.periods[t]),
                     }
                 )
-    rows.sort(
-        key=lambda r: (r["ticker"], r["exchange"], r["metric"], r["event_date"])  # type: ignore[arg-type]
-    )
+    rows.sort(key=lambda r: (r["ticker"], r["exchange"], r["metric"], r["event_date"]))
     return tuple(rows)
 
 
@@ -243,7 +250,12 @@ def _action_rows(b: _Builder, events: list[_ActionEvent]) -> tuple[Row, ...]:
         rows.append(row)
 
     rows.sort(
-        key=lambda r: (r["ticker"], r["exchange"], r["effective_date"], r["action_type"])  # type: ignore[arg-type]
+        key=lambda r: (
+            r["ticker"],
+            r["exchange"],
+            r["effective_date"],
+            r["action_type"],
+        )
     )
     return tuple(rows)
 
@@ -297,9 +309,7 @@ def _fundamental_rows(b: _Builder) -> tuple[Row, ...]:
         version: str,
     ) -> None:
         t_pub = b.period_index_on_or_after(knowledge_day)
-        ticker = (
-            b.ticker_at(i, t_pub) if t_pub is not None else b.ticker_at(i, b.t - 1)
-        )
+        ticker = b.ticker_at(i, t_pub) if t_pub is not None else b.ticker_at(i, b.t - 1)
         rows.append(
             {
                 "ticker": ticker,
@@ -323,8 +333,10 @@ def _fundamental_rows(b: _Builder) -> tuple[Row, ...]:
         base_rev = float(b.price0[i] * b.shares0[i] * 0.075)  # quarterly revenue
         for q_idx, q_end in enumerate(quarters):
             pub_day = q_end + lag
-            rev_true = base_rev * (1.0 + growth[i]) ** q_idx * float(
-                np.exp(0.08 * rng.standard_normal())
+            rev_true = (
+                base_rev
+                * (1.0 + growth[i]) ** q_idx
+                * float(np.exp(0.08 * rng.standard_normal()))
             )
             ni_true = float(margin[i]) * rev_true + 0.02 * base_rev * float(
                 rng.standard_normal()
@@ -380,8 +392,11 @@ def _fundamental_rows(b: _Builder) -> tuple[Row, ...]:
                 # after the fiscal observation date, published with a lag —
                 # perfect hindsight, worthless once knowable.
                 t_next = b.period_index_on_or_after(q_end + timedelta(days=1))
-                if t_next is not None and t_next < b.t and t_next > 0 and (
-                    b.alive(i, t_next)
+                if (
+                    t_next is not None
+                    and t_next < b.t
+                    and t_next > 0
+                    and (b.alive(i, t_next))
                 ):
                     emit(
                         i,
@@ -421,7 +436,7 @@ def _fundamental_rows(b: _Builder) -> tuple[Row, ...]:
             r["metric"],
             r["period_end"],
             r["knowledge_time"],
-        )  # type: ignore[arg-type]
+        )
     )
     return tuple(rows)
 
@@ -452,9 +467,7 @@ def _estimate_revision_rows(b: _Builder) -> tuple[Row, ...]:
             }
             bias0 = float(rng.normal(0.0, 0.08))
             revision_periods = [
-                t
-                for t, d in enumerate(b.periods)
-                if d.year == year and b.alive(i, t)
+                t for t, d in enumerate(b.periods) if d.year == year and b.alive(i, t)
             ]
             step = max(
                 1, len(revision_periods) // max(1, plan.estimate_revisions_per_year)
@@ -468,16 +481,14 @@ def _estimate_revision_rows(b: _Builder) -> tuple[Row, ...]:
                             f"unknown estimate metric {metric!r} in plan"
                         )
                     consensus = truths[metric] * (
-                        1.0
-                        + bias0 * frac_left
-                        + 0.01 * float(rng.standard_normal())
+                        1.0 + bias0 * frac_left + 0.01 * float(rng.standard_normal())
                     )
                     for label, end in (
                         ("FY1", fy_end),
                         ("FY2", date(year + 1, 12, 31)),
                     ):
-                        value = consensus if label == "FY1" else consensus * (
-                            1.0 + 0.05
+                        value = (
+                            consensus if label == "FY1" else consensus * (1.0 + 0.05)
                         )
                         rows.append(
                             {
@@ -501,7 +512,7 @@ def _estimate_revision_rows(b: _Builder) -> tuple[Row, ...]:
             r["metric"],
             r["forecast_period"],
             r["knowledge_time"],
-        )  # type: ignore[arg-type]
+        )
     )
     return tuple(rows)
 
@@ -518,8 +529,10 @@ def _membership_rows(b: _Builder) -> tuple[Row, ...]:
         ticker_from = b.ticker_at(i, from_t)
         change = next((c for c in b.symbol_changes if c[0] == i), None)
         segments: list[tuple[str, int, int | None]] = []
-        if change is not None and (to_t is None or change[1] <= to_t) and (
-            change[1] > from_t
+        if (
+            change is not None
+            and (to_t is None or change[1] <= to_t)
+            and (change[1] > from_t)
         ):
             segments.append((change[2], from_t, change[1] - 1))
             segments.append((change[3], change[1], to_t))
@@ -537,9 +550,7 @@ def _membership_rows(b: _Builder) -> tuple[Row, ...]:
                 }
             )
 
-    included = {
-        (truth.ticker, truth.exchange): truth for truth in b.inclusions
-    }
+    included = {(truth.ticker, truth.exchange): truth for truth in b.inclusions}
     for i in range(b.n):
         start, term = int(b.start_period[i]), int(b.term_period[i])
         end: int | None = term if term < b.t - 1 else None
@@ -563,7 +574,7 @@ def _membership_rows(b: _Builder) -> tuple[Row, ...]:
             add(i, start, end)
 
     rows.sort(
-        key=lambda r: (r["universe_id"], r["ticker"], r["exchange"], r["valid_from"])  # type: ignore[arg-type]
+        key=lambda r: (r["universe_id"], r["ticker"], r["exchange"], r["valid_from"])
     )
     return tuple(rows)
 
@@ -591,7 +602,7 @@ def _borrow_rows(b: _Builder) -> tuple[Row, ...]:
                     "knowledge_time": _bar_knowledge(b.periods[t]),
                 }
             )
-    rows.sort(key=lambda r: (r["ticker"], r["exchange"], r["event_date"]))  # type: ignore[arg-type]
+    rows.sort(key=lambda r: (r["ticker"], r["exchange"], r["event_date"]))
     return tuple(rows)
 
 
@@ -614,7 +625,7 @@ def _fx_rows(b: _Builder) -> tuple[Row, ...]:
                     "knowledge_time": _bar_knowledge(b.periods[t]),
                 }
             )
-    rows.sort(key=lambda r: (r["base_ccy"], r["quote_ccy"], r["event_date"]))  # type: ignore[arg-type]
+    rows.sort(key=lambda r: (r["base_ccy"], r["quote_ccy"], r["event_date"]))
     return tuple(rows)
 
 
@@ -656,9 +667,7 @@ def _ledger_rows(b: _Builder) -> tuple[LedgerTruthRow, ...]:
 # ── assembly, corruption, ablations ──────────────────────────────────────────
 
 
-def build_tables(
-    b: _Builder, events: list[_ActionEvent]
-) -> dict[str, tuple[Row, ...]]:
+def build_tables(b: _Builder, events: list[_ActionEvent]) -> dict[str, tuple[Row, ...]]:
     tables = {
         "raw_security_master": _security_master_rows(b),
         "raw_market_daily": _bar_rows(b),
@@ -693,15 +702,7 @@ def seed_errors(
                 table=table,
                 ticker=str(row.get("ticker")) if "ticker" in row else None,
                 exchange=str(row.get("exchange")) if "exchange" in row else None,
-                event_date=(
-                    row["event_date"].isoformat()  # type: ignore[union-attr]
-                    if isinstance(row.get("event_date"), date)
-                    else (
-                        row["period_end"].isoformat()  # type: ignore[union-attr]
-                        if isinstance(row.get("period_end"), date)
-                        else None
-                    )
-                ),
+                event_date=_event_iso(row),
                 metric=str(row["metric"]) if "metric" in row else None,
                 detail=detail,
             )
@@ -716,39 +717,57 @@ def seed_errors(
                 bars.append(dict(victim))
                 record(error, "raw_market_daily", victim, "row duplicated verbatim")
             elif error is ErrorClass.NEGATIVE_PRICE:
-                victim = bars[int(rng.integers(0, len(bars)))]
-                victim["close"] = -abs(float(victim["close"]))  # type: ignore[arg-type]
+                pos = int(rng.integers(0, len(bars)))
+                victim = dict(bars[pos])
+                close = victim["close"]
+                if not isinstance(close, float):
+                    raise GeneratorError("bar row lacks a float close")
+                victim["close"] = -abs(close)
+                bars[pos] = victim
                 record(error, "raw_market_daily", victim, "close negated")
             elif error is ErrorClass.STALE_PRICE:
                 idx = int(rng.integers(0, max(1, len(bars) - 6)))
                 anchor = bars[idx]
-                frozen = float(anchor["close"])  # type: ignore[arg-type]
+                frozen = anchor["close"]
+                if not isinstance(frozen, float):
+                    raise GeneratorError("bar row lacks a float close")
                 run = 0
-                for row in bars[idx : idx + 6]:
+                for offset, row in enumerate(bars[idx : idx + 6]):
                     if row["ticker"] == anchor["ticker"]:
-                        row["close"] = frozen
+                        stale = dict(row)
+                        stale["close"] = frozen
+                        bars[idx + offset] = stale
                         run += 1
-                record(error, "raw_market_daily", anchor, f"close frozen for {run} bars")
+                record(
+                    error, "raw_market_daily", anchor, f"close frozen for {run} bars"
+                )
             elif error is ErrorClass.IMPOSSIBLE_VOLUME:
-                victim = bars[int(rng.integers(0, len(bars)))]
+                pos = int(rng.integers(0, len(bars)))
+                victim = dict(bars[pos])
                 victim["volume"] = -1000.0
+                bars[pos] = victim
                 record(error, "raw_market_daily", victim, "negative volume")
             elif error is ErrorClass.MISSING_MANDATORY:
-                victim = bars[int(rng.integers(0, len(bars)))]
+                pos = int(rng.integers(0, len(bars)))
+                victim = dict(bars[pos])
                 victim["currency"] = None
+                bars[pos] = victim
                 record(error, "raw_market_daily", victim, "currency nulled")
             elif error is ErrorClass.INVERTED_TIMESTAMP:
                 if not fundamentals:
                     raise GeneratorError(
                         "INVERTED_TIMESTAMP needs fundamentals rows to corrupt"
                     )
-                victim = fundamentals[int(rng.integers(0, len(fundamentals)))]
+                pos = int(rng.integers(0, len(fundamentals)))
+                victim = dict(fundamentals[pos])
                 period_end = victim["period_end"]
-                assert isinstance(period_end, date)
+                if not isinstance(period_end, date):
+                    raise GeneratorError("fundamental row lacks a period_end date")
                 victim["knowledge_time"] = _at(
                     period_end - timedelta(days=30), _PUBLICATION_UTC
                 )
                 victim["report_date"] = period_end - timedelta(days=30)
+                fundamentals[pos] = victim
                 record(
                     error,
                     "raw_fundamentals",
@@ -770,9 +789,7 @@ def build_ablations(
     ablations: dict[str, dict[str, tuple[Row, ...]]] = {}
     for name in b.plan.ablation_names:
         if name == "control":  # LT-004: drop the leaked feature entirely
-            leaked = {
-                s.name for s in b.plan.factors if s.leak_forward_corr is not None
-            }
+            leaked = {s.name for s in b.plan.factors if s.leak_forward_corr is not None}
             ablations[name] = {
                 "raw_market_metrics": tuple(
                     row
@@ -781,9 +798,7 @@ def build_ablations(
                 )
             }
         elif name == "survivorship_biased":  # LT-009: drop dead names' history
-            dead = {
-                (truth.ticker, truth.exchange) for truth in _delisting_truths(b)
-            }
+            dead = {(truth.ticker, truth.exchange) for truth in _delisting_truths(b)}
             ablations[name] = {
                 table: tuple(
                     row
@@ -804,20 +819,12 @@ def build_ablations(
         elif name == "observation_date_join":  # LT-013: report-date join
             ablations[name] = {
                 "raw_fundamentals": tuple(
-                    {
-                        **row,
-                        "knowledge_time": _at(
-                            row["period_end"],  # type: ignore[arg-type]
-                            _PUBLICATION_UTC,
-                        ),
-                        "report_date": row["period_end"],
-                    }
-                    for row in clean["raw_fundamentals"]
+                    _observation_stamped(row) for row in clean["raw_fundamentals"]
                 )
             }
         elif name == "current_membership":  # LT-016: backfilled membership
             final_members = {
-                (row["ticker"], row["exchange"])
+                (str(row["ticker"]), str(row["exchange"]))
                 for row in clean["raw_universe_membership"]
                 if row["valid_to"] is None
             }
@@ -831,7 +838,7 @@ def build_ablations(
                         "valid_to": None,
                         "knowledge_time": _at(b.periods[0], _MIDNIGHT_UTC),
                     }
-                    for ticker, exchange in sorted(final_members)  # type: ignore[arg-type]
+                    for ticker, exchange in sorted(final_members)
                 )
             }
         elif name == "unpurged":  # LT-012: fold-spec marker (data identical)
@@ -848,6 +855,26 @@ def build_ablations(
     return ablations
 
 
+def _observation_stamped(row: Row) -> Row:
+    """LT-013 ablation: stamp knowledge at the OBSERVATION date (the classic
+    report-date join a leaky pipeline performs)."""
+    period_end = row["period_end"]
+    if not isinstance(period_end, date):
+        raise GeneratorError("fundamental row lacks a period_end date")
+    return {
+        **row,
+        "knowledge_time": _at(period_end, _PUBLICATION_UTC),
+        "report_date": period_end,
+    }
+
+
+def _knowledge_of(row: Row) -> datetime:
+    stamp = row["knowledge_time"]
+    if not isinstance(stamp, datetime):
+        raise GeneratorError("row lacks a knowledge_time stamp")
+    return stamp
+
+
 def _latest_vintage_flat(rows: tuple[Row, ...]) -> tuple[Row, ...]:
     """The LT-010 leaky table: keep only each event key's LAST value but
     stamp it with the FIRST vintage's knowledge_time — exactly what a
@@ -858,7 +885,7 @@ def _latest_vintage_flat(rows: tuple[Row, ...]) -> tuple[Row, ...]:
         by_key.setdefault(key, []).append(row)
     flat: list[Row] = []
     for group in by_key.values():
-        ordered = sorted(group, key=lambda r: r["knowledge_time"])  # type: ignore[arg-type, return-value]
+        ordered = sorted(group, key=_knowledge_of)
         first, last = ordered[0], ordered[-1]
         flat.append(
             {
@@ -868,7 +895,5 @@ def _latest_vintage_flat(rows: tuple[Row, ...]) -> tuple[Row, ...]:
                 "version_type": "latest_filing",
             }
         )
-    flat.sort(
-        key=lambda r: (r["ticker"], r["exchange"], r["metric"], r["period_end"])  # type: ignore[arg-type]
-    )
+    flat.sort(key=lambda r: (r["ticker"], r["exchange"], r["metric"], r["period_end"]))
     return tuple(flat)

@@ -422,7 +422,9 @@ def _build_churn(b: _Builder) -> None:
     if plan.late_listing_fraction > 0:
         late = rng.uniform(size=n) < plan.late_listing_fraction
         for i in np.flatnonzero(late):
-            b.start_period[i] = int(rng.integers(max(1, t // 10), max(2, (6 * t) // 10)))
+            b.start_period[i] = int(
+                rng.integers(max(1, t // 10), max(2, (6 * t) // 10))
+            )
     if plan.delisting_hazard > 0:
         signal = (
             b.exposures[plan.hazard_signal_factor]
@@ -635,12 +637,12 @@ def _build_action_schedule(b: _Builder) -> list[_ActionEvent]:
 
     if plan.dividend_yield_quarterly > 0:
         payments = _quarter_payment_periods(b.periods)
-        for i in np.flatnonzero(b.dividend_payer):
+        for payer in (int(x) for x in np.flatnonzero(b.dividend_payer)):
             for idx in payments:
-                if b.start_period[i] < idx <= b.term_period[i] and (
-                    b.term_reason[i] is None or idx < b.term_period[i]
+                if b.start_period[payer] < idx <= b.term_period[payer] and (
+                    b.term_reason[payer] is None or idx < b.term_period[payer]
                 ):
-                    b.dividend_yield[i, idx] = plan.dividend_yield_quarterly
+                    b.dividend_yield[payer, idx] = plan.dividend_yield_quarterly
 
     for item in plan.action_script:
         if not 0 <= item.security_index < n:
@@ -683,7 +685,7 @@ def _build_action_schedule(b: _Builder) -> list[_ActionEvent]:
         else:
             events.append(_ActionEvent(i, period, "reverse_split", 1.0, 10.0))
 
-    for k in range(plan.symbol_change_count):
+    for _ in range(plan.symbol_change_count):
         if not eligible:
             break
         i = int(eligible[int(rng.integers(0, len(eligible)))])
@@ -741,7 +743,9 @@ def _build_prices(b: _Builder) -> None:
             initial_close=float(b.price0[i]),
             initial_shares=float(b.shares0[i]),
             total_returns=tuple(float(x) for x in b.returns[i, t0 + 1 : t1 + 1]),
-            dividend_yields=tuple(float(x) for x in b.dividend_yield[i, t0 + 1 : t1 + 1]),
+            dividend_yields=tuple(
+                float(x) for x in b.dividend_yield[i, t0 + 1 : t1 + 1]
+            ),
             split_factors=tuple(float(x) for x in b.split_factors[i, t0 + 1 : t1 + 1]),
         )
         b.paths.append(path)
@@ -793,9 +797,7 @@ def _build_metric_series(b: _Builder) -> None:
         series["EVX"] = b.closes * b.shares * leverage[:, None]
     if "PEX" in wanted:
         pe_base = rng.uniform(8.0, 30.0, size=n)
-        series["PEX"] = pe_base[:, None] * np.exp(
-            0.1 * rng.standard_normal((n, t))
-        )
+        series["PEX"] = pe_base[:, None] * np.exp(0.1 * rng.standard_normal((n, t)))
     if "SPREADBPS" in wanted:
         spread_base = rng.uniform(2.0, 40.0, size=n)
         series["SPREADBPS"] = spread_base[:, None] * np.exp(

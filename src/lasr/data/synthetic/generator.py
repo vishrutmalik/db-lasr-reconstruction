@@ -15,11 +15,12 @@ addressed by name and factors are iterated in sorted order.
 
 from __future__ import annotations
 
+import itertools
 import logging
 import math
 
 import numpy as np
-from scipy import stats
+from scipy import stats  # type: ignore[import-untyped]
 
 from lasr.data.synthetic import scenarios
 from lasr.data.synthetic._emission import (
@@ -108,7 +109,7 @@ def _vee_quintile_expected(rho: float) -> tuple[float, ...]:
     units of sigma_resid (LT-006 embedded quintile returns)."""
     boundaries = [stats.norm.ppf(q / 5.0) for q in range(6)]
     expected: list[float] = []
-    for a, b in zip(boundaries[:-1], boundaries[1:], strict=True):
+    for a, b in itertools.pairwise(boundaries):
         phi_a = 0.0 if math.isinf(a) else float(stats.norm.pdf(a))
         phi_b = 0.0 if math.isinf(b) else float(stats.norm.pdf(b))
         if a >= 0:
@@ -271,13 +272,9 @@ def _build_sidecar(b: _Builder) -> SidecarTruth:
         sigma_resid=plan.sigma_resid,
         beta_dispersion=plan.beta_dispersion,
         features=_feature_truths(b),
-        regime_spells=tuple(b.regime_spells)
-        if plan.regime_mean_duration > 0
-        else (),
+        regime_spells=tuple(b.regime_spells) if plan.regime_mean_duration > 0 else (),
         crisis_windows=plan.crisis_windows,
-        adverse_periods=tuple(
-            int(t) for t in np.flatnonzero(b.adverse) if t >= 1
-        ),
+        adverse_periods=tuple(int(t) for t in np.flatnonzero(b.adverse) if t >= 1),
         delistings=tuple(b.delistings),
         survivorship_uplift_per_period=_survivorship_uplift(b),
         inclusions=tuple(b.inclusions),

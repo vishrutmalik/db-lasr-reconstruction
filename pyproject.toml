@@ -103,7 +103,11 @@ select = [
 # ── mypy: strict on src/lasr, relaxed on tests (proposal §4) ─────────────────
 
 [tool.mypy]
-python_version = "3.11"
+# 3.12 matches the CI typecheck job's interpreter; the locked numpy (2.5)
+# ships PEP 695 `type` statements in its stubs, which mypy rejects under
+# python_version=3.11 the moment src/lasr imports numpy (G019 generator).
+# 3.11 runtime compatibility stays gated by the 3.11 pytest matrix leg.
+python_version = "3.12"
 mypy_path = "src"
 files = ["src/lasr"]
 strict = true

@@ -132,6 +132,12 @@ class MintedSecurity:
     first_seen: date
 
 
+def _norm_key(ticker: object, exchange: object) -> tuple[str, str]:
+    """Normalized provider-native identity key (matches the A-ARCH-01
+    normalization inside ``mint_security_id``: strip + upper-case)."""
+    return (str(ticker).strip().upper(), str(exchange).strip().upper())
+
+
 def mint_ids(
     raw_security_records: Sequence[Row],
     *,
@@ -142,19 +148,19 @@ def mint_ids(
 
     ``first_observed`` maps ``(ticker, exchange)`` to the earliest event
     date observed anywhere in the drop (prices/fundamentals); used when the
-    provider serves no ``listing_date``. Collisions abort the build.
+    provider serves no ``listing_date``. Keys are normalization-invariant
+    (strip/upper) so re-ingestion re-mints identical ids (MP §15).
+    Collisions abort the build.
     """
+    observed = {_norm_key(t, e): d for (t, e), d in first_observed.items()}
     minted: dict[tuple[str, str], MintedSecurity] = {}
     seen_ids: dict[SecurityId, tuple[str, str]] = {}
     for record in raw_security_records:
-        ticker = str(record["ticker"])
-        exchange = str(record["exchange"])
-        key = (ticker, exchange)
+        key = _norm_key(record["ticker"], record["exchange"])
+        ticker, exchange = key
         listing = record.get("listing_date")
         first_seen = (
-            listing
-            if isinstance(listing, date)
-            else first_observed.get(key, retrieval_date)
+            listing if isinstance(listing, date) else observed.get(key, retrieval_date)
         )
         security_id = mint_security_id(ticker, exchange, first_seen)
         if security_id in seen_ids and seen_ids[security_id] != key:
@@ -175,7 +181,7 @@ def mint_ids(
 def _require_id(
     ids: Mapping[tuple[str, str], MintedSecurity], record: Row
 ) -> MintedSecurity:
-    key = (str(record["ticker"]), str(record["exchange"]))
+    key = _norm_key(record["ticker"], record["exchange"])
     try:
         return ids[key]
     except KeyError:

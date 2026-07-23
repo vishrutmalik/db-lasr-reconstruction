@@ -109,9 +109,10 @@ class TestIdempotentReruns:
         first = _write(store, _raw_fundamental_rows(100.0))
         second = _write(store, _raw_fundamental_rows(120.0))
         assert second.snapshot_id != first.snapshot_id
-        assert set(
-            store.list_snapshots("test_provider", FieldFamily.FUNDAMENTALS)
-        ) == {first.snapshot_id, second.snapshot_id}
+        assert set(store.list_snapshots("test_provider", FieldFamily.FUNDAMENTALS)) == {
+            first.snapshot_id,
+            second.snapshot_id,
+        }
         # original payload still readable and unchanged
         old = store.read_records(
             "test_provider", FieldFamily.FUNDAMENTALS, first.snapshot_id

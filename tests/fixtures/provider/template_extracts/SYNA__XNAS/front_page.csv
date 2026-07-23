@@ -1,0 +1,10 @@
+excel_code,label,value
+NAME,Company Name,Synthetic Aurora Corp
+COUNTRY_HQ,Country of Headquaters,United States
+TRADING_CURR,Trading Currency,USD
+SECTOR_GICS,Sector (GICS L1),Information Technology
+SUB_INDUSTRY_GICS,Sub-Sector (GICS L4),Synthetic Semiconductors
+REPORTING_CURR,Reporting Currency,USD
+COUNTRY_EXCH,Country of Stock Exchange,US
+EXCH,Stock Exchange,Synthetic Nasdaq
+FINANCIAL_PERIOD_END_DATE,Financial Period End Date,2024-12-31

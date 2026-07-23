@@ -1,0 +1,10 @@
+excel_code,label,value
+NAME,Company Name,Synthetic Dominion Ltd
+COUNTRY_HQ,Country of Headquaters,Canada
+TRADING_CURR,Trading Currency,CAD
+SECTOR_GICS,Sector (GICS L1),Materials
+SUB_INDUSTRY_GICS,Sub-Sector (GICS L4),Synthetic Mining
+REPORTING_CURR,Reporting Currency,CAD
+COUNTRY_EXCH,Country of Stock Exchange,CA
+EXCH,Stock Exchange,Synthetic Toronto
+FINANCIAL_PERIOD_END_DATE,Financial Period End Date,2024-12-31

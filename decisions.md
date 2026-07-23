@@ -70,3 +70,46 @@
 - **Decision:** Per docs/architecture/toolchain_proposal.md; sklearn/xgboost
   quarantined to a challengers extra; system Python 3.9.6 not used.
 - **Reversibility:** MODERATE. **Date:** 2026-07-20. **Agent:** architect. **Goal:** G015/G016.
+
+## D-011 — pit_grade split: SNAPSHOT_STAMPED vs RETRO_WINDOW
+- **Decision:** supports_pit=false forces SNAPSHOT_STAMPED (knowledge_time =
+  retrieval_time) only for revision-prone families (fundamentals, estimates,
+  classifications). Market-price families retrieved as retrospective daily
+  windows grade RETRO_WINDOW with bar knowledge_time = close of event date
+  (D-009), conditional on adjustment-basis verification (VP-07/CT-15).
+- **Evidence:** G039 contradiction 1 (provider_contract §1 vs system_design §2);
+  prices are publicly knowable at bar close and not restated like filings.
+- **Consequence:** G018 grading logic + CT tests implement the split.
+- **Reversibility:** MODERATE. **Date:** 2026-07-21. **Agent:** orchestrator (ruling on G039 finding). **Goal:** G039/G018.
+
+## D-012 — fetch_prices default fields narrowed to evidence-demonstrated set
+- **Decision:** default fields = ("close", "market_cap") (FM-11/31 demonstrated);
+  open/high/low/volume are LISTED_ONLY and explicit requests raise
+  FieldUnavailableError (CT-07) until probe VP-01 passes.
+- **Evidence:** G039 contradiction 2; G013 FM-12/13/14.
+- **Reversibility:** EASY. **Date:** 2026-07-21. **Agent:** orchestrator. **Goal:** G039/G018.
+
+## D-013 — Generic API provider = the DataProvider Protocol; no fake HTTP skeleton
+- **Decision:** MASTER_PROMPT §16's "generic API-provider interface" is satisfied
+  by the typed DataProvider Protocol + capability records + contract suite +
+  .env.example auth surface (all landed in G018). A concrete HTTP adapter
+  skeleton is deliberately NOT built until a real API shape exists — MASTER_PROMPT
+  forbids fabricated endpoints. Real-adapter authoring is documented in the G039
+  guide (CT crosswalk) and gated on credentials/API docs arriving.
+- **Evidence:** provider_contract.md §4.3 vs MASTER_PROMPT §16 "Never create fake
+  production endpoints"; G018 deviation item 7.
+- **Reversibility:** EASY. **Date:** 2026-07-21. **Agent:** orchestrator. **Goal:** G018.
+
+## D-014 — G043 pyproject grant executed
+- **Decision:** dev deps pandas-stubs>=2.2 + types-PyYAML>=6 (mypy-strict
+  necessity, flagged deviation); 37 TID251 numpy.random banned-api additions
+  per G017 recommendations. Per toolchain proposal §4 amendment rule.
+- **Date:** 2026-07-22. **Agent:** implementer (G043 grant), orchestrator ratifies. **Goal:** G043.
+
+## D-015 — Provider-contract §3 amendments post-G018 verification
+- **Decision:** (a) UnknownProviderIdError added to the closed error set;
+  (b) failed adjustment-basis check downgrades market data to SNAPSHOT_STAMPED
+  (leak-safe by construction) with MANDATORY manifest recording — the recording
+  requirement binds G020/G021 acceptance criteria.
+- **Evidence:** G018 verification (docs/verification/G018.md) amendment analysis.
+- **Reversibility:** EASY. **Date:** 2026-07-22. **Agent:** orchestrator (concurring with verifier). **Goal:** G018/G020.

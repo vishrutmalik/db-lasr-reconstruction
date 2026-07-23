@@ -28,10 +28,10 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G014 | Quantitative correctness & leakage criteria | quant-reviewer | G007–G010 | MERGED | [#14](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/14) | [#49](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/49) |
 | G015 | System architecture design | architect | G011, G012, G013 | MERGED | [#15](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/15) | [#53](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/53) |
 | G016 | pyproject, dev tooling, CI workflow | implementer | G015 | MERGED | [#16](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/16) | [#54](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/54) |
-| G017 | Typed canonical schemas | implementer | G015, G016 | IN_PROGRESS | [#17](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/17) | |
-| G018 | Provider interface + contract tests | implementer | G017 | BLOCKED | [#18](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/18) | |
-| G019 | Synthetic data generator + synthetic provider | implementer | G018 | BLOCKED | [#19](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/19) | |
-| G020 | Point-in-time data layer + as-of joins | implementer | G017, G018 | BLOCKED | [#20](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/20) | |
+| G017 | Typed canonical schemas | implementer | G015, G016 | MERGED | [#17](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/17) | [#57](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/57) |
+| G018 | Provider interface + contract tests | implementer | G017 | MERGED | [#18](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/18) | [#60](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/60) |
+| G019 | Synthetic data generator + synthetic provider | implementer | G018 | IN_PROGRESS | [#19](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/19) | |
+| G020 | Point-in-time data layer + as-of joins | implementer | G017, G018 | IN_PROGRESS | [#20](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/20) | |
 | G021 | Data-quality checks | implementer | G020 | BLOCKED | [#21](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/21) | |
 | G022 | Feature registry + small audited feature library | implementer | G020, G013 | BLOCKED | [#22](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/22) | |
 | G023 | Target & label engine (all 4 target families) | implementer | G020, G014 | BLOCKED | [#23](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/23) | |
@@ -50,10 +50,11 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G036 | Modern challenger models (same folds/costs) | implementer | G029, G033 | BLOCKED | [#35](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/35) | |
 | G037 | Red-team leakage & survivorship audit | red-team | G029 | BLOCKED | [#36](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/36) | |
 | G038 | Full synthetic experiment + reproducibility check | verifier | G029–G037 | BLOCKED | [#37](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/37) | |
-| G039 | Real-data integration guide (AlphaSense adapter spec) | data-researcher | G013, G018 | BLOCKED | [#38](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/38) | |
+| G039 | Real-data integration guide (AlphaSense adapter spec) | data-researcher | G013, G018 | IN_PROGRESS | [#38](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/38) | |
 | G040 | Final clean-clone audit + release tag | verifier | all | BLOCKED | [#39](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/39) | |
 | G041 | Quote-length compliance pass on merged evidence (P1/P3/P4) | paper-researcher | G007, G009, G010 | MERGED | [#46](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/46) | [#47](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/47) |
 | G042 | Methodology/doc cleanup: CI-046 unit reconcile + verifier nits | quant-reviewer | G006, G011, G014, G015 | MERGED | [#55](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/55) | [#56](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/56) |
+| G043 | Config schema slice: VersionSpec, guards, CI-044 completeness | implementer | G017 | IN_VERIFICATION | [#58](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/58) | [#61](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/61) |
 
 Deferred by design (MASTER_PROMPT §31/§32): LASR-HF beyond modular stubs, deep
 learning, live brokerage, distributed infra.

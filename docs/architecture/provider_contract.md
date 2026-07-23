@@ -83,9 +83,23 @@ class ProviderCapabilities:
     supports_vintages: bool                # pit_assessment verdict (A-001)
 ```
 
-`supports_pit=False` for a family forces the ingestion layer to stamp
+`supports_pit=False` for a **revision-prone** family (fundamentals, estimates,
+classifications) forces the ingestion layer to stamp
 `knowledge_time = retrieval_time` and grade the dataset `SNAPSHOT_STAMPED`
 (`system_design.md` §2); nothing downstream may upgrade the grade.
+Market-price families retrieved as retrospective daily windows are graded
+`RETRO_WINDOW` with bar `knowledge_time` = close of event date per D-009,
+PROVIDED the adjustment basis passes VP-07/CT-15 — prices are publicly knowable
+at the bar close and are not restated the way filings are. (D-011; resolves the
+§1-vs-system_design §2 conflict found by G039.) If the basis check FAILS, the
+dataset downgrades to SNAPSHOT_STAMPED (leak-safe: retrieval stamping is
+strictly later than bar close) and the downgrade MUST be recorded in the
+dataset manifest — binds G020/G021 (D-015; G018 verification amendment 2).
+
+### §3 amendment (D-015)
+`UnknownProviderIdError` joins the closed error set: entity-resolution failures
+must raise, never return an empty frame (empty-frame-as-absence is the silent
+failure §3 forbids). Accepted by G018 verification.
 
 ## 2. Provider interface (typed stub)
 
@@ -103,8 +117,10 @@ class DataProvider(Protocol):
         self, ids: Sequence[ProviderId] | None = None) -> DataFrame: ...
     def fetch_prices(
         self, ids: Sequence[ProviderId], start: date, end: date,
-        fields: Sequence[str] = ("open","high","low","close","volume",
-                                 "market_cap")) -> DataFrame: ...
+        fields: Sequence[str] = ("close", "market_cap")) -> DataFrame: ...
+    # Default fields narrowed to the evidence-demonstrated set (FM-11/31; G013).
+    # open/high/low/volume are LISTED_ONLY (FM-12/13/14): explicit requests for
+    # them MUST raise FieldUnavailableError (CT-07) until VP-01 passes. (D-012)
     def fetch_corporate_actions(
         self, ids: Sequence[ProviderId], start: date, end: date) -> DataFrame: ...
     def fetch_fundamentals(

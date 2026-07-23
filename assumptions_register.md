@@ -70,6 +70,12 @@ verifier):
   policy block. Sensitivity: identifier-collision synthetic test (G019).
 - Related: D-009 bar-knowledge convention joins the A-002 family.
 
+### A-G043-01 — nlasr_2012 costs.base_bps = 20 is ASSUMED
+- P1-38 gives the {5..30} bps grid and names no base; 20 is not the grid
+  midpoint, so INFERRED is untenable; coincidence with P2/P3's 20 bps must not
+  cross the version boundary. Config: costs.base_bps (tagged ASSUMED).
+  Sensitivity: the P1 cost grid sweep itself. Goal: G043/G024.
+
 ### Toolchain conventions (G016, merged PR #54)
 - Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per
   docs/runbooks/dev_setup.md. TEST_SEED=1729 root test seed (tests/conftest.py).

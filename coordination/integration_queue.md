@@ -34,5 +34,18 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
 - N-4: TimingRecord explicit holding_period field -> G017/G026.
 - N-8: uv bootstrap for brew-less macOS -> G016 step 1.
 
+## Doc reconciliations queued (non-blocking)
+- config_system.md: ComponentSpec->ExpertSpec naming, HedgeSelector 'hedge'->
+  'hedge_backcast' discriminator, §6 base_bps provenance tag (N-3/A-G043-01)
+  — G043 report; fold into next docs/architecture-owning goal.
+
+## Bindings on upcoming goals (from G018 verification)
+- G019 grant note: fix NB-1 (duplicate ProviderIds -> PK-violating frame) via a
+  shared dedupe/refusal helper in providers/base.py + local_file.py (explicit
+  small grant over those merged files; no active owner conflicts).
+- G020/G021 acceptance MUST include: manifest recording of failed-basis
+  downgrades (D-015); the typed validate(frame) wrapper now that pandas-stubs
+  landed (G017 NB-2); CT-10 ingestion-side stamping behavior.
+
 ## Conflicts requiring resolution
 - (none)

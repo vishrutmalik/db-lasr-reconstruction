@@ -30,6 +30,8 @@ from lasr.data.synthetic._emission import (
     seed_errors,
 )
 from lasr.data.synthetic._stages import (
+    CALENDAR_ID,
+    UNIVERSE_ID,
     GeneratorError,
     _build_action_schedule,
     _build_churn,
@@ -51,7 +53,13 @@ from lasr.data.synthetic.plan import FactorSpec
 from lasr.data.synthetic.sidecar import FeatureTruth, SidecarTruth
 from lasr.data.synthetic.world import SyntheticWorld
 
-__all__ = ["GeneratorError", "child_rng", "generate_world"]
+__all__ = [
+    "CALENDAR_ID",
+    "UNIVERSE_ID",
+    "GeneratorError",
+    "child_rng",
+    "generate_world",
+]
 
 logger = logging.getLogger(__name__)
 

@@ -47,5 +47,9 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   downgrades (D-015); the typed validate(frame) wrapper now that pandas-stubs
   landed (G017 NB-2); CT-10 ingestion-side stamping behavior.
 
+## Doc nits queued
+- system_design.md §5: canonical/<table>/ vs sketch's canonical/<family>/ (G020
+  deviation, family recorded in manifests) — next architecture-docs pass.
+
 ## Conflicts requiring resolution
 - (none)

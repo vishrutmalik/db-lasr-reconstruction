@@ -19,7 +19,7 @@ from lasr.core.errors import TimeSemanticsError
 from lasr.data.canonical.builders import BuildContext, BuildResult, write_build
 from lasr.data.canonical.stamping import StampingConfig
 from lasr.data.canonical.store import CanonicalStore, StoreError
-from lasr.data.point_in_time.store import PitQueryConfig, PitStore
+from lasr.data.point_in_time.store import PitQueryConfig, PitQueryError, PitStore
 from lasr.data.providers.base import (
     CorporateActionBasis,
     FamilyCapability,
@@ -386,10 +386,16 @@ class TestCi005PublicationLags:
             store, config=PitQueryConfig(publication_lags={"fundamentals": lag})
         )
         assert _values(pit.as_of_frame("fundamentals", T[5])) == {"SEC-OLDNEWS": 1.0}
-        # per-call override wins over config
-        assert set(
-            _values(pit.as_of_frame("fundamentals", T[5], lag=timedelta(0)))
-        ) == {"SEC-OLDNEWS", "SEC-RECENT"}
+        # RT-G020-N1: the configured lag is a FLOOR — a per-call lag=0
+        # cannot defeat the embargo (CI-005 "never returns")...
+        assert _values(pit.as_of_frame("fundamentals", T[5], lag=timedelta(0))) == {
+            "SEC-OLDNEWS": 1.0
+        }
+        # ...but a LONGER per-call lag extends it.
+        assert (
+            _values(pit.as_of_frame("fundamentals", T[5], lag=timedelta(days=200)))
+            == {}
+        )
 
     def test_ci005_negative_lag_rejected(self, tmp_path):
         store = CanonicalStore(tmp_path)
@@ -399,6 +405,190 @@ class TestCi005PublicationLags:
             pit.as_of_frame("fundamentals", T[5], lag=timedelta(days=-1))
         with pytest.raises(TimeSemanticsError, match=">= 0"):
             PitQueryConfig(publication_lags={"fundamentals": timedelta(days=-1)})
+
+
+class TestB2LagGatingEveryPath:
+    """RT-G020-B2 promoted reproduction: a configured publication lag must
+    gate EVERY query path identically. Before the fix, `as_of_frame`
+    honored `publication_lags` while `universe()` and `classification()`
+    ignored them — the permissive paths erred on the early-knowledge (leak)
+    side of CI-005."""
+
+    KT = datetime(2021, 3, 1, 12, 0, tzinfo=UTC)
+    LAG = timedelta(days=90)
+
+    def _membership_row(self) -> dict[str, object]:
+        return {
+            "universe_id": "u_test",
+            "security_id": "SEC-A",
+            "valid_from": date(2020, 1, 1),
+            "valid_to": None,
+            "knowledge_time": self.KT,
+            "membership_basis": "synthetic_truth",
+        }
+
+    def _classification_row(self) -> dict[str, object]:
+        return {
+            "security_id": "SEC-A",
+            "scheme": "gics_l1",
+            "value": "Information Technology",
+            "valid_from": date(2020, 1, 1),
+            "valid_to": None,
+            "knowledge_time": self.KT,
+        }
+
+    def test_b2_reproduction_universe_honors_configured_lag(self, tmp_path):
+        """The report's exact split-brain: as_of inside the embargo window
+        — as_of_frame excludes the row, and universe() must now agree."""
+        store = CanonicalStore(tmp_path)
+        _write(store, "universe_membership_intervals", [self._membership_row()])
+        pit = PitStore(
+            store,
+            config=PitQueryConfig(
+                publication_lags={"universe_membership_intervals": self.LAG}
+            ),
+        )
+        inside_embargo = self.KT + timedelta(days=30)
+        assert (
+            len(pit.as_of_frame("universe_membership_intervals", inside_embargo)) == 0
+        )
+        assert pit.universe("u_test", inside_embargo) == frozenset()  # was {SEC-A}
+        past_embargo = self.KT + self.LAG
+        assert pit.universe("u_test", past_embargo) == frozenset({"SEC-A"})
+
+    def test_b2_classification_honors_configured_lag(self, tmp_path):
+        store = CanonicalStore(tmp_path)
+        _write(store, "classification_intervals", [self._classification_row()])
+        pit = PitStore(
+            store,
+            config=PitQueryConfig(
+                publication_lags={"classification_intervals": self.LAG}
+            ),
+        )
+        inside_embargo = self.KT + timedelta(days=30)
+        assert pit.classification("gics_l1", inside_embargo) == {}
+        past_embargo = self.KT + self.LAG
+        assert pit.classification("gics_l1", past_embargo) == {
+            "SEC-A": "Information Technology"
+        }
+
+    def test_b2_cross_surface_consistency(self, tmp_path):
+        """The knowable set must agree between as_of_frame and the interval
+        query paths at EVERY probe instant, with and without lag."""
+        store = CanonicalStore(tmp_path)
+        _write(store, "universe_membership_intervals", [self._membership_row()])
+        pit = PitStore(
+            store,
+            config=PitQueryConfig(
+                publication_lags={"universe_membership_intervals": self.LAG}
+            ),
+        )
+        probes = [
+            self.KT - MICRO,
+            self.KT,
+            self.KT + timedelta(days=30),
+            self.KT + self.LAG - MICRO,
+            self.KT + self.LAG,
+            self.KT + self.LAG + MICRO,
+        ]
+        for as_of in probes:
+            frame_members = {
+                row["security_id"]
+                for row in pit.as_of_frame(
+                    "universe_membership_intervals", as_of
+                ).to_dict("records")
+            }
+            assert pit.universe("u_test", as_of) == frozenset(frame_members), as_of
+
+    def test_b2_per_call_lag_on_universe_extends_config(self, tmp_path):
+        store = CanonicalStore(tmp_path)
+        _write(store, "universe_membership_intervals", [self._membership_row()])
+        pit = PitStore(store)
+        as_of = self.KT + timedelta(days=30)
+        assert pit.universe("u_test", as_of) == frozenset({"SEC-A"})
+        assert pit.universe("u_test", as_of, lag=timedelta(days=90)) == frozenset()
+
+    def test_b2_config_rejects_lag_no_path_can_deliver(self, tmp_path):
+        """A lag for a knowledge-exempt table (trading_calendars) or an
+        unknown table is a config error, not a silent promise."""
+        with pytest.raises(PitQueryError, match="no knowledge time"):
+            PitQueryConfig(publication_lags={"trading_calendars": timedelta(days=1)})
+        with pytest.raises(PitQueryError, match="unknown table"):
+            PitQueryConfig(publication_lags={"no_such_table": timedelta(days=1)})
+
+    def test_b2_per_call_lag_on_exempt_table_rejected(self, tmp_path):
+        store = CanonicalStore(tmp_path)
+        rows = [
+            {
+                "calendar_id": "test_cal",
+                "event_date": date(2021, 1, 4),
+                "is_trading_day": True,
+            }
+        ]
+        _write(store, "trading_calendars", rows)
+        pit = PitStore(store)
+        with pytest.raises(PitQueryError, match="no knowledge time"):
+            pit.as_of_frame("trading_calendars", T[5], lag=timedelta(days=1))
+
+
+class TestTypedIdentifierErrors:
+    """RT-G020-N5 / verifier NB-3: unknown identifiers are typed errors,
+    never silent empties (the provider-contract §3 rule, one layer up)."""
+
+    def test_nb3_unknown_table_raises_pit_query_error(self, tmp_path):
+        store = CanonicalStore(tmp_path)
+        pit = PitStore(store)
+        with pytest.raises(PitQueryError, match="unknown table"):
+            pit.as_of_frame("fundmentals", T[5])  # typo'd table
+
+    def test_n5_unknown_universe_id_raises(self, tmp_path):
+        store = CanonicalStore(tmp_path)
+        _write(
+            store,
+            "universe_membership_intervals",
+            [
+                {
+                    "universe_id": "u_test",
+                    "security_id": "SEC-A",
+                    "valid_from": date(2020, 1, 1),
+                    "valid_to": None,
+                    "knowledge_time": T[1],
+                    "membership_basis": "synthetic_truth",
+                }
+            ],
+        )
+        pit = PitStore(store)
+        with pytest.raises(PitQueryError, match="unknown universe_id"):
+            pit.universe("u_tset", T[5])  # typo'd id
+        # a KNOWN id whose rows are not yet knowable is a legal empty answer
+        assert pit.universe("u_test", T[0]) == frozenset()
+
+    def test_n5_unknown_scheme_raises(self, tmp_path):
+        store = CanonicalStore(tmp_path)
+        _write(
+            store,
+            "classification_intervals",
+            [
+                {
+                    "security_id": "SEC-A",
+                    "scheme": "gics_l1",
+                    "value": "Information Technology",
+                    "valid_from": date(2020, 1, 1),
+                    "valid_to": None,
+                    "knowledge_time": T[1],
+                }
+            ],
+        )
+        pit = PitStore(store)
+        with pytest.raises(PitQueryError, match="unknown classification scheme"):
+            pit.classification("gics_1l", T[5])  # typo'd scheme
+
+    def test_n5_unknown_key_filter_column_raises(self, tmp_path):
+        store = CanonicalStore(tmp_path)
+        _write(store, "fundamentals", [_fund("SEC-A", 0, T[1], 1.0)])
+        pit = PitStore(store)
+        with pytest.raises(PitQueryError, match="undeclared columns"):
+            pit.as_of_frame("fundamentals", T[5], keys={"secid": "SEC-A"})  # typo
 
 
 class TestCi007Ci008Substrate:

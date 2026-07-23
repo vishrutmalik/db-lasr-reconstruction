@@ -34,5 +34,10 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
 - N-4: TimingRecord explicit holding_period field -> G017/G026.
 - N-8: uv bootstrap for brew-less macOS -> G016 step 1.
 
+## Doc reconciliations queued (non-blocking)
+- config_system.md: ComponentSpec->ExpertSpec naming, HedgeSelector 'hedge'->
+  'hedge_backcast' discriminator, §6 base_bps provenance tag (N-3/A-G043-01)
+  — G043 report; fold into next docs/architecture-owning goal.
+
 ## Conflicts requiring resolution
 - (none)

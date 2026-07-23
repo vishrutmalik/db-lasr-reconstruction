@@ -99,3 +99,9 @@
 - **Evidence:** provider_contract.md §4.3 vs MASTER_PROMPT §16 "Never create fake
   production endpoints"; G018 deviation item 7.
 - **Reversibility:** EASY. **Date:** 2026-07-21. **Agent:** orchestrator. **Goal:** G018.
+
+## D-014 — G043 pyproject grant executed
+- **Decision:** dev deps pandas-stubs>=2.2 + types-PyYAML>=6 (mypy-strict
+  necessity, flagged deviation); 37 TID251 numpy.random banned-api additions
+  per G017 recommendations. Per toolchain proposal §4 amendment rule.
+- **Date:** 2026-07-22. **Agent:** implementer (G043 grant), orchestrator ratifies. **Goal:** G043.

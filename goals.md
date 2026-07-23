@@ -54,7 +54,7 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G040 | Final clean-clone audit + release tag | verifier | all | BLOCKED | [#39](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/39) | |
 | G041 | Quote-length compliance pass on merged evidence (P1/P3/P4) | paper-researcher | G007, G009, G010 | MERGED | [#46](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/46) | [#47](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/47) |
 | G042 | Methodology/doc cleanup: CI-046 unit reconcile + verifier nits | quant-reviewer | G006, G011, G014, G015 | MERGED | [#55](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/55) | [#56](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/56) |
-| G043 | Config schema slice: VersionSpec, guards, CI-044 completeness | implementer | G017 | IN_PROGRESS | [#58](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/58) | |
+| G043 | Config schema slice: VersionSpec, guards, CI-044 completeness | implementer | G017 | IN_VERIFICATION | [#58](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/58) | [#61](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/61) |
 
 Deferred by design (MASTER_PROMPT §31/§32): LASR-HF beyond modular stubs, deep
 learning, live brokerage, distributed infra.

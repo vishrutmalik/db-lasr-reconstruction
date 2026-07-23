@@ -25,17 +25,17 @@ active:
     github_issue: 58
     branch: agent/implementer/G043-config-schemas
     worktree: .worktrees/G043-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #61)
     dependencies: [G017]
     owned_paths: ["src/lasr/config/**", "tests/unit/test_config*.py", "pyproject.toml (one-goal grant)", "uv.lock"]
     read_only_paths: ["docs/architecture/config_system.md", "docs/methodology/**", "src/lasr/core/**", "src/lasr/data/schemas/**"]
     shared_interfaces: ["VersionSpec consumed by G023-G033; pyproject grant exclusive until merge"]
     started_at: 2026-07-21
     last_updated_at: 2026-07-21
-    latest_commit: null
+    latest_commit: 6a41c08 (final; 702 tests; 158-knob CI-044 table; base_bps->ASSUMED ruling)
     verification_required: true
     red_team_required: false
-    notes: Parallel to G018 (disjoint paths incl. the pyproject exclusivity).
+    notes: pyproject grant closed (D-014). config_system.md doc drift queued.
 
   G039:
     agent_role: data-researcher

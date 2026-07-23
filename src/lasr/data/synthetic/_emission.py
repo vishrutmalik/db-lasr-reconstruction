@@ -112,7 +112,7 @@ def _security_master_rows(b: _Builder) -> tuple[Row, ...]:
                     "knowledge_time": _at(closure_day, _PUBLICATION_UTC),
                 }
             )
-    rows.sort(key=lambda r: (r["ticker"], r["exchange"], r["knowledge_time"]))  # type: ignore[arg-type,return-value]
+    rows.sort(key=lambda r: (r["ticker"], r["exchange"], r["knowledge_time"]))
     return tuple(rows)
 
 
@@ -146,7 +146,7 @@ def _classification_rows(b: _Builder) -> tuple[Row, ...]:
                     }
                 )
     rows.sort(
-        key=lambda r: (r["ticker"], r["exchange"], r["scheme"], r["knowledge_time"])  # type: ignore[arg-type,return-value]
+        key=lambda r: (r["ticker"], r["exchange"], r["scheme"], r["knowledge_time"])
     )
     return tuple(rows)
 
@@ -633,7 +633,7 @@ def _membership_rows(b: _Builder) -> tuple[Row, ...]:
             r["exchange"],
             r["valid_from"],
             r["knowledge_time"],
-        )  # type: ignore[arg-type,return-value]
+        )
     )
     return tuple(rows)
 

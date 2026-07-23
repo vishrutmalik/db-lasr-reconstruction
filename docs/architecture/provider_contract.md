@@ -101,6 +101,11 @@ dataset manifest — binds G020/G021 (D-015; G018 verification amendment 2).
 must raise, never return an empty frame (empty-frame-as-absence is the silent
 failure §3 forbids). Accepted by G018 verification.
 
+### §3 amendment (D-017)
+`DuplicateProviderIdError` joins the closed error set: duplicate ids in one
+request raise a typed refusal (never silent dedupe, never PK-violating frames).
+G018-verification NB-1 resolution, implemented in G019.
+
 > **D-013 note (2026-07-22):** §4.3's concrete API-stub/replay description is
 > descoped — the Protocol + capability records + CT suite are the generic API
 > interface; replay mode is a design REQUIREMENT on future real adapters, not

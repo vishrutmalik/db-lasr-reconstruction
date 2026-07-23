@@ -28,6 +28,13 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-07-22: PR #61 near-miss — `gh pr merge` failed silently (output was
+  grep-filtered), then branch deletions auto-CLOSED the unmerged PR. Caught by
+  post-merge verification (main lacked src/lasr/config; PR state CLOSED with
+  empty mergedAt). Recovered: branch recreated from local object store,
+  PR reopened and merged (d4c5c8a). Rule adopted: after every gh pr merge,
+  verify `gh pr view --json state,mergedAt` = MERGED and the content exists on
+  main BEFORE any branch deletion.
 - 2026-07-21: GitHub email re CI failure triaged — run 29747283743 (PR #54,
   2026-07-20): all jobs failed at setup, 'Unable to resolve action
   astral-sh/setup-uv@v8' (nonexistent floating tag). Already remediated in the

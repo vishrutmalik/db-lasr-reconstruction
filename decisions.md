@@ -83,7 +83,7 @@
 - **Reversibility:** MODERATE. **Date:** 2026-07-21. **Agent:** orchestrator (ruling on G039 finding). **Goal:** G039/G018.
 
 ## D-012 — fetch_prices default fields narrowed to evidence-demonstrated set
-- **Decision:** default fields = ("close", "market_cap") (FM-11/31 demonstrated);
+- **Decision:** default fields = ("close", "market_cap") (FM-11/FM-25 demonstrated; citation corrected from FM-11/31 per G039 drift finding 3 — FM-31 is float-adjusted cap, needs-additional-data);
   open/high/low/volume are LISTED_ONLY and explicit requests raise
   FieldUnavailableError (CT-07) until probe VP-01 passes.
 - **Evidence:** G039 contradiction 2; G013 FM-12/13/14.

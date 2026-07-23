@@ -91,7 +91,15 @@ Market-price families retrieved as retrospective daily windows are graded
 `RETRO_WINDOW` with bar `knowledge_time` = close of event date per D-009,
 PROVIDED the adjustment basis passes VP-07/CT-15 — prices are publicly knowable
 at the bar close and are not restated the way filings are. (D-011; resolves the
-§1-vs-system_design §2 conflict found by G039.)
+§1-vs-system_design §2 conflict found by G039.) If the basis check FAILS, the
+dataset downgrades to SNAPSHOT_STAMPED (leak-safe: retrieval stamping is
+strictly later than bar close) and the downgrade MUST be recorded in the
+dataset manifest — binds G020/G021 (D-015; G018 verification amendment 2).
+
+### §3 amendment (D-015)
+`UnknownProviderIdError` joins the closed error set: entity-resolution failures
+must raise, never return an empty frame (empty-frame-as-absence is the silent
+failure §3 forbids). Accepted by G018 verification.
 
 ## 2. Provider interface (typed stub)
 

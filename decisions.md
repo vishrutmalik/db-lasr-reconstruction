@@ -105,3 +105,11 @@
   necessity, flagged deviation); 37 TID251 numpy.random banned-api additions
   per G017 recommendations. Per toolchain proposal §4 amendment rule.
 - **Date:** 2026-07-22. **Agent:** implementer (G043 grant), orchestrator ratifies. **Goal:** G043.
+
+## D-015 — Provider-contract §3 amendments post-G018 verification
+- **Decision:** (a) UnknownProviderIdError added to the closed error set;
+  (b) failed adjustment-basis check downgrades market data to SNAPSHOT_STAMPED
+  (leak-safe by construction) with MANDATORY manifest recording — the recording
+  requirement binds G020/G021 acceptance criteria.
+- **Evidence:** G018 verification (docs/verification/G018.md) amendment analysis.
+- **Reversibility:** EASY. **Date:** 2026-07-22. **Agent:** orchestrator (concurring with verifier). **Goal:** G018/G020.

@@ -8,7 +8,7 @@ active:
     github_issue: 19
     branch: agent/implementer/G019-synthetic-provider
     worktree: .worktrees/G019-implementer
-    status: IN_VERIFICATION (PR #63; verifier PASS 16d24a6; red-team pending)
+    status: FAILED_VERIFICATION (verifier PASS 16d24a6; red-team 4 BLOCKING at a1cc21b; remediation in progress)
     dependencies: [G018]
     owned_paths: ["src/lasr/data/synthetic/**", "src/lasr/data/providers/synthetic*.py", "tests/unit/test_synthetic*.py", "tests/leakage/**", "tests/fixtures/synthetic/**", "PROVIDER_CASES line in tests/integration/test_provider_contract.py (explicit grant)", "NB-1 dedupe helper in providers/base.py + local_file.py (explicit grant)"]
     read_only_paths: ["docs/methodology/leakage_tests.md", "docs/architecture/**", "src/lasr/core/**", "src/lasr/data/schemas/**"]

@@ -42,7 +42,10 @@ A003_BANNER = (
 )
 
 #: Bumped whenever generated content for a fixed (config, seed) changes.
-GENERATOR_VERSION = "1.0.0"
+#: 1.1.0: red-team remediations RT-1/2/3/5/6/7/8 changed emitted content
+#: (closure vintages, announcement stamps, absolute estimate series
+#: labels, collision-safe error seeding, ablation/action sampling).
+GENERATOR_VERSION = "1.1.0"
 
 
 class FeatureTruth(SchemaRow):

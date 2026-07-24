@@ -61,12 +61,25 @@ class TestConstruction:
 
 class TestTeeth:
     def test_biased_ablation_drops_the_dead_names_entirely(self) -> None:
+        """RT-G019-6: including the side tables — a survivorship-biased
+        vendor must not disclose who delisted through actions or
+        classifications."""
         world = get_world("LT-009")
         dead = {t.ticker for t in world.sidecar.delistings}
         ablation = world.ablations["survivorship_biased"]
-        for table in ("raw_market_daily", "raw_security_master"):
+        for table in (
+            "raw_market_daily",
+            "raw_security_master",
+            "raw_market_metrics",
+            "raw_universe_membership",
+            "raw_corporate_actions",
+            "raw_classifications",
+        ):
             tickers = {str(r["ticker"]) for r in ablation[table]}
-            assert not tickers & dead
+            assert not tickers & dead, table
+        assert not any(
+            r["action_type"] == "delisting" for r in ablation["raw_corporate_actions"]
+        )
 
     def test_survivorship_uplift_matches_the_sidecar_exactly(
         self, panel: Panel

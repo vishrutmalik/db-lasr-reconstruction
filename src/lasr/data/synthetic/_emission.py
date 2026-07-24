@@ -958,6 +958,9 @@ def build_ablations(
             }
         elif name == "survivorship_biased":  # LT-009: drop dead names' history
             dead = {(truth.ticker, truth.exchange) for truth in _delisting_truths(b)}
+            # RT-G019-6: actions and classifications included — a
+            # survivorship-biased vendor must not disclose who delisted and
+            # when through unfiltered side tables.
             ablations[name] = {
                 table: tuple(
                     row
@@ -969,6 +972,8 @@ def build_ablations(
                     "raw_market_daily",
                     "raw_market_metrics",
                     "raw_universe_membership",
+                    "raw_corporate_actions",
+                    "raw_classifications",
                 )
             }
         elif name == "latest_vintage":  # LT-010: flat restated-only table

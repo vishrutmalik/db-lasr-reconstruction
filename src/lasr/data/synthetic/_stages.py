@@ -664,48 +664,65 @@ def _build_action_schedule(b: _Builder) -> list[_ActionEvent]:
             )
         )
 
-    eligible = [
-        i
-        for i in range(n)
-        if b.term_period[i] - b.start_period[i] > t // 2 and b.term_reason[i] is None
-    ]
-    for k in range(plan.random_split_count):
-        if not eligible:
-            break
-        i = int(eligible[int(rng.integers(0, len(eligible)))])
-        lo = int(b.start_period[i]) + 2
-        hi = int(b.term_period[i]) - 1
-        if hi <= lo:
-            continue
+    # RT-G019-7: split/symbol-change names are sampled from names ALIVE at
+    # the drawn period — never from full-path survivors — so an action's
+    # existence at t encodes "listed around t", not "never delists
+    # in-sample". (A merger IS a termination, so merger candidates must
+    # tautologically have no OTHER termination; that residual conditioning
+    # is inherent, not look-ahead.)
+    taken: set[tuple[int, int]] = set()
+
+    def alive_at(period: int, exclude_changed: bool = False) -> list[int]:
+        return [
+            i
+            for i in range(n)
+            if int(b.start_period[i]) + 2 <= period <= int(b.term_period[i]) - 1
+            and (i, period) not in taken
+            and not (
+                exclude_changed and any(sec == i for sec, _, _, _ in b.symbol_changes)
+            )
+        ]
+
+    def draw_period(lo: int, hi: int) -> int:
         period = int(rng.integers(lo, hi))
         if b.periods[period].month == 2:
             period += 1  # keep window-boundary arithmetic Feb-29-safe (NB-4)
+        return period
+
+    for k in range(plan.random_split_count):
+        period = draw_period(3, t - 1)
+        candidates = alive_at(period)
+        if not candidates:
+            continue
+        i = int(candidates[int(rng.integers(0, len(candidates)))])
+        taken.add((i, period))
         if k % 2 == 0:
             events.append(_ActionEvent(i, period, "split", 2.0, 1.0))
         else:
             events.append(_ActionEvent(i, period, "reverse_split", 1.0, 10.0))
 
     for _ in range(plan.symbol_change_count):
-        if not eligible:
-            break
-        i = int(eligible[int(rng.integers(0, len(eligible)))])
-        if any(sec == i for sec, _, _, _ in b.symbol_changes):
+        period = draw_period(t // 3, (2 * t) // 3)
+        candidates = alive_at(period, exclude_changed=True)
+        if not candidates:
             continue
-        period = int(rng.integers(t // 3, (2 * t) // 3))
+        i = int(candidates[int(rng.integers(0, len(candidates)))])
+        taken.add((i, period))
         new_ticker = f"SYNX{i:04d}"
         b.symbol_changes.append((i, period, b.tickers[i], new_ticker))
         events.append(_ActionEvent(i, period, "symbol_change"))
 
-    merge_candidates = [
-        i for i in eligible if all(sec != i for sec, _, _, _ in b.symbol_changes)
-    ]
     for _ in range(plan.merger_count):
+        period = draw_period((2 * t) // 5, t - 2)
+        merge_candidates = [
+            i
+            for i in alive_at(period, exclude_changed=True)
+            if b.term_reason[i] is None and int(b.term_period[i]) == t - 1
+        ]
         if len(merge_candidates) < 2:
-            break
+            continue
         i = merge_candidates.pop(int(rng.integers(0, len(merge_candidates))))
-        period = int(rng.integers((2 * t) // 5, t - 2))
-        if b.periods[period].month == 2:
-            period += 1
+        taken.add((i, period))
         b.term_period[i] = period
         b.term_reason[i] = "merger"
         b.terminal_return[i] = float(b.config.param("merger_premium", 0.15))
@@ -714,6 +731,10 @@ def _build_action_schedule(b: _Builder) -> list[_ActionEvent]:
         b.returns[i, period] = b.terminal_return[i]
         b.dividend_yield[i, period:] = 0.0
         events.append(_ActionEvent(i, period, "merger"))
+
+    # a merger may truncate a name whose split/symbol change was scheduled
+    # later: drop events past the (possibly shortened) terminal period.
+    events = [e for e in events if e.period <= int(b.term_period[e.security])]
 
     for event in events:
         if event.kind in ("split", "reverse_split"):

@@ -304,7 +304,12 @@ class CanonicalStore:
         if schema.vintaged:
             for predecessor_id in self.dataset_ids(table_name):
                 verify_vintage_append(
-                    schema, self.read_records(table_name, predecessor_id), ordered
+                    # R2-N1: predecessor reads are VERIFIED — a tampered
+                    # predecessor fails here instead of being laundered into
+                    # a freshly-hashed (clean-auditing) successor dataset.
+                    schema,
+                    self.verified_records(table_name, predecessor_id),
+                    ordered,
                 )
         dataset_id = f"ds-{digest[:16]}"
         directory = self._root / table_name / dataset_id

@@ -70,5 +70,11 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
 - N2 universe listing-intersection default -> G026 universe consumers.
 - N10 raw CA PK / fundamentals event-key representability -> G021/G023 review.
 
+## Contract-suite hardening queued (RT-9, from G019 red-team)
+- CT-16 (new): interval-table PIT policing — a provider serving interval tables
+  must not expose closures/backfilled membership knowable only later (the
+  LT-016 leak shape at the contract level). Owner: next goal touching the CT
+  suite (G018-descendant contract work or G029 integration hardening).
+
 ## Conflicts requiring resolution
 - (none)

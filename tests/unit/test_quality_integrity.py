@@ -8,28 +8,45 @@ audited clean and was served. The fix routes predecessor reads inside
 ``CanonicalStore.write`` through ``verified_records``, so the tampered
 predecessor is refused at the rebuild instead of being laundered.
 
-The reproduction below is the red-team's §2c probe inverted: the attack is
-executed verbatim and the test asserts REFUSAL (plus that nothing lands on
-disk), with a positive twin proving clean appends still pass.
+NB-6 (docs/verification/G020.md, round 2): rewriting a downgraded
+dataset's manifest to ``capability.supports_pit=true`` +
+``pit_grade=FULL_VINTAGES`` + ``downgrade_events=[]`` — a LEGAL manifest
+state — audited clean, because the content hash covered records only and
+the stamp-consistency check is skipped for ``supports_pit=true`` claims.
+The fix binds the manifest's provenance fields into the content-addressed
+dataset identity (``dataset_identity_digest``), so the forgery shifts the
+identity away from the directory name.
+
+Each reproduction is the original probe inverted: the attack is executed
+verbatim and the test asserts detection/refusal, with positive twins
+proving honest datasets still pass.
 """
 
 from __future__ import annotations
 
+import json
 from datetime import UTC, date, datetime, time
 
 import pytest
 
 from lasr.artifacts.serialization import ColumnDef, write_parquet_records
 from lasr.core.enums import PitGrade, RevisionSupport
-from lasr.data.canonical.builders import BuildContext, BuildResult, write_build
+from lasr.data.canonical.builders import (
+    BuildContext,
+    BuildResult,
+    build_prices_daily,
+    mint_ids,
+    write_build,
+)
 from lasr.data.canonical.stamping import StampingConfig
 from lasr.data.canonical.store import CanonicalStore, DatasetRef, StoreError
+from lasr.data.point_in_time.store import PitStore
 from lasr.data.providers.base import (
     CorporateActionBasis,
     FamilyCapability,
     FieldFamily,
 )
-from lasr.data.quality.manifest import audit_dataset
+from lasr.data.quality.manifest import audit_dataset, verify_manifest_payload
 from lasr.data.schemas.registry import get_schema
 
 pytestmark = pytest.mark.unit
@@ -142,3 +159,121 @@ class TestR2N1LaunderViaAppend:
         assert successor.created is True
         assert audit_dataset(store, "fundamentals", v0.dataset_id) == ()
         assert audit_dataset(store, "fundamentals", successor.dataset_id) == ()
+
+
+# ── NB-6: manifest provenance bound into the dataset identity ────────────────
+
+CAP_UNKNOWN_BASIS = FamilyCapability(
+    available=True,
+    supports_pit=False,
+    revision_support=RevisionSupport.LATEST_ONLY,
+    fields=frozenset({"close"}),
+    notes="test fixture: latest-only market feed (FM-17 basis unknown)",
+    corporate_action_basis=CorporateActionBasis.UNKNOWN,
+)
+
+RAW_PRICES: list[dict[str, object]] = [
+    {
+        "ticker": "SYNA",
+        "exchange": "XNAS",
+        "event_date": date(2024, 1, 2),
+        "close": 140.0,
+        "currency": "USD",
+    },
+    {
+        "ticker": "SYNA",
+        "exchange": "XNAS",
+        "event_date": date(2024, 1, 3),
+        "close": 140.06,
+        "currency": "USD",
+    },
+]
+
+
+def _downgraded_prices(store: CanonicalStore) -> DatasetRef:
+    """A legitimately D-015-downgraded prices dataset (retrieval stamps)."""
+    minted = mint_ids(
+        [{"ticker": "SYNA", "exchange": "XNAS"}],
+        first_observed={("SYNA", "XNAS"): date(2024, 1, 2)},
+        retrieval_date=RETRIEVAL.date(),
+    )
+    ctx = BuildContext(
+        provider_name="test_provider",
+        provider_version="1.0.0",
+        capability=CAP_UNKNOWN_BASIS,
+        source_snapshot_ids=("snap-1",),
+        retrieval_time=RETRIEVAL,
+        stamping=StampingConfig(bar_close_time=time(21, 0)),
+    )
+    return write_build(store, build_prices_daily(RAW_PRICES, minted, ctx))
+
+
+class TestNb6ManifestIdentityBinding:
+    def _forge_full_vintages_claim(
+        self, store: CanonicalStore, ref: DatasetRef
+    ) -> dict[str, object]:
+        """The NB-6 probe verbatim: a coherent multi-field capability
+        forgery landing in a LEGAL manifest state (supports_pit=true grades
+        FULL_VINTAGES with no downgrade on the D-011 table)."""
+        payload = store.manifest_payload("prices_daily", ref.dataset_id)
+        capability = dict(payload["capability"])  # type: ignore[arg-type]
+        capability["supports_pit"] = True
+        payload["capability"] = capability
+        payload["pit_grade"] = "FULL_VINTAGES"
+        payload["downgrade_events"] = []
+        (ref.directory / "manifest.json").write_text(
+            json.dumps(payload), encoding="utf-8"
+        )
+        return payload
+
+    def test_nb6_reproduction_capability_forgery_detected_and_refused(self, tmp_path):
+        """Pre-fix: the rewrite audited clean (content hash covers records
+        only; the stamp check is skipped for supports_pit=true claims) —
+        grade/provenance metadata was forgeable. Now the identity digest
+        disagrees with the directory name and the dataset is refused."""
+        store = CanonicalStore(tmp_path)
+        ref = _downgraded_prices(store)
+        assert len(ref.manifest.downgrade_events) == 1  # honest D-015 record
+        assert audit_dataset(store, "prices_daily", ref.dataset_id) == ()
+
+        payload = self._forge_full_vintages_claim(store, ref)
+        # the forged state is legal for the manifest model in isolation —
+        # this is exactly why the pre-fix nets passed clean:
+        assert verify_manifest_payload(payload) == ()
+        store.read_manifest("prices_daily", ref.dataset_id)  # parses clean
+        # ...but the identity no longer matches the directory:
+        problems = audit_dataset(store, "prices_daily", ref.dataset_id)
+        assert any("directory id" in p for p in problems)
+        # content hash is UNCHANGED (records untouched) — pin that the
+        # identity binding is the net that fires:
+        assert not any("content_hash" in p for p in problems)
+        with pytest.raises(StoreError, match="integrity"):
+            store.verified_records("prices_daily", ref.dataset_id)
+        with pytest.raises(StoreError, match="integrity"):
+            PitStore(store).as_of_frame(
+                "prices_daily", datetime(2024, 6, 1, tzinfo=UTC)
+            )
+
+    def test_nb6_any_single_identity_field_rewrite_shifts_identity(self, tmp_path):
+        """Every provenance field is bound: flipping just one (provider)
+        is detected even though the records and grade are untouched."""
+        store = CanonicalStore(tmp_path)
+        ref = _downgraded_prices(store)
+        payload = store.manifest_payload("prices_daily", ref.dataset_id)
+        payload["provider"] = "forged_provider"
+        (ref.directory / "manifest.json").write_text(
+            json.dumps(payload), encoding="utf-8"
+        )
+        problems = audit_dataset(store, "prices_daily", ref.dataset_id)
+        assert any("directory id" in p for p in problems)
+
+    def test_nb6_honest_dataset_audits_clean_and_rerun_is_noop(self, tmp_path):
+        """Positive twin: the identity binding must not break clean audits
+        or idempotent re-runs (retrieval_time stays volatile-excluded)."""
+        store = CanonicalStore(tmp_path)
+        first = _downgraded_prices(store)
+        again = _downgraded_prices(store)
+        assert audit_dataset(store, "prices_daily", first.dataset_id) == ()
+        assert again.created is False
+        assert again.dataset_id == first.dataset_id
+        assert store.dataset_ids("prices_daily") == (first.dataset_id,)

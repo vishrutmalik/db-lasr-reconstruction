@@ -26,6 +26,7 @@ EXPECTED_PACKAGES: tuple[str, ...] = (
     "lasr.artifacts",
     "lasr.data",
     "lasr.data.schemas",
+    "lasr.data.synthetic",  # G019 generator (providers/ holds its adapter)
     "lasr.data.providers",
     "lasr.data.ingestion",
     "lasr.data.canonical",

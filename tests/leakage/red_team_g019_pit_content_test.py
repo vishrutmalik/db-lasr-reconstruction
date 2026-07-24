@@ -2,11 +2,10 @@
 
 The LT-019 harness deletes ROWS with knowledge_time > as_of; these tests
 attack the payloads of the rows that SURVIVE. Findings RT-G019-1 and
-RT-G019-2 are recorded as strict xfails: they document defects in the
-generated worlds that row-level truncation can never catch. When the
-generator is fixed, the strict xfail flips to a failure, forcing the
-markers' removal (ratchet discipline — do not delete these tests, un-xfail
-them).
+RT-G019-2 were recorded as strict xfails; both fixes landed (closure
+vintages; post-effective terminal-return stamps), the ratchets flipped,
+and the markers were removed — these are now permanent keeper regressions
+(do not delete).
 """
 
 from __future__ import annotations

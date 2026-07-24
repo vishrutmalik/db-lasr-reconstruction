@@ -34,8 +34,11 @@ Session-independent status. Update at every session end and major milestone.
   python_version=3.11, surfaced only when G018's pandas import met G043's
   pandas-stubs on merged main). Fixed on main (D-016): mypy targets 3.12,
   unused ignore removed per G018's own plan, one sound cast. Local gates
-  green (855 tests); CI confirmation tracked. Lint/test legs were never
+  green (855 tests); CI confirmed green at 30005226757. Lint/test legs never
   affected. No goal created (orchestrator integration duty, CI verifies).
+  Email-burst note: the 6 failed runs (07:45-08:09) each generated a GitHub
+  email; user received the backlog after the fix. Re-triaged 21:23 — all 7
+  runs since the fix are SUCCESS across main + both PR branches. No action.
 - 2026-07-22 (2): E-1 DATA-INTEGRITY — proprietary input workbooks drifted from
   manifested hashes (login-prompt cache corruption; mtimes Jul 21 16:31/16:52,
   after all extractions/verifications). No merged work invalidated (timeline

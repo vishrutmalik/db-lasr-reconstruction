@@ -129,3 +129,11 @@
 - **Reversibility:** EASY. **Date:** 2026-07-23. **Agent:** orchestrator
   (integration duty per MP §10.1; CI is the verification instrument).
   **Goal:** G043/G018 integration.
+
+## D-017 — DuplicateProviderIdError joins the closed error set (NB-1 resolution)
+- **Decision:** duplicate ProviderIds in a request raise a typed refusal
+  (shared require_unique_ids helper, both adapters) rather than silent dedupe —
+  silent dedupe would mask caller bugs (double-counted joins). Amends
+  provider_contract.md §3 alongside UnknownProviderIdError (D-015).
+- **Evidence:** G018 verification NB-1; G019 implementation.
+- **Reversibility:** EASY. **Date:** 2026-07-23. **Agent:** implementer (G019), orchestrator ratifies pending verification. **Goal:** G019.

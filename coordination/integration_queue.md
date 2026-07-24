@@ -39,6 +39,12 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   'hedge_backcast' discriminator, §6 base_bps provenance tag (N-3/A-G043-01)
   — G043 report; fold into next docs/architecture-owning goal.
 
+## Bindings on upcoming goals (from G020 verification)
+- G021 acceptance: defense-in-depth for manifest forgery on the WRITE side
+  (model_construct bypass persists via store.write; read/audit catch it —
+  NB-2, docs/verification/G020.md). Also NB-3 (typed PitQueryError for unknown
+  table), NB-4 (join_latest_known naive-datetime localization consistency).
+
 ## Bindings on upcoming goals (from G018 verification)
 - G019 grant note: fix NB-1 (duplicate ProviderIds -> PK-violating frame) via a
   shared dedupe/refusal helper in providers/base.py + local_file.py (explicit
@@ -46,6 +52,29 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
 - G020/G021 acceptance MUST include: manifest recording of failed-basis
   downgrades (D-015); the typed validate(frame) wrapper now that pandas-stubs
   landed (G017 NB-2); CT-10 ingestion-side stamping behavior.
+
+## Doc nits queued
+- system_design.md §5: canonical/<table>/ vs sketch's canonical/<family>/ (G020
+  deviation, family recorded in manifests) — next architecture-docs pass.
+
+## Follow-ups from G020 remediation (documented-not-fixed, owner-routed)
+- N3: raw sort-key ties -> append PK columns to raw schema sort keys (owner:
+  next goal touching schemas/raw_*.py; candidate G021).
+- N9: naive bar_close_time contract (StampingConfig/bar_knowledge_time,
+  touches providers/base.py) -> fold into next provider-touching goal.
+- N11: retrieval-time truthfulness cross-check -> G021 charter (with G020
+  verifier NB items already queued above).
+- CT-15 wording update ('basis matches' -> 'basis known; ADJUSTED refused at
+  canonical build per B3') -> provider_contract.md owner edit (orchestrator
+  control-plane on G020 merge).
+- N2 universe listing-intersection default -> G026 universe consumers.
+- N10 raw CA PK / fundamentals event-key representability -> G021/G023 review.
+
+## Contract-suite hardening queued (RT-9, from G019 red-team)
+- CT-16 (new): interval-table PIT policing — a provider serving interval tables
+  must not expose closures/backfilled membership knowable only later (the
+  LT-016 leak shape at the contract level). Owner: next goal touching the CT
+  suite (G018-descendant contract work or G029 integration hardening).
 
 ## Conflicts requiring resolution
 - (none)

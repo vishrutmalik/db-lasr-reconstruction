@@ -2,42 +2,83 @@
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
 active:
+  G021:
+    agent_role: implementer
+    objective: Data-quality checks + integrity hardening (R2-N1 first commit, NB-6 manifest self-hash, N11, N3 raw sort keys)
+    github_issue: 21
+    branch: agent/implementer/G021-data-quality
+    worktree: .worktrees/G021-implementer
+    status: IN_PROGRESS
+    dependencies: [G020]
+    owned_paths: ["src/lasr/data/quality/**", "tests/unit/test_quality*.py", "explicit grants: verified_records one-liner in data/canonical (R2-N1), manifest self-hash (NB-6), raw sort-key PK append in data/schemas/raw_*.py (N3)"]
+    read_only_paths: ["docs/architecture/**", "src/lasr/data/{canonical,point_in_time,providers}/** (beyond grants)"]
+    shared_interfaces: ["quality battery consumed by G029/G038"]
+    started_at: 2026-07-23
+    last_updated_at: 2026-07-23
+    latest_commit: null
+    verification_required: true
+    red_team_required: false
+    notes: LT-021 detection integration activates when G019 merges (still in remediation).
+  G022:
+    agent_role: implementer
+    objective: Feature registry + small audited feature library (MP SS18, D-007 pre-neutralization store)
+    github_issue: 22
+    branch: agent/implementer/G022-feature-registry
+    worktree: .worktrees/G022-implementer
+    status: IN_PROGRESS
+    dependencies: [G020, G013]
+    owned_paths: ["src/lasr/features/**", "tests/unit/test_features*.py"]
+    read_only_paths: ["docs/data/field_mapping.md", "docs/methodology/**", "src/lasr/data/**", "src/lasr/config/**"]
+    shared_interfaces: ["FeatureSpec (G017); feature values consumed by G023-G029"]
+    started_at: 2026-07-23
+    last_updated_at: 2026-07-23
+    latest_commit: null
+    verification_required: true
+    red_team_required: true
+    notes: CI-020..024 bind here (cross-sectional fitting discipline).
+  G023:
+    agent_role: implementer
+    objective: Target & label engine — all 4 target families per version specs (CI-012..019)
+    github_issue: 23
+    branch: agent/implementer/G023-target-engine
+    worktree: .worktrees/G023-implementer
+    status: IN_PROGRESS
+    dependencies: [G020, G014, G043]
+    owned_paths: ["src/lasr/targets/**", "tests/unit/test_targets*.py"]
+    read_only_paths: ["docs/methodology/**", "src/lasr/core/timing.py", "src/lasr/config/**", "src/lasr/data/**"]
+    shared_interfaces: ["training examples (CI-018 schema) consumed by G024-G026"]
+    started_at: 2026-07-23
+    last_updated_at: 2026-07-23
+    latest_commit: null
+    verification_required: true
+    red_team_required: true
+    notes: TimingRecord + purge/embargo metadata mandatory per record.
+
   G019:
     agent_role: implementer
     objective: Synthetic data generator + synthetic provider + LT scenario bundles (MP SS17, leakage_tests.md interface)
     github_issue: 19
     branch: agent/implementer/G019-synthetic-provider
     worktree: .worktrees/G019-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION round 2 (remediated b160f52; verifier r2 PASS 56ad39d; red-team r2 pending)
     dependencies: [G018]
     owned_paths: ["src/lasr/data/synthetic/**", "src/lasr/data/providers/synthetic*.py", "tests/unit/test_synthetic*.py", "tests/leakage/**", "tests/fixtures/synthetic/**", "PROVIDER_CASES line in tests/integration/test_provider_contract.py (explicit grant)", "NB-1 dedupe helper in providers/base.py + local_file.py (explicit grant)"]
     read_only_paths: ["docs/methodology/leakage_tests.md", "docs/architecture/**", "src/lasr/core/**", "src/lasr/data/schemas/**"]
     shared_interfaces: ["ScenarioBundle consumed by G037 red-team + tests/leakage; provider joins CT suite"]
     started_at: 2026-07-22
     last_updated_at: 2026-07-22
-    latest_commit: null
+    latest_commit: 036c742 (final; 1081 tests; 21 LT scenarios; NB-1 typed refusal D-017)
     verification_required: true
     red_team_required: true
-    notes: Parallel to G020/G039/G043-verify. Red-team required (synthetic truth underpins all leakage evidence).
-  G020:
-    agent_role: implementer
-    objective: Ingestion -> canonical -> point-in-time layer with as-of joins (D-006 query API), incl. D-015 manifest downgrade recording + typed validate(frame) wrapper
-    github_issue: 20
-    branch: agent/implementer/G020-pit-layer
-    worktree: .worktrees/G020-implementer
-    status: IN_PROGRESS
-    dependencies: [G017, G018]
-    owned_paths: ["src/lasr/data/ingestion/**", "src/lasr/data/canonical/**", "src/lasr/data/point_in_time/**", "src/lasr/data/quality/manifest*.py (D-015 recording)", "tests/unit/test_ingestion*.py", "tests/unit/test_canonical*.py", "tests/unit/test_pit*.py", "tests/integration/test_pit_asof*.py"]
-    read_only_paths: ["docs/architecture/**", "docs/methodology/correctness_criteria.md", "src/lasr/core/**", "src/lasr/data/schemas/**", "src/lasr/data/providers/**"]
-    shared_interfaces: ["PitStore API consumed by G022/G023; manifest consumed by G021"]
-    started_at: 2026-07-22
-    last_updated_at: 2026-07-22
-    latest_commit: null
-    verification_required: true
-    red_team_required: true
-    notes: Parallel to G019 (disjoint paths). CI-001..011 bind here; red-team required (PIT correctness).
-
+    notes: CT-suite shared-file edits (CT-10/CT-07 PIT-true accommodations) need verifier sign-off.
 history:
+  - goal_id: G020
+    agent_role: implementer
+    branch: agent/implementer/G020-pit-layer (deleted after merge)
+    final_commit: 7cf0058 (remediated) + e4f795b/a204960 (verify r1/r2 PASS) + 7f34c62/ceea7d5 (red-team r1 4-BLOCKING/r2 CLEAN)
+    pr: 62
+    verification: PASS r2 + red-team NO_BLOCKING_FINDINGS r2 (docs/verification+red_team/G020.md)
+    worktree: removed
   - goal_id: G039
     agent_role: data-researcher
     branch: agent/data-researcher/G039-real-data-guide (deleted after merge)

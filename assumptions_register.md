@@ -76,6 +76,20 @@ verifier):
   cross the version boundary. Config: costs.base_bps (tagged ASSUMED).
   Sensitivity: the P1 cost grid sweep itself. Goal: G043/G024.
 
+### A-G020-01..05 — ingestion/canonical conventions (G020, PR #62)
+Defined in the G020 report + build-note manifests: security_type=other fallback
++ issuer_id=security_id (01); A-ARCH-01 first_seen fallback semantics (02);
+fiscal-period normalization rules (03); adjustment-factor conventions pinned by
+hand-ledger test (04); snapshot intervals valid_from=retrieval date (05).
+
+### A-G019-01 — multi-vintage rows share raw PKs in world/bundle tables
+- Post-RT-1, interval tables (master, membership, classifications) carry
+  superseding closure-vintage rows: same raw event key, later knowledge_time —
+  same convention as multi-vintage fundamentals. Consumers (G020 canonical
+  assembly, G021 quality checks) MUST be vintage-aware; naive duplicate-PK
+  validation on world tables is expected to flag these legitimately.
+- Source: G019 red-team round-2 residual (docs/red_team/G019.md).
+
 ### Toolchain conventions (G016, merged PR #54)
 - Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per
   docs/runbooks/dev_setup.md. TEST_SEED=1729 root test seed (tests/conftest.py).

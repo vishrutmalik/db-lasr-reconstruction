@@ -79,6 +79,38 @@ class TestCheckResultConsistency:
         assert skip.status is CheckStatus.SKIPPED
         assert skip.skip_reason == "no listing_intervals dataset"
 
+    def test_flagged_indices_are_the_quarantine_surface(self):
+        bad = failed(
+            "a.b",
+            "prices_daily",
+            ("row 0: x", "row 3: y"),
+            flagged_indices=(0, 3),
+        )
+        assert bad.flagged_rows == 2  # defaults to the index count
+        with pytest.raises(ValidationError, match="require a FAIL"):
+            CheckResult(
+                check_id="a.b",
+                table_name="prices_daily",
+                status=CheckStatus.PASS,
+                flagged_indices=(0,),
+            )
+        with pytest.raises(ValidationError, match="sorted and unique"):
+            CheckResult(
+                check_id="a.b",
+                table_name="prices_daily",
+                status=CheckStatus.FAIL,
+                problems=("x",),
+                flagged_indices=(3, 0),
+            )
+        with pytest.raises(ValidationError, match="non-negative"):
+            CheckResult(
+                check_id="a.b",
+                table_name="prices_daily",
+                status=CheckStatus.FAIL,
+                problems=("x",),
+                flagged_indices=(-1, 0),
+            )
+
 
 def _report() -> QualityReport:
     return QualityReport(

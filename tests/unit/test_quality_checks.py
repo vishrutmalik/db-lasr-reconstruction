@@ -30,6 +30,7 @@ from lasr.data.quality.checks import (
     check_stale_prices,
 )
 from lasr.data.quality.report import CheckStatus
+from lasr.data.schemas.raw_registry import get_raw_schema
 from lasr.data.schemas.registry import get_schema
 
 pytestmark = pytest.mark.unit
@@ -111,6 +112,7 @@ class TestLt021Class2NegativePrices:
         result = check_negative_prices(records)
         assert result.status is CheckStatus.FAIL
         assert result.flagged_rows == 3
+        assert result.flagged_indices == (0, 1, 2)
         assert all("negative-price class" in p for p in result.problems)
 
     def test_every_price_column_screened(self):
@@ -133,16 +135,37 @@ class TestLt021Class3StalePrices:
     def test_frozen_run_caught_regardless_of_input_order(self):
         closes = [100.0, 100.0, 100.0, 101.0]
         records = [_bar(day=d, close=c) for d, c in zip(_days(4), closes, strict=True)]
-        for batch in (records, list(reversed(records))):
-            result = check_stale_prices(batch, CONFIG)
-            assert result.status is CheckStatus.FAIL
-            assert result.flagged_rows == 3
-            assert "frozen at 100.0 for 3 consecutive bars" in result.problems[0]
+        result = check_stale_prices(records, CONFIG)
+        assert result.status is CheckStatus.FAIL
+        assert result.flagged_rows == 3
+        assert result.flagged_indices == (0, 1, 2)  # quarantine surface
+        assert "frozen at 100.0 for 3 consecutive bars" in result.problems[0]
+        reversed_result = check_stale_prices(list(reversed(records)), CONFIG)
+        assert reversed_result.status is CheckStatus.FAIL
+        assert reversed_result.flagged_indices == (1, 2, 3)  # same rows
 
     def test_securities_are_independent(self):
         records = [_bar(day=d, close=100.0) for d in _days(2)]
         records += [_bar(sid="SEC-B", day=d, close=50.0) for d in _days(2)]
         assert check_stale_prices(records, CONFIG).status is CheckStatus.PASS
+
+    def test_raw_entity_key_groups_by_ticker_exchange(self):
+        """Raw payloads have no security_id; the entity key is explicit
+        (the LT-021 generator seeds stale runs in raw_market_daily)."""
+        records = [
+            {"ticker": "ACME", "exchange": "XNAS", "event_date": d, "close": 10.0}
+            for d in _days(3)
+        ] + [
+            {"ticker": "BOLT", "exchange": "XNAS", "event_date": d, "close": 10.0}
+            for d in _days(3)
+        ]
+        entity = ("ticker", "exchange")
+        result = check_stale_prices(
+            records, CONFIG, table_name="raw_market_daily", entity_key=entity
+        )
+        assert result.status is CheckStatus.FAIL
+        assert len(result.problems) == 2  # one run per ticker, not one blob
+        assert result.flagged_indices == (0, 1, 2, 3, 4, 5)
 
 
 class TestLt021Class4ImpossibleVolumes:
@@ -213,8 +236,37 @@ class TestLt021Class6InvertedTimestamps:
         assert result.status is CheckStatus.FAIL
         assert "not a datetime" in result.problems[0]
 
+    def test_raw_fundamentals_with_explicit_knowledge_column(self):
+        """Raw schemas declare knowledge_time_column=None (CT-10); the
+        LT-021 generator seeds inversions in raw_fundamentals, so the
+        physical column is named explicitly."""
+        raw_schema = get_raw_schema("raw_fundamentals")
+        row = {
+            "ticker": "ACME",
+            "exchange": "XNAS",
+            "metric": "EPS",
+            "fiscal_period": "FY2024",
+            "period_end": date(2024, 12, 31),
+            "knowledge_time": datetime(2024, 6, 1, tzinfo=UTC),  # inverted
+            "value": 1.0,
+            "unit": "unscaled",
+            "currency": "USD",
+        }
+        result = check_inverted_timestamps(
+            raw_schema, [row], knowledge_column="knowledge_time"
+        )
+        assert result.status is CheckStatus.FAIL
+        assert result.flagged_indices == (0,)
+        # a null knowledge cell is CT-10's concern, not an inversion:
+        clean = check_inverted_timestamps(
+            raw_schema,
+            [dict(row, knowledge_time=None)],
+            knowledge_column="knowledge_time",
+        )
+        assert clean.status is CheckStatus.PASS
+
     def test_unmapped_table_is_a_caller_bug(self):
-        with pytest.raises(QualityCheckError, match="no event-time mapping"):
+        with pytest.raises(QualityCheckError, match="mapping"):
             check_inverted_timestamps(get_schema("corporate_actions"), [])
 
 
@@ -431,3 +483,33 @@ class TestSplitBasisReconciliation:
             self._series(100.4), [dividend], CONFIG
         )
         assert result.status is CheckStatus.PASS
+
+
+class TestQuarantineRoundTrip:
+    """LT-021: "quarantines rows so downstream stages never consume them" —
+    dropping exactly the flagged indices leaves a batch every row-level
+    detector passes."""
+
+    def test_dropping_flagged_indices_cleans_the_batch(self):
+        closes = [100.0, 100.0, 100.0, 101.0, 102.0]
+        records = [_bar(day=d, close=c) for d, c in zip(_days(5), closes, strict=True)]
+        records.append(_bar(close=-3.0))  # duplicate day AND negative price
+        records.append(_bar(day=date(2024, 2, 1), volume=-9.0))
+        records.append(_bar(day=date(2024, 2, 2), currency=None))
+
+        def run_all(batch):
+            return (
+                check_duplicate_rows(PRICES, batch),
+                check_negative_prices(batch),
+                check_stale_prices(batch, CONFIG),
+                check_impossible_volumes(batch),
+                check_missing_mandatory_fields(PRICES, batch),
+                check_inverted_timestamps(PRICES, batch),
+            )
+
+        dirty = run_all(records)
+        flagged = sorted({i for r in dirty for i in r.flagged_indices})
+        assert flagged  # the corruption was seen
+        quarantined = [r for i, r in enumerate(records) if i not in set(flagged)]
+        assert quarantined  # quarantine is surgical, not a table drop
+        assert all(r.status is CheckStatus.PASS for r in run_all(quarantined))

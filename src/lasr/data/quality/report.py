@@ -62,6 +62,11 @@ class CheckResult(SchemaRow):
       non-empty iff ``status == FAIL`` (enforced);
     - ``flagged_rows``: number of rows implicated (0 for manifest-level
       problems);
+    - ``flagged_indices``: positions of the offending rows in the audited
+      batch (sorted, unique) — the QUARANTINE surface: downstream drops
+      exactly these rows, and the LT-021 sidecar diff matches seeded
+      errors to detector hits mechanically instead of parsing problem
+      strings;
     - ``metrics``: check-specific numbers (e.g. per-column coverage
       fractions) — populated even on PASS so reports carry the
       "coverage and quality metadata" MP §15 asks for;
@@ -74,6 +79,7 @@ class CheckResult(SchemaRow):
     status: CheckStatus
     problems: tuple[str, ...] = ()
     flagged_rows: int = Field(default=0, ge=0)
+    flagged_indices: tuple[int, ...] = ()
     metrics: dict[str, float] = Field(default_factory=dict)
     skip_reason: str | None = None
 
@@ -83,6 +89,12 @@ class CheckResult(SchemaRow):
             raise ValueError("FAIL requires at least one problem string")
         if self.status is CheckStatus.PASS and self.problems:
             raise ValueError("PASS with problems is a contradiction")
+        if self.status is not CheckStatus.FAIL and self.flagged_indices:
+            raise ValueError("flagged_indices require a FAIL status")
+        if tuple(sorted(set(self.flagged_indices))) != self.flagged_indices:
+            raise ValueError("flagged_indices must be sorted and unique")
+        if any(i < 0 for i in self.flagged_indices):
+            raise ValueError("flagged_indices must be non-negative")
         if self.status is CheckStatus.SKIPPED and not self.skip_reason:
             raise ValueError(
                 "SKIPPED requires a recorded reason (a silent skip is "
@@ -115,17 +127,22 @@ def failed(
     problems: tuple[str, ...],
     dataset_id: str | None = None,
     flagged_rows: int | None = None,
+    flagged_indices: tuple[int, ...] = (),
     metrics: dict[str, float] | None = None,
 ) -> CheckResult:
-    """A failed check outcome; ``flagged_rows`` defaults to the problem
-    count (one problem string per offending row is the detector norm)."""
+    """A failed check outcome; ``flagged_rows`` defaults to the flagged
+    index count when indices are given, else to the problem count (one
+    problem string per offending row is the detector norm)."""
+    if flagged_rows is None:
+        flagged_rows = len(flagged_indices) if flagged_indices else len(problems)
     return CheckResult(
         check_id=check_id,
         table_name=table_name,
         dataset_id=dataset_id,
         status=CheckStatus.FAIL,
         problems=problems,
-        flagged_rows=len(problems) if flagged_rows is None else flagged_rows,
+        flagged_rows=flagged_rows,
+        flagged_indices=flagged_indices,
         metrics=metrics or {},
     )
 

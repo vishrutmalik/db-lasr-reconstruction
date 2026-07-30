@@ -83,12 +83,18 @@ PRICE_COLUMNS: tuple[str, ...] = (
 #: Event-time column per table for the inverted-timestamp detector
 #: (LT-021 class 6). Tables absent here are either U3-exempt or carry no
 #: event/knowledge pair; the battery records an explicit SKIP for them.
+#: Raw tables appear too (the LT-021 generator seeds inverted timestamps
+#: in raw payloads): their schemas declare ``knowledge_time_column=None``
+#: (CT-10: stamping is canonical's job), so callers pass the physical
+#: column via ``knowledge_column``.
 EVENT_TIME_COLUMNS: Mapping[str, str] = {
     "prices_daily": "event_date",
     "fx_rates": "event_date",
     "borrow_daily": "event_date",
     "fundamentals": "period_end",
     "feature_values": "observation_time",
+    "raw_market_daily": "event_date",
+    "raw_fundamentals": "period_end",
 }
 
 #: Documented U3 exceptions: an announcement may precede the effective
@@ -157,6 +163,7 @@ def _result(
     problems: Sequence[str],
     flagged_rows: int | None = None,
     metrics: dict[str, float] | None = None,
+    flagged: Sequence[int] = (),
 ) -> CheckResult:
     if problems:
         return failed(
@@ -165,6 +172,7 @@ def _result(
             tuple(problems),
             dataset_id,
             flagged_rows=flagged_rows,
+            flagged_indices=tuple(sorted(set(flagged))),
             metrics=metrics,
         )
     return passed(check_id, table_name, dataset_id, metrics=metrics)
@@ -191,18 +199,25 @@ def check_duplicate_rows(
     security-day, so this IS the duplicate-security-day class)."""
     problems: list[str] = []
     seen: dict[tuple[object, ...], int] = {}
-    flagged = 0
+    flagged: list[int] = []
     for i, record in enumerate(records):
         key = _pk(schema, record)
         if key in seen:
-            flagged += 1
+            flagged.append(i)
             problems.append(
                 f"row {i}: duplicate {schema.primary_key!r} = {key!r} "
                 f"(first at row {seen[key]}) — LT-021 duplicate-row class"
             )
         else:
             seen[key] = i
-    return _result("lt021.duplicate_rows", schema.name, dataset_id, problems, flagged)
+    return _result(
+        "lt021.duplicate_rows",
+        schema.name,
+        dataset_id,
+        problems,
+        len(flagged),
+        flagged=flagged,
+    )
 
 
 # ── LT-021 class 2: negative prices ──────────────────────────────────────────
@@ -215,7 +230,7 @@ def check_negative_prices(
 ) -> CheckResult:
     """Non-positive or non-finite values in price columns."""
     problems: list[str] = []
-    flagged_rows = 0
+    flagged: list[int] = []
     for i, record in enumerate(records):
         row_bad = False
         for column in PRICE_COLUMNS:
@@ -230,9 +245,15 @@ def check_negative_prices(
                     f"{record.get('event_date')!r}): {column}={value!r} is not "
                     "a positive finite price — LT-021 negative-price class"
                 )
-        flagged_rows += int(row_bad)
+        if row_bad:
+            flagged.append(i)
     return _result(
-        "lt021.negative_prices", table_name, dataset_id, problems, flagged_rows
+        "lt021.negative_prices",
+        table_name,
+        dataset_id,
+        problems,
+        len(flagged),
+        flagged=flagged,
     )
 
 
@@ -244,38 +265,50 @@ def check_stale_prices(
     config: QualityCheckConfig,
     dataset_id: str | None = None,
     table_name: str = "prices_daily",
+    entity_key: tuple[str, ...] = ("security_id",),
 ) -> CheckResult:
     """Runs of >= ``stale_run_length`` identical consecutive closes per
-    security (event-date order)."""
-    by_security: dict[str, list[tuple[date, float]]] = {}
-    for record in records:
+    entity (event-date order).
+
+    ``entity_key`` names the per-series identity columns — canonical
+    tables use ``security_id``; raw payloads use ``("ticker", "exchange")``
+    (the LT-021 generator seeds stale runs in ``raw_market_daily``).
+    """
+    by_entity: dict[tuple[object, ...], list[tuple[date, float, int]]] = {}
+    for i, record in enumerate(records):
         close = _finite(record.get("close"))
         event = record.get("event_date")
         if close is None or not isinstance(event, date):
             continue  # unusable cells belong to other checks
-        by_security.setdefault(str(record.get("security_id")), []).append(
-            (event, close)
-        )
+        entity = tuple(record.get(c) for c in entity_key)
+        by_entity.setdefault(entity, []).append((event, close, i))
     problems: list[str] = []
-    flagged = 0
-    for security_id in sorted(by_security):
-        series = sorted(by_security[security_id])
+    flagged: list[int] = []
+    for entity in sorted(by_entity, key=repr):
+        series = sorted(by_entity[entity])
         run_start = 0
         for i in range(1, len(series) + 1):
             if i < len(series) and series[i][1] == series[run_start][1]:
                 continue
             run = i - run_start
             if run >= config.stale_run_length:
-                flagged += run
+                flagged.extend(index for _, _, index in series[run_start:i])
                 problems.append(
-                    f"security {security_id!r}: close frozen at "
+                    f"entity {entity!r}: close frozen at "
                     f"{series[run_start][1]!r} for {run} consecutive bars "
                     f"({series[run_start][0].isoformat()}"
                     f"..{series[i - 1][0].isoformat()}) — LT-021 stale-price "
                     f"class (threshold {config.stale_run_length})"
                 )
             run_start = i
-    return _result("lt021.stale_prices", table_name, dataset_id, problems, flagged)
+    return _result(
+        "lt021.stale_prices",
+        table_name,
+        dataset_id,
+        problems,
+        len(flagged),
+        flagged=flagged,
+    )
 
 
 # ── LT-021 class 4: impossible volumes ───────────────────────────────────────
@@ -288,18 +321,26 @@ def check_impossible_volumes(
 ) -> CheckResult:
     """Negative or non-finite volumes (zero is a legal no-trade day)."""
     problems: list[str] = []
+    flagged: list[int] = []
     for i, record in enumerate(records):
         value = record.get("volume")
         if value is None:
             continue
         finite = _finite(value)
         if finite is None or finite < 0.0:
+            flagged.append(i)
             problems.append(
                 f"row {i} ({record.get('security_id')!r} "
                 f"{record.get('event_date')!r}): volume={value!r} is not a "
                 "non-negative finite number — LT-021 impossible-volume class"
             )
-    return _result("lt021.impossible_volumes", table_name, dataset_id, problems)
+    return _result(
+        "lt021.impossible_volumes",
+        table_name,
+        dataset_id,
+        problems,
+        flagged=flagged,
+    )
 
 
 # ── LT-021 class 5: missing mandatory fields ─────────────────────────────────
@@ -310,7 +351,7 @@ def check_missing_mandatory_fields(
 ) -> CheckResult:
     """Null/absent values in non-nullable columns."""
     problems: list[str] = []
-    flagged = 0
+    flagged: list[int] = []
     for i, record in enumerate(records):
         row_bad = False
         for column in schema.columns:
@@ -320,9 +361,15 @@ def check_missing_mandatory_fields(
                     f"row {i}: mandatory column {column.name!r} missing/null "
                     "— LT-021 missing-mandatory-field class"
                 )
-        flagged += int(row_bad)
+        if row_bad:
+            flagged.append(i)
     return _result(
-        "lt021.missing_mandatory_fields", schema.name, dataset_id, problems, flagged
+        "lt021.missing_mandatory_fields",
+        schema.name,
+        dataset_id,
+        problems,
+        len(flagged),
+        flagged=flagged,
     )
 
 
@@ -334,27 +381,37 @@ def check_inverted_timestamps(
     records: Sequence[Row],
     dataset_id: str | None = None,
     event_column: str | None = None,
+    knowledge_column: str | None = None,
 ) -> CheckResult:
     """``knowledge_time`` strictly before the row's event time (the
     manufactured CI-001 violation LT-021 seeds).
 
-    ``event_column`` defaults through :data:`EVENT_TIME_COLUMNS`; invoking
-    the detector on a table with no mapping is a caller bug (the battery
-    records those as explicit SKIPs instead).
+    ``event_column`` defaults through :data:`EVENT_TIME_COLUMNS`;
+    ``knowledge_column`` defaults to the schema's declared knowledge-time
+    column — raw tables declare ``None`` there (CT-10: stamping is
+    canonical's job), so raw callers name the physical column explicitly.
+    Invoking the detector without a resolvable pair is a caller bug (the
+    battery records those tables as explicit SKIPs instead). Rows without
+    a knowledge value are legal on raw non-PIT payloads and are not this
+    class's concern (CT-10 owns them).
     """
     column = event_column or EVENT_TIME_COLUMNS.get(schema.name)
-    ktc = schema.knowledge_time_column
+    ktc = knowledge_column or schema.knowledge_time_column
     if column is None or ktc is None:
         raise QualityCheckError(
-            f"no event-time mapping for table {schema.name!r} — the "
+            f"no event/knowledge mapping for table {schema.name!r} — the "
             "inverted-timestamp detector needs an event/knowledge pair "
             "(U3-exempt tables are recorded as SKIPPED by the battery)"
         )
     problems: list[str] = []
+    flagged: list[int] = []
     for i, record in enumerate(records):
         kt = record.get(ktc)
         event = record.get(column)
+        if kt is None:
+            continue  # null knowledge is CT-10/U1's concern, not inversion
         if not isinstance(kt, datetime):
+            flagged.append(i)
             problems.append(
                 f"row {i}: {ktc!r}={kt!r} is not a datetime — unusable "
                 "knowledge time (U1)"
@@ -365,19 +422,27 @@ def check_inverted_timestamps(
         elif isinstance(event, date):
             inverted = kt.date() < event
         else:
+            flagged.append(i)
             problems.append(
                 f"row {i}: {column!r}={event!r} is not a date/datetime — "
                 "unusable event time"
             )
             continue
         if inverted:
+            flagged.append(i)
             problems.append(
                 f"row {i} ({record.get('security_id')!r}): "
                 f"knowledge_time {kt.isoformat()} precedes {column} "
                 f"{event.isoformat()} — LT-021 inverted-timestamp class "
                 "(manufactured CI-001 violation; U3)"
             )
-    return _result("lt021.inverted_timestamps", schema.name, dataset_id, problems)
+    return _result(
+        "lt021.inverted_timestamps",
+        schema.name,
+        dataset_id,
+        problems,
+        flagged=flagged,
+    )
 
 
 # ── schema conformance sweep (U1..U4 + row models on stored data) ─────────────
@@ -467,6 +532,7 @@ def check_bars_after_delisting(
         if not isinstance(r.get("delisting_date"), date)
     }
     problems: list[str] = []
+    flagged: list[int] = []
     for i, record in enumerate(price_records):
         security_id = str(record.get("security_id"))
         if security_id in open_securities:
@@ -476,13 +542,18 @@ def check_bars_after_delisting(
         if delisting is None or not isinstance(event, date):
             continue
         if event > delisting:
+            flagged.append(i)
             problems.append(
                 f"row {i}: bar for {security_id!r} on {event.isoformat()} "
                 f"postdates its final delisting {delisting.isoformat()} — "
                 "phantom price after death (CI-003/LT-009 substrate)"
             )
     return _result(
-        "reconcile.bars_after_delisting", "prices_daily", dataset_id, problems
+        "reconcile.bars_after_delisting",
+        "prices_daily",
+        dataset_id,
+        problems,
+        flagged=flagged,
     )
 
 
@@ -507,10 +578,12 @@ def check_factors_match_actions(
         if isinstance(when, date):
             action_dates[action_id] = when
     problems: list[str] = []
+    flagged: list[int] = []
     for i, record in enumerate(factor_records):
         cited = record.get("derived_from_action_ids")
         label = f"row {i} ({record.get('security_id')!r} {record.get('event_date')!r})"
         if not isinstance(cited, list | tuple) or not cited:
+            flagged.append(i)
             problems.append(
                 f"{label}: factor cites no contributing actions — factors "
                 "exist only where actions exist (FM-17, §2.1)"
@@ -518,6 +591,7 @@ def check_factors_match_actions(
             continue
         missing = sorted(str(a) for a in cited if str(a) not in action_dates)
         if missing:
+            flagged.append(i)
             problems.append(
                 f"{label}: cited action id(s) {missing!r} not present in "
                 "corporate_actions — broken factor lineage"
@@ -527,6 +601,7 @@ def check_factors_match_actions(
         if isinstance(event, date) and all(
             action_dates[str(a)] != event for a in cited
         ):
+            flagged.append(i)
             problems.append(
                 f"{label}: no cited action has action date "
                 f"{event.isoformat()} — factor date does not reconcile"

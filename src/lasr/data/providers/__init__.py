@@ -15,6 +15,7 @@ from lasr.data.providers.base import (
     CapabilityError,
     CorporateActionBasis,
     DataProvider,
+    DuplicateProviderIdError,
     FamilyCapability,
     FieldFamily,
     FieldUnavailableError,
@@ -27,6 +28,7 @@ from lasr.data.providers.base import (
     UnknownProviderIdError,
     bar_knowledge_time,
     grade_dataset,
+    require_unique_ids,
 )
 from lasr.data.providers.local_file import (
     DERIVED_CALENDAR_ID,
@@ -35,6 +37,11 @@ from lasr.data.providers.local_file import (
     LocalFileProvider,
     PeriodColumn,
     SecurityExtract,
+)
+from lasr.data.providers.synthetic_provider import (
+    DatasetRef,
+    ScenarioBundle,
+    SyntheticProvider,
 )
 
 __all__ = [
@@ -48,6 +55,8 @@ __all__ = [
     "CorporateActionBasis",
     "CsvTemplateExtractLoader",
     "DataProvider",
+    "DatasetRef",
+    "DuplicateProviderIdError",
     "ExtractMetadata",
     "FamilyCapability",
     "FieldFamily",
@@ -60,8 +69,11 @@ __all__ = [
     "ProviderError",
     "ProviderId",
     "RevisionSupport",
+    "ScenarioBundle",
     "SecurityExtract",
+    "SyntheticProvider",
     "UnknownProviderIdError",
     "bar_knowledge_time",
     "grade_dataset",
+    "require_unique_ids",
 ]

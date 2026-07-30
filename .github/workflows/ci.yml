@@ -99,10 +99,9 @@ jobs:
       - run: uv run pytest -m e2e
 
   leakage-fast:
-    # ACTIVATION: G019 (leakage harness). Fast subset per
-    # testing_strategy.md §6: LT-005, LT-010, LT-013, LT-019-smoke, LT-020;
-    # the exact `-k` selection is finalized when those scenario modules land.
-    if: false
+    # ACTIVATED at G019 merge (PR #63): fast subset per testing_strategy.md §6.
+    # Full battery runs nightly (lands with G038's nightly.yml).
+    if: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -113,7 +112,7 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --locked
-      - run: uv run pytest -m leakage -k "lt005 or lt010 or lt013 or lt019_smoke or lt020"
+      - run: uv run pytest -m leakage -k "lt005 or lt010 or lt013 or lt019 or lt020"
 
   determinism:
     # ACTIVATION: G029 (vertical-slice CLI) — double-run hash comparison,

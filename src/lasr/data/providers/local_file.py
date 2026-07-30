@@ -62,6 +62,7 @@ from lasr.data.providers.base import (
     ProviderCapabilities,
     ProviderId,
     UnknownProviderIdError,
+    require_unique_ids,
 )
 from lasr.data.schemas.raw_classifications import RAW_CLASSIFICATIONS
 from lasr.data.schemas.raw_estimates import RAW_ESTIMATES
@@ -623,7 +624,7 @@ class LocalFileProvider:
 
     def _resolve(self, ids: Sequence[ProviderId]) -> list[SecurityExtract]:
         resolved: list[SecurityExtract] = []
-        for pid in ids:
+        for pid in require_unique_ids(ids):  # NB-1: typed refusal
             extract = self._extracts.get(pid)
             if extract is None:
                 known = ", ".join(

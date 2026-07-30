@@ -97,6 +97,13 @@ sources only (02); library window/staleness/coverage constants all ASSUMED
 (03); OQ-P1-01 security_id tie rule default (04); eps_revision_3m
 unavailable_pending_data (05).
 
+### A-G023-01..07 — target/label conventions (G023, PR #65)
+Defined in the G023 report + module docstrings: pctrank (ordinal-1)/(n-1) with
+security_id ties (01); quantile boundary tie rule (02); vol = ddof=1 weekly
+sample std (03); asymmetric-basis window-end anchoring (04); delisting terminal
+leg + cash-to-window-end (05); purged retention tiling anchor (06); demeaning
+over eligible members only (07).
+
 ### Toolchain conventions (G016, merged PR #54)
 - Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per
   docs/runbooks/dev_setup.md. TEST_SEED=1729 root test seed (tests/conftest.py).

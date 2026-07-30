@@ -8,14 +8,14 @@ active:
     github_issue: 21
     branch: agent/implementer/G021-data-quality
     worktree: .worktrees/G021-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #66)
     dependencies: [G020]
     owned_paths: ["src/lasr/data/quality/**", "tests/unit/test_quality*.py", "explicit grants: verified_records one-liner in data/canonical (R2-N1), manifest self-hash (NB-6), raw sort-key PK append in data/schemas/raw_*.py (N3)"]
     read_only_paths: ["docs/architecture/**", "src/lasr/data/{canonical,point_in_time,providers}/** (beyond grants)"]
     shared_interfaces: ["quality battery consumed by G029/G038"]
     started_at: 2026-07-23
-    last_updated_at: 2026-07-23
-    latest_commit: null
+    last_updated_at: 2026-07-24
+    latest_commit: c50acad (final; hardening closed; LT-021 live 6/6)
     verification_required: true
     red_team_required: false
     notes: LT-021 detection integration activates when G019 merges (still in remediation).

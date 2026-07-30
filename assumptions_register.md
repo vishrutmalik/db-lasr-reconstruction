@@ -104,6 +104,11 @@ sample std (03); asymmetric-basis window-end anchoring (04); delisting terminal
 leg + cash-to-window-end (05); purged retention tiling anchor (06); demeaning
 over eligible members only (07).
 
+### A-G021-01..04 — quality/identity conventions (G021, PR #66)
+Identity digest excludes retrieval_time (N11 compensates) (01); config-default
+detector thresholds visible in QualityConfig (02); U3_EXEMPT_TABLES enumeration
+(03); raw re-hash requires full-column records, fails loudly (04).
+
 ### Toolchain conventions (G016, merged PR #54)
 - Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per
   docs/runbooks/dev_setup.md. TEST_SEED=1729 root test seed (tests/conftest.py).

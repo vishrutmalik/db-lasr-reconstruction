@@ -209,8 +209,8 @@ class TestForwardReturns:
         assert result.reason is SkipReason.FX_MISSING
 
     def test_delisting_realizes_terminal_return_once_ci049(self) -> None:
-        """Ledger identity: 100 → last close 80, terminal −50% ⇒
-        0.8 x 0.5 − 1 = −60%; cash (flat) to the window end."""
+        """Ledger identity: 100 → last close 80, terminal -50% ⇒
+        0.8 x 0.5 - 1 = -60%; cash (flat) to the window end."""
         effective = date(2020, 6, 9)
         last_traded = date(2020, 6, 8)
         view = MarketDataView.from_records(
@@ -326,12 +326,8 @@ class TestQuantileLabels:
 
     @given(
         st.dictionaries(
-            keys=st.text(
-                alphabet="abcdefghij", min_size=1, max_size=6
-            ),
-            values=st.floats(
-                min_value=-1.0, max_value=10.0, allow_nan=False, width=64
-            ),
+            keys=st.text(alphabet="abcdefghij", min_size=1, max_size=6),
+            values=st.floats(min_value=-1.0, max_value=10.0, allow_nan=False, width=64),
             min_size=1,
             max_size=40,
         )
@@ -352,7 +348,7 @@ class TestQuantileLabels:
 
 class TestThresholdLabels:
     def test_pctrank_convention(self) -> None:
-        """Ordinal pctrank = (ordinal−1)/(n−1) ∈ [0,1] (P4 F1 range)."""
+        """Ordinal pctrank = (ordinal-1)/(n-1) ∈ [0,1] (P4 F1 range)."""
         values = {f"s{i:02d}": float(i) for i in range(11)}
         ranks = pctrank(values)
         assert ranks["s00"] == pytest.approx(0.0)
@@ -370,7 +366,7 @@ class TestThresholdLabels:
         assert labels["s03"] is None  # rank exactly 0.3 → dropped
 
     def test_approx_balanced_counts_p4_p17(self) -> None:
-        """|{+1}| ≈ |{−1}| ≈ 0.3·N (P4 p.17: 1,200 stocks → ~360 each)."""
+        """|{+1}| ≈ |{-1}| ≈ 0.3·N (P4 p.17: 1,200 stocks → ~360 each)."""
         values = {f"s{i:04d}": float(i) for i in range(1200)}
         labels = threshold_labels(pctrank(values), upper=0.7, lower=0.3)
         positives = sum(1 for y in labels.values() if y == 1)

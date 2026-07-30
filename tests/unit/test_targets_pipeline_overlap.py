@@ -11,6 +11,7 @@ weighting), CI-015 (exact overlap facts for all four families).
 from __future__ import annotations
 
 from datetime import date, timedelta
+from itertools import pairwise
 from math import sqrt
 
 import pytest
@@ -49,8 +50,8 @@ FRIDAYS = tuple(d for d in CAL if d.weekday() == 4)
 def alternating_price_rows(
     security: str, days: tuple[date, ...], v: float
 ) -> list[dict[str, object]]:
-    """Weekly closes with returns +v, −v, +v, ... (sample std known in
-    closed form: sigma = v·sqrt(m/(m−1)) for m alternating returns)."""
+    """Weekly closes with returns +v, -v, +v, ... (sample std known in
+    closed form: sigma = v·sqrt(m/(m-1)) for m alternating returns)."""
     rows: list[dict[str, object]] = []
     price = 100.0
     for index, day in enumerate(days):
@@ -190,7 +191,7 @@ class TestCr029OrderFlip:
         out = residual_values(
             CR029_RAW, CR029_GROUPS, CR029_SIGMA, order="volscale_first"
         )
-        # scaled cell A = [0.10, 0.00, -1.0], mean −0.30
+        # scaled cell A = [0.10, 0.00, -1.0], mean -0.30
         assert out["a1"] == pytest.approx(0.40)
         assert out["a2"] == pytest.approx(0.30)
         assert out["a3"] == pytest.approx(-0.70)
@@ -283,7 +284,7 @@ class TestOverlapAccounting:
         retained = purged_retention(candidates, 3)
         assert retained == {2, 5, 8, 11}
         retained_sorted = sorted(retained)
-        for left, right in zip(retained_sorted, retained_sorted[1:], strict=False):
+        for left, right in pairwise(retained_sorted):
             assert right - left >= 3  # windows [i, i+3) disjoint
         meta = overlap_metadata(
             index=5,

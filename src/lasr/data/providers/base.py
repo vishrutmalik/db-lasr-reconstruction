@@ -36,6 +36,7 @@ __all__ = [
     "CapabilityError",
     "CorporateActionBasis",
     "DataProvider",
+    "DuplicateProviderIdError",
     "FamilyCapability",
     "FieldFamily",
     "FieldUnavailableError",
@@ -48,6 +49,7 @@ __all__ = [
     "UnknownProviderIdError",
     "bar_knowledge_time",
     "grade_dataset",
+    "require_unique_ids",
 ]
 
 
@@ -200,6 +202,40 @@ class UnknownProviderIdError(ProviderError):
     frame to signal absence" failure §3 forbids, and none of the four
     documented errors covers entity resolution.
     """
+
+
+class DuplicateProviderIdError(ProviderError):
+    """The same ``ProviderId`` appears more than once in one request.
+
+    G018-verification NB-1: duplicated ids used to produce frames that
+    violate the raw schema's primary-key uniqueness. Per §3's
+    no-silent-anything principle the fix is a typed REFUSAL, not a silent
+    dedupe — a duplicated id is a caller bug (e.g. a double-counted
+    portfolio join) that deduping would mask. Shared guard:
+    :func:`require_unique_ids`; every adapter applies it before resolving.
+    Addition to the §3 closed set (flagged for provider_contract.md).
+    """
+
+
+def require_unique_ids(ids: Sequence[ProviderId]) -> tuple[ProviderId, ...]:
+    """NB-1 guard: refuse duplicated ``ProviderId``s in a single request.
+
+    Returns the ids unchanged (as a tuple) when unique, so adapters can
+    use it inline at the top of every id-taking fetch method.
+    """
+    seen: set[ProviderId] = set()
+    duplicates: list[str] = []
+    for pid in ids:
+        if pid in seen:
+            duplicates.append(f"{pid.value}/{pid.exchange}")
+        seen.add(pid)
+    if duplicates:
+        raise DuplicateProviderIdError(
+            f"duplicate ProviderIds in one request: {sorted(set(duplicates))} "
+            "(a duplicated id is a caller bug; frames must keep raw-schema "
+            "primary-key uniqueness — G018 verification NB-1)"
+        )
+    return tuple(ids)
 
 
 # ── D-012: fetch_prices field defaults and the OHLV guard ───────────────────

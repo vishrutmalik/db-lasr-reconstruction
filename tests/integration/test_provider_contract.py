@@ -33,12 +33,14 @@ from lasr.data.providers import (
     HistoryUnavailableError,
     LocalFileProvider,
     ProviderId,
+    SyntheticProvider,
     UnknownProviderIdError,
     grade_dataset,
 )
 from lasr.data.schemas.base import validate_rows
 from lasr.data.schemas.market_data import FM17_FORBIDDEN_PRICE_COLUMNS
 from lasr.data.schemas.raw_registry import RAW_SCHEMAS
+from lasr.data.synthetic import ScenarioConfig
 
 pytestmark = pytest.mark.integration
 
@@ -61,13 +63,24 @@ class ProviderCase:
     input_root: Path | None
 
 
+#: G019: the synthetic provider joins the suite on the baseline scenario —
+#: small enough for CI, every family populated, TRUE vintages (CT-10/CT-11
+#: positive branches). Fixed seed: CT-04 requires instance-identical worlds.
+SYNTHETIC_CT_CONFIG = ScenarioConfig(
+    scenario_id="baseline", seed=1729, n_securities=40, n_years=6
+)
+
 PROVIDER_CASES: tuple[ProviderCase, ...] = (
     ProviderCase(
         name="local_file",
         factory=lambda: LocalFileProvider(FIXTURE_ROOT),
         input_root=FIXTURE_ROOT,
     ),
-    # G019 appends: ProviderCase(name="synthetic", factory=..., input_root=None)
+    ProviderCase(
+        name="synthetic",
+        factory=lambda: SyntheticProvider(SYNTHETIC_CT_CONFIG),
+        input_root=None,
+    ),
 )
 
 
@@ -449,6 +462,15 @@ def test_ct07_field_coverage_matches_returned_fields(
                 "period_end",
                 "is_trading_day",
                 "name",
+                # G019 amendment: structural PIT/interval columns are not
+                # field coverage — CT-10 MANDATES knowledge stamps on
+                # PIT-true providers' frames, and interval bounds are
+                # structure like period_end (previously unexercised: the
+                # local adapter emits none of these).
+                "knowledge_time",
+                "announcement_time",
+                "valid_from",
+                "valid_to",
             }
             if "metric" in frame.columns:
                 served = set(frame["metric"])
@@ -517,30 +539,44 @@ def test_ct09_same_entity_same_provider_id_across_calls(
 # ── CT-10: knowledge-time discipline ─────────────────────────────────────────
 
 
+# G019 amendments to CT-10 (first PIT-true provider; branches previously
+# unexercised): (a) the raw corporate-actions schema names its knowledge
+# column ``announcement_time`` (G017 schema; no knowledge_time column
+# exists there, so the literal column check was unsatisfiable); (b) on
+# ``raw_estimates`` the ``period_end`` is a FORECAST horizon — estimates
+# are published before the period they predict, so U3's knowledge>=event
+# comparison applies to event tables only.
+KNOWLEDGE_COLUMN_BY_TABLE = {"raw_corporate_actions": "announcement_time"}
+FORECAST_PERIOD_TABLES = frozenset({"raw_estimates"})
+
+
 def test_ct10_knowledge_time_stamping_is_ingestions_job(
     provider: DataProvider,
 ) -> None:
-    """supports_pit=false => frames carry NO knowledge_time column;
-    supports_pit=true => knowledge_time non-null and >= event time (U3)."""
+    """supports_pit=false => frames carry NO knowledge column;
+    supports_pit=true => knowledge column non-null and >= event time (U3)."""
     ids = master_ids(provider)
     capabilities = provider.capabilities()
     for family in available_families(provider):
         supports_pit = capabilities.family(family).supports_pit
         for table_name, frame in family_frames(provider, family, ids).items():
+            column = KNOWLEDGE_COLUMN_BY_TABLE.get(table_name, "knowledge_time")
             if not supports_pit:
-                assert "knowledge_time" not in frame.columns, (
-                    f"{table_name}: non-PIT provider emitted knowledge_time "
+                assert column not in frame.columns, (
+                    f"{table_name}: non-PIT provider emitted {column} "
                     "(stamping is ingestion's job, A-001)"
                 )
                 continue
-            assert "knowledge_time" in frame.columns, table_name
+            assert column in frame.columns, table_name
             for record in normalized_records(frame):
-                knowledge_time = record["knowledge_time"]
+                knowledge_time = record[column]
                 assert knowledge_time is not None
+                if table_name in FORECAST_PERIOD_TABLES:
+                    continue  # period_end is a forecast horizon, not an event
                 event = record.get("event_date") or record.get("period_end")
                 if isinstance(event, date):
                     assert knowledge_time.date() >= event, (
-                        f"{table_name}: knowledge_time precedes event (U3)"
+                        f"{table_name}: knowledge time precedes event (U3)"
                     )
 
 

@@ -101,6 +101,11 @@ dataset manifest — binds G020/G021 (D-015; G018 verification amendment 2).
 must raise, never return an empty frame (empty-frame-as-absence is the silent
 failure §3 forbids). Accepted by G018 verification.
 
+### CT-15 wording update (post-B3, G020 merge)
+CT-15's basis clause reads: basis must be a declared CorporateActionBasis and
+ADJUSTED-basis price payloads are REFUSED at canonical build (never silently
+landed where factors would double-adjust); UNKNOWN follows D-011/D-015.
+
 ### §3 amendment (D-017)
 `DuplicateProviderIdError` joins the closed error set: duplicate ids in one
 request raise a typed refusal (never silent dedupe, never PK-violating frames).

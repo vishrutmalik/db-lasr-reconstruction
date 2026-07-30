@@ -17,11 +17,12 @@ Session-independent status. Update at every session end and major milestone.
 - Evidence matrix federated over per-source row files (D-005).
 
 ## Active assignments
-- G019 synthetic generator+provider → implementer, .worktrees/G019-implementer (red-team required)
-- G020 ingestion/canonical/PIT layer → implementer, .worktrees/G020-implementer (red-team required)
-- G039 integration guide → IMPLEMENTED at 5ba8eea; drift-check verification dispatching; PR #59 held
-- Merged in M3/M4 so far: G015 (#53), G016 (#54), G017 (#57), G018 (#60),
-  G042 (#56), G043 (#61) — all PASS verification reports in docs/verification/
+- G021 data quality + hardening → implementer, .worktrees/G021-implementer
+- G022 feature registry + library → implementer, .worktrees/G022-implementer (red-team on completion)
+- G023 target & label engine → implementer, .worktrees/G023-implementer (red-team on completion)
+- Merged in M4: G015-G020, G039, G042, G043 — G019/G020 each survived
+  4-blocking red-team rounds + clean round-2 re-checks; leakage-fast CI job
+  now ACTIVE on every PR
 - Full detail: `coordination/agent_assignments.yaml`
 
 ## Blockers

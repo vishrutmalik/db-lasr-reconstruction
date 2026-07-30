@@ -15,7 +15,7 @@ exploit this for boundary tests.
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time
 from pathlib import Path
 
 from lasr.core.enums import PitGrade, RevisionSupport
@@ -134,9 +134,7 @@ def estimate(
     }
 
 
-def write_table(
-    store: CanonicalStore, table: str, records: list[Row]
-) -> DatasetRef:
+def write_table(store: CanonicalStore, table: str, records: list[Row]) -> DatasetRef:
     ctx = BuildContext(
         provider_name="g022_test_provider",
         provider_version="1.0.0",
@@ -196,9 +194,7 @@ def build_engine_pair(
         if base_records:
             ids_a[table] = write_table(store, table, base_records).dataset_id
         if added:
-            ids_b[table] = write_table(
-                store, table, base_records + added
-            ).dataset_id
+            ids_b[table] = write_table(store, table, base_records + added).dataset_id
         elif base_records:
             ids_b[table] = ids_a[table]
     reg = registry or build_default_registry()

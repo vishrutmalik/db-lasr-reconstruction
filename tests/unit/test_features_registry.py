@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 from datetime import UTC, datetime, timedelta
+from typing import ClassVar
 
 import pytest
 
@@ -69,7 +70,7 @@ class TestMp18Enforcement:
     #: - neutralization method: per-feature `neutralize` flag (CI-028);
     #:   mechanism is version-keyed NeutralizationConfig (CR-004);
     #: - eligibility: min_coverage is the engine's coverage gate.
-    MP18_FIELD_MAP = {
+    MP18_FIELD_MAP: ClassVar[dict[str, str]] = {
         "name": "feature_id",
         "version": "version",
         "economic category": "category",
@@ -163,9 +164,7 @@ class TestRegistrationEnforcement:
     def test_malformed_field_refused(self):
         registry = FeatureRegistry()
         with pytest.raises(SourceFieldError, match="malformed"):
-            registry.register(
-                toy_spec(required_fields=("prices_daily",)), _noop_kernel
-            )
+            registry.register(toy_spec(required_fields=("prices_daily",)), _noop_kernel)
 
     def test_empty_required_fields_refused(self):
         registry = FeatureRegistry()
@@ -185,9 +184,7 @@ class TestRegistrationEnforcement:
     def test_catalog_extension_declares_new_metrics(self):
         catalog = SourceFieldCatalog().with_metrics("fundamentals", {"OCF"})
         registry = FeatureRegistry(catalog)
-        registry.register(
-            toy_spec(required_fields=("fundamentals.OCF",)), _noop_kernel
-        )
+        registry.register(toy_spec(required_fields=("fundamentals.OCF",)), _noop_kernel)
         assert registry.keys() == (("toy_close", 1),)
 
     def test_catalog_refuses_unknown_metric_table(self):

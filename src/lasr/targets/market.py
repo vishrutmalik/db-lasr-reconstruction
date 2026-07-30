@@ -11,7 +11,7 @@ any label (# arch: system_design.md §4; import rule: targets never touch
 
 Conventions consumed (documented at their producers):
 
-- adjusted price = unadjusted price × cumulative factor
+- adjusted price = unadjusted price x cumulative factor
   (``lasr.data.canonical.actions`` factor convention; CI-049 substrate);
 - ``total_return_factor_cum`` for ``return_type=total``,
   ``split_factor_cum`` for ``price`` (CI-019);
@@ -145,7 +145,8 @@ class MarketDataView:
         split_cum: dict[str, list[float]] = {}
         tr_cum: dict[str, list[float]] = {}
         for row in sorted(
-            factors, key=lambda r: (str(r["security_id"]), r["event_date"])  # type: ignore[arg-type]
+            factors,
+            key=lambda r: (str(r["security_id"]), str(r["event_date"])),
         ):
             security = str(row["security_id"])
             day = row["event_date"]
@@ -224,7 +225,10 @@ class MarketDataView:
             if table is None:
                 return ()
             frame = pit.as_of_frame(table, build_as_of)
-            return tuple(frame.to_dict("records"))
+            return tuple(
+                {str(column): value for column, value in row.items()}
+                for row in frame.to_dict("records")
+            )
 
         return cls.from_records(
             trading_days=pit.trading_days(calendar_id),

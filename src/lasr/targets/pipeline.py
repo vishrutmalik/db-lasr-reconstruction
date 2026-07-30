@@ -18,7 +18,7 @@ Volatility definition (documented choices, register candidates):
   label's currency — the same return definition as the label (ASSUMED;
   P4 says only "historical volatility of weekly returns", fn 12);
 - min-history fallback per A-G011-53: at least ``min_weeks`` observed
-  weekly returns, else the row is ineligible (never a fabricated σ).
+  weekly returns, else the row is ineligible (never a fabricated sigma).
 """
 
 from __future__ import annotations
@@ -85,7 +85,7 @@ def weekly_volatility(
     """Rolling std of weekly close-to-close returns ending at the decision.
 
     Returns the eligibility-reason string on failure (short history or
-    degenerate σ) — the row is then emitted ineligible, never scaled by a
+    degenerate sigma) — the row is then emitted ineligible, never scaled by a
     fabricated number.
     """
     if decision_index <= 0:
@@ -141,7 +141,7 @@ def group_demean(
     weighting: Literal["equal", "cap_weighted"] = "equal",
     caps: Mapping[str, float] | None = None,
 ) -> dict[str, float]:
-    """value − (weighted) mean of its group (P1-33 country demean; P4 F2).
+    """value - (weighted) mean of its group (P1-33 country demean; P4 F2).
 
     Means are computed over exactly the supplied (eligible) members, in
     sorted id order (input-order invariance, CI-043). Cap weighting per
@@ -170,9 +170,7 @@ def group_demean(
                 raise TargetConfigError(
                     f"non-positive total market cap in group {group!r}"
                 )
-            means[group] = (
-                fsum(caps[s] * values[s] for s in members) / total_weight
-            )
+            means[group] = fsum(caps[s] * values[s] for s in members) / total_weight
     return {s: values[s] - means[groups[s]] for s in sorted(values)}
 
 
@@ -185,11 +183,11 @@ def residual_values(
 ) -> dict[str, float]:
     """The CR-029 knob: both F2 orders, chosen explicitly, never silently.
 
-    - ``neutralize_first`` (P4 §2.1): demean within sector×region, THEN
-      divide by σ;
-    - ``volscale_first`` (P4 Appendix Step 2): divide by σ, THEN demean.
+    - ``neutralize_first`` (P4 §2.1): demean within sectorxregion, THEN
+      divide by sigma;
+    - ``volscale_first`` (P4 Appendix Step 2): divide by sigma, THEN demean.
 
-    The two genuinely differ whenever σ varies within a group — label
+    The two genuinely differ whenever sigma varies within a group — label
     memberships can flip (pinned by fixture test).
     """
     if order == "neutralize_first":

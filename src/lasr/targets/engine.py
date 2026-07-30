@@ -45,7 +45,6 @@ import logging
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
-from typing import Literal
 
 from lasr.core.timing import TimingRecord
 from lasr.data.schemas.training_examples import TrainingExampleRow
@@ -177,9 +176,7 @@ def _point_timing(
     if end_day is None:
         return None
     session = spec.session
-    decision_time = datetime.combine(
-        decision_day, session.close_utc, tzinfo=UTC
-    )
+    decision_time = datetime.combine(decision_day, session.close_utc, tzinfo=UTC)
     execution_time = datetime.combine(
         start_day, session.field_time(spec.start_field), tzinfo=UTC
     )
@@ -330,15 +327,11 @@ def build_training_examples(
             continue
         point = _point_timing(spec, view.trading_days, grid, index)
         if point is None:
-            skips.append(
-                SkipEvent(decision_day, None, SkipReason.CALENDAR_EXHAUSTED)
-            )
+            skips.append(SkipEvent(decision_day, None, SkipReason.CALENDAR_EXHAUSTED))
             continue
         if point.timing.target_end > build_as_of:
             # CI-010/CI-015a: only realized labels enter a training set.
-            skips.append(
-                SkipEvent(decision_day, None, SkipReason.UNREALIZED_WINDOW)
-            )
+            skips.append(SkipEvent(decision_day, None, SkipReason.UNREALIZED_WINDOW))
             continue
         if (
             spec.training_data_lag_steps is not None
@@ -358,9 +351,7 @@ def build_training_examples(
     )
     for point in candidates:
         if point.index not in retained:
-            skips.append(
-                SkipEvent(point.decision_day, None, SkipReason.OVERLAP_PURGED)
-            )
+            skips.append(SkipEvent(point.decision_day, None, SkipReason.OVERLAP_PURGED))
     emitted_indices = sorted(retained)
     weekly_days = grid if spec.grid == "weekly" else ()
     records: list[TargetRecord] = []
@@ -499,7 +490,7 @@ def _build_grid_point(
         is_eligible = security not in ineligible
         label = stage.labels.get(security) if is_eligible else None
         transformed = stage.transformed.get(security) if is_eligible else None
-        vol = vols.get(security) if is_eligible else None
+        vol_estimate = vols.get(security) if is_eligible else None
         row = TrainingExampleRow(
             config_hash=config_hash,
             security_id=security,
@@ -516,8 +507,8 @@ def _build_grid_point(
             label=label,
             comparison_group_id=group_ids[security],
             vol_window_spec=(
-                vol.spec_string(spec.vol_window_weeks)
-                if vol is not None and spec.vol_window_weeks is not None
+                vol_estimate.spec_string(spec.vol_window_weeks)
+                if vol_estimate is not None and spec.vol_window_weeks is not None
                 else None
             ),
             universe_id=universe_id,
@@ -536,7 +527,7 @@ def _build_grid_point(
                     stage.regression.get(security) if is_eligible else None
                 ),
                 delisted_in_window=outcomes[security].delisted_in_window,
-                vol=vol,
+                vol=vol_estimate,
             )
         )
     return records

@@ -3,10 +3,10 @@
 Family facts encoded here and bound by tests (CI-015c):
 
 - 1M labels on the monthly grid do not overlap (multiplicity 1);
-- 3M labels on the monthly grid overlap 3× — each window shares 2 months
+- 3M labels on the monthly grid overlap 3x — each window shares 2 months
   with each immediate neighbor and intersects up to 4 other grid points;
 - 1W labels on the weekly grid do not overlap;
-- 4W labels on the weekly grid overlap 4×.
+- 4W labels on the weekly grid overlap 4x.
 
 ``pooled_as_paper`` keeps overlapping rows and RECORDS the fact
 (``PurgeStatus.OVERLAP_PERMITTED`` — permitted overlap is a recorded
@@ -53,14 +53,12 @@ def overlap_metadata(
     """Exact overlap accounting for the grid point at ``index``.
 
     Two windows ``[i, i+H)`` and ``[j, j+H)`` on the same grid intersect
-    iff ``|i − j| < H``; the overlap set counts the OTHER emitted grid
+    iff ``|i - j| < H``; the overlap set counts the OTHER emitted grid
     points satisfying that, so a 3M monthly row has up to 4 (2 per side)
-    and shares ``H−1 = 2`` months with each immediate neighbor.
+    and shares ``H-1 = 2`` months with each immediate neighbor.
     """
     overlap_set_size = sum(
-        1
-        for j in emitted_indices
-        if j != index and abs(j - index) < horizon_steps
+        1 for j in emitted_indices if j != index and abs(j - index) < horizon_steps
     )
     overlapping_family = horizon_steps > 1
     if not overlapping_family:
@@ -87,7 +85,7 @@ def purged_retention(candidates: tuple[int, ...], horizon_steps: int) -> frozens
     """The deterministic ``purged`` subgrid: every H-th candidate index.
 
     Retention anchors on the FIRST candidate (documented rule): kept
-    indices satisfy ``(i − candidates[0]) % H == 0``, so retained windows
+    indices satisfy ``(i - candidates[0]) % H == 0``, so retained windows
     tile the timeline without intersection.
     """
     if not candidates or horizon_steps <= 1:

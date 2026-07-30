@@ -103,7 +103,7 @@ class ReturnBasis(StrEnum):
     The skill's four modes: ``close_to_close`` / ``close_to_open`` /
     ``open_to_open`` per MP §19.3, plus ``open_to_close`` — P3's final HF
     form (labels "based on the next day's opening prices", P3-30,
-    extraction "Return definition" p.72–73).
+    extraction "Return definition" p.72-73).
     """
 
     CLOSE_TO_CLOSE = "close_to_close"
@@ -130,7 +130,7 @@ MODE_EXECUTION_FIELD: dict[ExecutionMode, PriceField] = {
 }
 
 #: Default basis per mode. NEXT_OPEN defaults to open-to-close: the final
-#: HF variant is trained AND evaluated on that basis (P3-30, p.72–73);
+#: HF variant is trained AND evaluated on that basis (P3-30, p.72-73);
 #: open-to-open / close-to-open stay selectable per MP §19.3.
 DEFAULT_BASIS: dict[ExecutionMode, ReturnBasis] = {
     ExecutionMode.SAME_CLOSE: ReturnBasis.CLOSE_TO_CLOSE,
@@ -147,9 +147,7 @@ def parse_week_count(value: str, *, field: str) -> int:
     """Parse a ``'260w'``-style window length (E-P4-08 / A-G011-53)."""
     match = _WEEKS_RE.match(value)
     if match is None:
-        raise TargetConfigError(
-            f"{field} must look like '<n>w' (weeks), got {value!r}"
-        )
+        raise TargetConfigError(f"{field} must look like '<n>w' (weeks), got {value!r}")
     count = int(match.group(1))
     if count < 2:
         raise TargetConfigError(f"{field} must be >= 2 weeks, got {value!r}")
@@ -228,13 +226,12 @@ class TargetFamilySpec:
                 f"illegal horizon/grid pair ({self.horizon!r}, {self.grid!r}); "
                 f"legal CI-013 families: {HORIZON_FAMILIES!r}"
             )
-        if self.grid == "weekly":
-            if self.grid_anchor not in WEEKDAY_NUMBERS:
-                raise TargetConfigError(
-                    "weekly grids require grid_anchor in "
-                    f"{sorted(WEEKDAY_NUMBERS)!r}, got {self.grid_anchor!r} "
-                    "(OQ-P4-07/A-G011-49: the anchor is a config value)"
-                )
+        if self.grid == "weekly" and self.grid_anchor not in WEEKDAY_NUMBERS:
+            raise TargetConfigError(
+                "weekly grids require grid_anchor in "
+                f"{sorted(WEEKDAY_NUMBERS)!r}, got {self.grid_anchor!r} "
+                "(OQ-P4-07/A-G011-49: the anchor is a config value)"
+            )
         fractions_sum = self.top_fraction + self.middle_fraction + self.bottom_fraction
         if abs(fractions_sum - 1.0) > 1e-9:
             raise TargetConfigError(
@@ -266,8 +263,7 @@ class TargetFamilySpec:
                 )
             if self.vol_min_history_weeks < 2:
                 raise TargetConfigError(
-                    "vol_min_history must be >= 2 weeks (sample std needs "
-                    "two returns)"
+                    "vol_min_history must be >= 2 weeks (sample std needs two returns)"
                 )
         if (
             self.vol_scaling == "rolling_std"

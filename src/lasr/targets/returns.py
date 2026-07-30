@@ -9,7 +9,7 @@ One pure function computes every family's raw forward return from a
   A-G011-08);
 - CI-049: a split creates no phantom return (factor identity); a
   delisting inside the window realizes ``terminal_return`` exactly once —
-  the position converts to cash at the last traded close × (1 +
+  the position converts to cash at the last traded close x (1 +
   terminal_return) and stays flat to the window end;
 - missing data is a typed skip, never a silent zero.
 """
@@ -71,7 +71,7 @@ def measured_price(
 ) -> float | ReturnFailure:
     """Adjusted, currency-converted price at (day, field).
 
-    adjusted = unadjusted × cumulative factor (total-return factor for
+    adjusted = unadjusted x cumulative factor (total-return factor for
     ``return_type='total'``, split factor for ``'price'`` — CI-019/CI-049);
     then converted to ``target_currency`` at the same day's FX rate.
     """
@@ -106,7 +106,7 @@ def forward_return(
     Delisting rule (CI-049, terminal returns enter the window): if a
     terminal event falls in ``(start_day, end_day]``, the return is::
 
-        (P_last × F_last) / (P_start × F_start) × (1 + terminal_return) − 1
+        (P_last x F_last) / (P_start x F_start) x (1 + terminal_return) - 1
 
     with ``P_last`` the close on the last traded day at or before the
     effective date; the position is cash (flat) for the remainder of the

@@ -27,12 +27,15 @@ from bisect import bisect_right
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 import pandas as pd
 
 from lasr.targets.errors import TargetConfigError
 from lasr.targets.spec import PriceField
+
+if TYPE_CHECKING:  # compile-time only: protocol-conformance witness below
+    from lasr.data.point_in_time.store import PitStore
 
 __all__ = ["MarketDataView", "PitReader", "TerminalEvent"]
 
@@ -287,3 +290,11 @@ class MarketDataView:
         if index < 0 or days[index] < start:
             return None
         return days[index]
+
+
+if TYPE_CHECKING:
+    # mypy-checked witness (never executed): the REAL PitStore satisfies
+    # the PitReader protocol, so the boundary contract breaks loudly here
+    # rather than at the first caller (# arch: canonical_schemas.md §11).
+    def _pitreader_conformance_witness(store: PitStore) -> PitReader:
+        return store

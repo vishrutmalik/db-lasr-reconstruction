@@ -54,24 +54,14 @@ active:
     red_team_required: true
     notes: TimingRecord + purge/embargo metadata mandatory per record.
 
-  G019:
-    agent_role: implementer
-    objective: Synthetic data generator + synthetic provider + LT scenario bundles (MP SS17, leakage_tests.md interface)
-    github_issue: 19
-    branch: agent/implementer/G019-synthetic-provider
-    worktree: .worktrees/G019-implementer
-    status: IN_VERIFICATION round 2 (remediated b160f52; re-checks dispatched)
-    dependencies: [G018]
-    owned_paths: ["src/lasr/data/synthetic/**", "src/lasr/data/providers/synthetic*.py", "tests/unit/test_synthetic*.py", "tests/leakage/**", "tests/fixtures/synthetic/**", "PROVIDER_CASES line in tests/integration/test_provider_contract.py (explicit grant)", "NB-1 dedupe helper in providers/base.py + local_file.py (explicit grant)"]
-    read_only_paths: ["docs/methodology/leakage_tests.md", "docs/architecture/**", "src/lasr/core/**", "src/lasr/data/schemas/**"]
-    shared_interfaces: ["ScenarioBundle consumed by G037 red-team + tests/leakage; provider joins CT suite"]
-    started_at: 2026-07-22
-    last_updated_at: 2026-07-22
-    latest_commit: 036c742 (final; 1081 tests; 21 LT scenarios; NB-1 typed refusal D-017)
-    verification_required: true
-    red_team_required: true
-    notes: CT-suite shared-file edits (CT-10/CT-07 PIT-true accommodations) need verifier sign-off.
 history:
+  - goal_id: G019
+    agent_role: implementer
+    branch: agent/implementer/G019-synthetic-provider (deleted after merge)
+    final_commit: b160f52+a784348 (remediated+NB-7) + 16d24a6/56ad39d (verify r1/r2 PASS) + a1cc21b/bcf93be (red-team r1 4-BLOCKING/r2 CLEAN)
+    pr: 63
+    verification: PASS r2 + red-team CLEAN r2 (docs/verification+red_team/G019.md)
+    worktree: removed
   - goal_id: G020
     agent_role: implementer
     branch: agent/implementer/G020-pit-layer (deleted after merge)

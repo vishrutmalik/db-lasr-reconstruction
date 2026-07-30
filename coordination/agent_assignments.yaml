@@ -25,14 +25,14 @@ active:
     github_issue: 22
     branch: agent/implementer/G022-feature-registry
     worktree: .worktrees/G022-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #64; verifier + red-team parallel)
     dependencies: [G020, G013]
     owned_paths: ["src/lasr/features/**", "tests/unit/test_features*.py"]
     read_only_paths: ["docs/data/field_mapping.md", "docs/methodology/**", "src/lasr/data/**", "src/lasr/config/**"]
     shared_interfaces: ["FeatureSpec (G017); feature values consumed by G023-G029"]
     started_at: 2026-07-23
-    last_updated_at: 2026-07-23
-    latest_commit: null
+    last_updated_at: 2026-07-24
+    latest_commit: f572b91 (final; 112 tests; 9-feature library)
     verification_required: true
     red_team_required: true
     notes: CI-020..024 bind here (cross-sectional fitting discipline).

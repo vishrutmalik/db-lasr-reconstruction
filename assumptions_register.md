@@ -90,6 +90,13 @@ hand-ledger test (04); snapshot intervals valid_from=retrieval date (05).
   validation on world tables is expected to flag these legitimately.
 - Source: G019 red-team round-2 residual (docs/red_team/G019.md).
 
+### A-G022-01..05 — feature stamping/lag/library conventions (G022, PR #64)
+Defined in the G022 report + library.py named constants: conservative
+cross-sectional max knowledge stamping (01); publication_lag gates vintaged
+sources only (02); library window/staleness/coverage constants all ASSUMED
+(03); OQ-P1-01 security_id tie rule default (04); eps_revision_3m
+unavailable_pending_data (05).
+
 ### Toolchain conventions (G016, merged PR #54)
 - Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per
   docs/runbooks/dev_setup.md. TEST_SEED=1729 root test seed (tests/conftest.py).

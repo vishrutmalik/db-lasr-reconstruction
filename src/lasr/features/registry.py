@@ -64,7 +64,8 @@ __all__ = [
 FeatureKey = tuple[str, int]
 
 #: Version tag of the hash payload layout (bump on layout change).
-_HASH_LAYOUT = "g022.registry.v1"
+#: v2: kernel identity (module:qualname) hashed per feature (RT-G022-N4).
+_HASH_LAYOUT = "g022.registry.v2"
 
 
 class FeatureRegistryError(LasrError):
@@ -88,6 +89,20 @@ def _spec_payload(spec: FeatureSpec) -> dict[str, object]:
     assert isinstance(lag, timedelta)
     payload["publication_lag"] = lag.total_seconds()
     return payload
+
+
+def _kernel_identity(compute: FeatureComputeFn) -> str:
+    """Deterministic identity of a computation kernel for lineage
+    (RT-G022-N4): ``module:qualname`` of the function (or its type, for
+    non-function callables). Captures WHICH kernel implements a feature —
+    two registries with identical specs but swapped kernels hash apart.
+    Body drift under an unchanged qualname remains invisible to the hash;
+    that residual is guarded by the hand-computable fixture suite and
+    recorded as an A-G022 limitation.
+    """
+    module = getattr(compute, "__module__", None) or type(compute).__module__
+    qualname = getattr(compute, "__qualname__", None) or type(compute).__qualname__
+    return f"{module}:{qualname}"
 
 
 class FeatureRegistry:
@@ -211,15 +226,23 @@ class FeatureRegistry:
     # -- lineage -----------------------------------------------------------------
 
     def registry_hash(self) -> str:
-        """SHA-256 over the canonical serialization of all specs + lists.
+        """SHA-256 over the canonical serialization of all specs, kernel
+        identities, and lists.
 
         Registration-order independent (specs and lists are sorted);
-        sensitive to any spec field, member, or list change — the lineage
-        identity feature datasets record (system_design.md §5).
+        sensitive to any spec field, member, list, or kernel-identity
+        change (RT-G022-N4) — the lineage identity feature datasets record
+        (system_design.md §5).
         """
+        entries = []
+        for key in sorted(self._features):
+            registered = self._features[key]
+            entry = _spec_payload(registered.spec)
+            entry["kernel"] = _kernel_identity(registered.compute)
+            entries.append(entry)
         payload = {
             "layout": _HASH_LAYOUT,
-            "specs": [_spec_payload(spec) for spec in self.specs()],
+            "specs": entries,
             "lists": {
                 list_id: [list(member) for member in members]
                 for list_id, members in sorted(self._lists.items())

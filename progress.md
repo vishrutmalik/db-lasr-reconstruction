@@ -30,6 +30,11 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-08-04 (2): OneDrive resurrected 8 previously-removed worktrees of merged
+  goals (the .git/worktrees metadata + directories re-synced during the 11-day
+  gap). All HEADs verified fully merged; dirt was sync residue; all removed +
+  pruned. Rule: `git worktree list` reconciliation is now part of session-start
+  recovery; worktrees under OneDrive are disposable by design.
 - 2026-08-04: 11-day interruption (session limits + process restart killed 4
   review agents mid-flight; 2026-07-24 -> 2026-08-04). Recovery: G022 red-team
   had UNCOMMITTED report + 2 keeper files preserved in the worktree (its last

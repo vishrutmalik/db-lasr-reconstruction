@@ -43,7 +43,7 @@ active:
     github_issue: 22
     branch: agent/implementer/G022-feature-registry
     worktree: .worktrees/G022-implementer
-    status: FAILED_VERIFICATION (verifier PASS; red-team 1 BLOCKING at 430c56b; remediation in progress)
+    status: IN_VERIFICATION round 2 (remediated fede265; re-checks dispatched)
     dependencies: [G020, G013]
     owned_paths: ["src/lasr/features/**", "tests/unit/test_features*.py"]
     read_only_paths: ["docs/data/field_mapping.md", "docs/methodology/**", "src/lasr/data/**", "src/lasr/config/**"]

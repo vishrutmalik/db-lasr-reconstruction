@@ -85,5 +85,12 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
 - O-4/A-G023-08: G026 must realize terminal returns on held positions even
   when no label window captured the delisting.
 
+## Policy/binding additions from G022 remediation
+- N5 -> G033 acceptance: config-time guard that registered features touching a
+  floor-lagged family carry spec.publication_lag >= floor (or explicit accept).
+- N8 -> G029 persistence binding: feature stamps are batch properties;
+  feature_values PK excludes knowledge_time — key stamps per batch.
+- PIT owner follow-up: promote PitStore._effective_lag to public API.
+
 ## Conflicts requiring resolution
 - (none)

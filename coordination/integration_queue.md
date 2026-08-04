@@ -92,5 +92,10 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   feature_values PK excludes knowledge_time — key stamps per batch.
 - PIT owner follow-up: promote PitStore._effective_lag to public API.
 
+## G025 binding (from G022 round-2 verification)
+- zscore numerical-degeneracy corner: all-identical large values yield constant
+  +/-1 scores instead of documented 0.0 (mean round-off, std = 1 ulp). Fix =
+  degeneracy detection + tolerance cap when G025 consumes zscore machinery.
+
 ## Conflicts requiring resolution
 - (none)

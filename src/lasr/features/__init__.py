@@ -12,6 +12,7 @@ from lasr.features.computation import (
     FeatureComputeFn,
     FeatureContext,
     RawObservation,
+    require_utc_datetime,
 )
 from lasr.features.engine import FeatureComputationResult, FeatureEngine
 from lasr.features.library import (
@@ -64,6 +65,7 @@ __all__ = [
     "parse_source_field",
     "rank_normalize",
     "rank_normalize_by_cell",
+    "require_utc_datetime",
     "winsorize",
     "zscore",
 ]

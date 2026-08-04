@@ -17,15 +17,25 @@ structural guarantee: a compute function never touches a
   (RT-G020-N1);
 - refuses reads from tables that host none of the spec's declared
   ``required_fields``, refuses undeclared metric ids on metric-namespaced
-  tables, and drops undeclared columns from returned frames — a feature can
-  only consume what its registry entry declares (MP §18);
-- records the maximum *effective* knowledge time over every returned row
-  (``knowledge_time`` + applied lag), from which the engine stamps the
-  stored :class:`~lasr.data.schemas.features.FeatureValueRow.knowledge_time`
-  ("max input knowledge_time + registry publication lag", canonical
-  feature-layer rule). The stamp is the cross-sectional maximum over all
-  rows the computation *saw* — conservative (never earlier than the truth;
-  A-G022 candidate, see registry docs).
+  tables (the outgoing metric filter is REWRITTEN to the validated string
+  ids, so a key object with divergent ``__str__``/``__eq__`` cannot smuggle
+  undeclared rows — RT-G022-N1), and drops undeclared columns from returned
+  frames of EVERY shape (column tables keep declared fields + plumbing;
+  metric tables keep ``value`` + event/plumbing columns — post-``as_of``
+  bookkeeping like ``ingestion_time`` is never visible, RT-G022-N2);
+- records the maximum *effective* knowledge time over every returned row:
+  ``knowledge_time`` + the lag the PIT store ACTUALLY applied —
+  ``max(configured PitQueryConfig floor, registry lag)`` per table
+  (RT-G022-B1) — from which the engine stamps the stored
+  :class:`~lasr.data.schemas.features.FeatureValueRow.knowledge_time`.
+  Invariant (tested): querying any input table at the stored stamp under
+  the same store/config serves the rows the computation used. The stamp is
+  the cross-sectional maximum over all rows the computation *saw* —
+  conservative (never earlier than the truth; A-G022 candidate) and a
+  property of the computation BATCH, not per-security truth: the same
+  logical row computed over two different universes may carry different
+  (both honest) stamps — persistence must key stamps per batch
+  (RT-G022-N8, G023/G029 note).
 """
 
 from __future__ import annotations
@@ -38,7 +48,7 @@ from typing import Protocol
 
 import pandas as pd
 
-from lasr.core.errors import LasrError
+from lasr.core.errors import LasrError, TimeSemanticsError
 from lasr.core.time_semantics import ensure_utc
 from lasr.data.point_in_time import KeyFilter, PitStore
 from lasr.data.schemas.features import FeatureSpec
@@ -50,9 +60,39 @@ __all__ = [
     "FeatureComputeFn",
     "FeatureContext",
     "RawObservation",
+    "require_utc_datetime",
 ]
 
 logger = logging.getLogger(__name__)
+
+#: Metric-table columns beyond primary-key/sort/knowledge plumbing that
+#: kernels may consume (statement event-time legs). Everything else —
+#: ``ingestion_time`` (a post-as_of wall-clock stamp), ``report_date``,
+#: ``knowledge_basis``, ``unit``, ``currency``, ``consolidation_basis``,
+#: ``n_contributors`` — is dropped from served frames (RT-G022-N2); a
+#: future feature needing one extends this declaration, never bypasses it.
+_METRIC_TABLE_EVENT_COLUMNS: Mapping[str, tuple[str, ...]] = {
+    "fundamentals": ("period_end",),
+    "estimates_consensus": (),
+}
+
+
+def require_utc_datetime(value: object, where: str) -> datetime:
+    """Typed guard for ``as_of`` arguments (RT-G022-N6).
+
+    A plain ``date`` (or anything else that is not a ``datetime``) raises
+    :class:`TimeSemanticsError` instead of an untyped ``AttributeError``
+    deeper down; naive datetimes are rejected by :func:`ensure_utc`.
+    Note ``datetime`` subclasses ``date``, so the check must be on
+    ``datetime`` membership, not ``date`` membership.
+    """
+    if not isinstance(value, datetime):
+        raise TimeSemanticsError(
+            f"{where} must be a tz-aware datetime, got "
+            f"{type(value).__name__}: {value!r} (a bare date has no "
+            "knowledge-time semantics)"
+        )
+    return ensure_utc(value)
 
 
 class FeatureComputationError(LasrError):
@@ -109,7 +149,7 @@ class FeatureContext:
     ) -> None:
         self._pit = pit
         self._spec = spec
-        self._as_of = ensure_utc(as_of)
+        self._as_of = require_utc_datetime(as_of, "as_of")
         self._metric_tables = catalog.metric_tables
         fields_by_table: dict[str, set[str]] = {}
         for source_field in spec.required_fields:
@@ -154,8 +194,9 @@ class FeatureContext:
         field; (2) a caller ``as_of`` may only look *back* (CI-004(b)
         trailing statistics; looking forward is structurally impossible —
         CI-001); (3) metric-namespaced tables must be filtered to declared
-        metric ids; (4) column-shaped tables come back with declared fields
-        plus key/knowledge plumbing only.
+        metric ids, and the outgoing filter is rewritten to the validated
+        string ids (RT-G022-N1); (4) every frame comes back with declared
+        fields plus plumbing only (RT-G022-N2).
         """
         if table not in self._declared:
             raise FeatureComputationError(
@@ -163,27 +204,43 @@ class FeatureContext:
                 f"undeclared source table {table!r}; declared tables: "
                 f"{sorted(self._declared)} (MP §18 required_fields is enforced)"
             )
-        effective_as_of = self._as_of if as_of is None else ensure_utc(as_of)
+        effective_as_of = (
+            self._as_of
+            if as_of is None
+            else require_utc_datetime(as_of, "frame(as_of=...)")
+        )
         if effective_as_of > self._as_of:
             raise FeatureComputationError(
                 f"feature {self._spec.feature_id!r} requested as_of "
                 f"{effective_as_of.isoformat()} beyond the computation as_of "
                 f"{self._as_of.isoformat()} (CI-001: no forward looks)"
             )
-        lag = self._applied_lag(table)
+        requested_lag = self._applied_lag(table) or None
         if table in self._metric_tables:
-            self._require_declared_metric_filter(table, keys)
+            keys = self._with_validated_metric_filter(table, keys)
         frame = self._pit.as_of_frame(
-            table, effective_as_of, keys=keys, lag=lag if lag else None
+            table, effective_as_of, keys=keys, lag=requested_lag
         )
-        self._record_knowledge(table, frame, lag)
-        if table not in self._metric_tables:
-            frame = frame[self._visible_columns(table)]
-        return frame
+        # RT-G022-B1: the stamp must reflect the lag the store ACTUALLY
+        # applied — max(configured PitQueryConfig floor, registry lag) —
+        # not the registry lag alone, or a configured floor above the
+        # registry lag would produce stamps at instants where this very
+        # store serves zero rows. The store's own rule is the single
+        # source of truth (RT-G020-B2/N1); a private-API read is
+        # deliberate drift-proofing until PitStore exposes it publicly
+        # (proposed follow-up for the PIT owner).
+        effective_lag = self._pit._effective_lag(table, requested_lag)
+        self._record_knowledge(table, frame, effective_lag)
+        return frame[self._visible_columns(table)]
 
-    def _require_declared_metric_filter(
+    def _with_validated_metric_filter(
         self, table: str, keys: KeyFilter | None
-    ) -> None:
+    ) -> KeyFilter:
+        """Validate the metric filter AND rewrite it with the validated
+        ``str`` ids (RT-G022-N1: the store matches with the caller
+        object's ``__eq__`` — a key object whose ``__str__`` names a
+        declared metric but whose ``__eq__`` matches an undeclared one
+        must not reach the store)."""
         declared = self._declared[table]
         metric = keys.get("metric") if keys is not None else None
         if metric is None:
@@ -203,26 +260,36 @@ class FeatureContext:
                 f"undeclared metric(s) {undeclared} on {table!r}; declared: "
                 f"{sorted(declared)}"
             )
+        rewritten = dict(keys) if keys is not None else {}
+        rewritten["metric"] = tuple(sorted(requested))  # validated strs only
+        return rewritten
 
     def _visible_columns(self, table: str) -> list[str]:
-        """Declared fields + plumbing (keys, event/sort columns, knowledge
-        time), in schema column order (deterministic)."""
+        """Served columns, in schema order (deterministic): plumbing
+        (primary key, sort key, knowledge time) plus declared fields
+        (column tables) or ``value`` + declared event columns (metric
+        tables — RT-G022-N2: bookkeeping like ``ingestion_time`` is a
+        post-as_of wall-clock stamp and must never reach a kernel)."""
         schema = get_schema(table)
-        plumbing = set(schema.primary_key) | set(schema.sort_key)
+        visible = set(schema.primary_key) | set(schema.sort_key)
         if schema.knowledge_time_column is not None:
-            plumbing.add(schema.knowledge_time_column)
-        visible = plumbing | self._declared[table]
+            visible.add(schema.knowledge_time_column)
+        if table in self._metric_tables:
+            visible.add("value")
+            visible.update(_METRIC_TABLE_EVENT_COLUMNS.get(table, ()))
+        else:
+            visible.update(self._declared[table])
         return [c for c in schema.column_names if c in visible]
 
     def _record_knowledge(
-        self, table: str, frame: pd.DataFrame, lag: timedelta
+        self, table: str, frame: pd.DataFrame, effective_lag: timedelta
     ) -> None:
         column = get_schema(table).knowledge_time_column
         if column is None:  # pragma: no cover - metric/price tables carry one
             return
         for value in frame[column]:
             if isinstance(value, datetime):
-                effective = value + lag
+                effective = value + effective_lag
                 if (
                     self._max_effective_knowledge is None
                     or effective > self._max_effective_knowledge

@@ -71,7 +71,11 @@ RAW_FUNDAMENTALS = TableSchema(
         ColumnSpec("knowledge_time", "datetime", nullable=True),
     ),
     primary_key=("ticker", "exchange", "metric", "fiscal_period"),
-    sort_key=("ticker", "exchange", "metric", "period_end"),
+    # RT-G020-N3: the sort key is a PK superset — two rows tying on
+    # (ticker, exchange, metric, period_end) (e.g. Q4 + FY ending the same
+    # date) have exactly ONE canonical order, so one row set can never hash
+    # to two snapshot ids (MP §15 idempotency; CI-043 substrate).
+    sort_key=("ticker", "exchange", "metric", "period_end", "fiscal_period"),
     knowledge_time_column=None,  # raw layer: stamping is ingestion's job (CT-10)
     row_model=RawFundamentalRow,
 )

@@ -2,9 +2,12 @@
 
 # arch: system_design.md §2/§5. Layout:
 ``canonical/<table>/<dataset_id>/{part-*.parquet, manifest.json}`` —
-``dataset_id`` is content-addressed (SHA-256 over sorted content + identity
-fields, truncated), so identical inputs → identical ids → idempotent
-reruns and cheap double-run comparison (MP §15, CI-042 substrate).
+``dataset_id`` is content-addressed (SHA-256 over sorted content + the
+manifest's provenance fields sans the volatile ``retrieval_time``; §5
+"manifest sans hash", hardened per G020 verifier NB-6), so identical
+inputs → identical ids → idempotent reruns and cheap double-run comparison
+(MP §15, CI-042 substrate), while a post-hoc manifest metadata rewrite
+shifts the identity away from the directory it sits in.
 
 Deviation from the §5 sketch, documented: the directory level uses the
 *table* name rather than the family name because one family can yield
@@ -33,11 +36,12 @@ escape hatch) and runs the same stamp check before persisting.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
 import shutil
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
@@ -60,7 +64,13 @@ from lasr.data.canonical.manifests import CanonicalDatasetManifest
 from lasr.data.schemas.base import Row, TableSchema
 from lasr.data.schemas.registry import get_schema
 
-__all__ = ["CanonicalStore", "DatasetRef", "StoreError", "verify_vintage_append"]
+__all__ = [
+    "CanonicalStore",
+    "DatasetRef",
+    "StoreError",
+    "dataset_identity_digest",
+    "verify_vintage_append",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +147,43 @@ def _stamp_consistency_problems(
 class StoreError(LasrError):
     """Canonical-store integrity violation (immutability, resolution,
     append discipline)."""
+
+
+#: Manifest fields EXCLUDED from the content-addressed identity (NB-6):
+#: ``content_hash`` is replaced by the recomputed records digest (no
+#: self-reference), ``retrieval_time`` is the one volatile field — binding
+#: it would mint a duplicate dataset id for every identical re-run
+#: (MP §15 idempotent reruns; system_design.md §5 "never volatile fields").
+#: Manifest-side retrieval_time rewrites on market-bar tables remain
+#: caught by the payload stamp-consistency check (RT-G020-B4b test).
+_IDENTITY_EXCLUDED_FIELDS = frozenset({"content_hash", "retrieval_time"})
+
+
+def dataset_identity_digest(
+    records_digest: str, manifest_payload: Mapping[str, object]
+) -> str:
+    """Content-addressed dataset identity: records hash + manifest sans
+    volatile fields (# arch: system_design.md §5; G020 verifier NB-6).
+
+    Binding the capability snapshot, grade, downgrade record, and lineage
+    fields into the directory id makes provenance-metadata forgery
+    detectable: a post-hoc manifest rewrite (e.g. ``supports_pit=true`` +
+    ``FULL_VINTAGES`` + erased downgrade events — a LEGAL manifest state)
+    no longer hashes to the directory it sits in, so ``integrity_problems``
+    flags it and ``verified_records`` refuses to serve. The residual (full
+    re-forgery including a directory rename to the new identity) is the
+    documented trust-boundary acceptance from the G020 round-2 audit.
+    """
+    identity = {
+        key: value
+        for key, value in manifest_payload.items()
+        if key not in _IDENTITY_EXCLUDED_FIELDS
+    }
+    body = {
+        "manifest_identity": identity,
+        "records_content_hash": records_digest,
+    }
+    return hashlib.sha256(canonical_json(body).encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -304,9 +351,18 @@ class CanonicalStore:
         if schema.vintaged:
             for predecessor_id in self.dataset_ids(table_name):
                 verify_vintage_append(
-                    schema, self.read_records(table_name, predecessor_id), ordered
+                    # R2-N1: predecessor reads are VERIFIED — a tampered
+                    # predecessor fails here instead of being laundered into
+                    # a freshly-hashed (clean-auditing) successor dataset.
+                    schema,
+                    self.verified_records(table_name, predecessor_id),
+                    ordered,
                 )
-        dataset_id = f"ds-{digest[:16]}"
+        # NB-6: the directory id binds the manifest's provenance fields
+        # (capability snapshot, grade, downgrade events, lineage) to the
+        # records hash — metadata forgery shifts the identity.
+        identity = dataset_identity_digest(digest, manifest.model_dump(mode="json"))
+        dataset_id = f"ds-{identity[:16]}"
         directory = self._root / table_name / dataset_id
         if directory.exists() and not (directory / _MANIFEST_FILE).is_file():
             # RT-G020-N4: a crash between part files and manifest leaves a
@@ -498,10 +554,13 @@ class CanonicalStore:
                 "payload does not hash to the manifest content_hash — "
                 "payload or manifest was modified after write (RT-G020-B4a)"
             )
-        if dataset_id != f"ds-{digest[:16]}":
+        identity = dataset_identity_digest(digest, payload)
+        if dataset_id != f"ds-{identity[:16]}":
             problems.append(
-                f"directory id {dataset_id!r} does not match the payload "
-                f"content hash ds-{digest[:16]} (RT-G020-B4a)"
+                f"directory id {dataset_id!r} does not match the identity "
+                f"ds-{identity[:16]} recomputed from the payload records "
+                "hash + manifest provenance fields (RT-G020-B4a; NB-6 "
+                "manifest self-hash: metadata forgery shifts the identity)"
             )
         if payload.get("row_count") != len(records):
             problems.append(

@@ -90,6 +90,33 @@ hand-ledger test (04); snapshot intervals valid_from=retrieval date (05).
   validation on world tables is expected to flag these legitimately.
 - Source: G019 red-team round-2 residual (docs/red_team/G019.md).
 
+### A-G022-01..05 — feature stamping/lag/library conventions (G022, PR #64)
+Defined in the G022 report + library.py named constants: conservative
+cross-sectional max knowledge stamping (01); publication_lag gates vintaged
+sources only (02); library window/staleness/coverage constants all ASSUMED
+(03); OQ-P1-01 security_id tie rule default (04); eps_revision_3m
+unavailable_pending_data (05).
+
+### A-G023-01..07 — target/label conventions (G023, PR #65)
+Defined in the G023 report + module docstrings: pctrank (ordinal-1)/(n-1) with
+security_id ties (01); quantile boundary tie rule (02); vol = ddof=1 weekly
+sample std (03); asymmetric-basis window-end anchoring (04); delisting terminal
+leg + cash-to-window-end (05); purged retention tiling anchor (06); demeaning
+over eligible members only (07).
+
+### A-G023-08 — halt-spanning-delisting outcomes enter no label (O-4)
+- A trading halt spanning a window boundary before a delisting effective date
+  yields typed skips in every window: PIT-honest, but extreme losers vanish
+  from label distributions (mild optimistic bias in label priors). G026 MUST
+  realize the terminal return on held positions regardless (red-team O-4,
+  docs/red_team/G023.md). Sensitivity: LT-009-style delisting-materiality
+  comparison with/without halt-spanning cases.
+
+### A-G021-01..04 — quality/identity conventions (G021, PR #66)
+Identity digest excludes retrieval_time (N11 compensates) (01); config-default
+detector thresholds visible in QualityConfig (02); U3_EXEMPT_TABLES enumeration
+(03); raw re-hash requires full-column records, fails loudly (04).
+
 ### Toolchain conventions (G016, merged PR #54)
 - Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per
   docs/runbooks/dev_setup.md. TEST_SEED=1729 root test seed (tests/conftest.py).

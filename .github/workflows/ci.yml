@@ -112,7 +112,7 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --locked
-      - run: uv run pytest -m leakage -k "lt005 or lt010 or lt013 or lt019 or lt020"
+      - run: uv run pytest -m leakage -k "lt005 or lt010 or lt013 or lt019 or lt020 or lt021"
 
   determinism:
     # ACTIVATION: G029 (vertical-slice CLI) — double-run hash comparison,

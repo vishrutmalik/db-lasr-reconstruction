@@ -2,59 +2,73 @@
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
 active:
-  G021:
+  G024:
     agent_role: implementer
-    objective: Data-quality checks + integrity hardening (R2-N1 first commit, NB-6 manifest self-hash, N11, N3 raw sort keys)
-    github_issue: 21
-    branch: agent/implementer/G021-data-quality
-    worktree: .worktrees/G021-implementer
+    objective: N-LASR 2012 weak learner + shared AdaBoost loop + min_z objective (D-008 plugins; formula-level P1 golden tests)
+    github_issue: 24
+    branch: agent/implementer/G024-nlasr-kernel
+    worktree: .worktrees/G024-implementer
     status: IN_PROGRESS
-    dependencies: [G020]
-    owned_paths: ["src/lasr/data/quality/**", "tests/unit/test_quality*.py", "explicit grants: verified_records one-liner in data/canonical (R2-N1), manifest self-hash (NB-6), raw sort-key PK append in data/schemas/raw_*.py (N3)"]
-    read_only_paths: ["docs/architecture/**", "src/lasr/data/{canonical,point_in_time,providers}/** (beyond grants)"]
-    shared_interfaces: ["quality battery consumed by G029/G038"]
-    started_at: 2026-07-23
-    last_updated_at: 2026-07-23
+    dependencies: [G007, G023, G043, G022 (feature inputs at integration; kernel math independent)]
+    owned_paths: ["src/lasr/models/boosting.py", "src/lasr/models/selection.py", "src/lasr/models/nlasr/**", "tests/unit/test_models*.py", "LT-005 activation markers in tests/leakage (grant)"]
+    read_only_paths: ["docs/evidence/p1_nlasr_2012/**", "docs/methodology/versions/nlasr_2012.md", "docs/architecture/training_and_artifacts.md", "src/lasr/config/**", "src/lasr/targets/**", "src/lasr/features/**"]
+    shared_interfaces: ["Kernel/FittedFactor protocol consumed by G025/G030/G031/G033"]
+    started_at: 2026-08-04
+    last_updated_at: 2026-08-04
     latest_commit: null
     verification_required: true
-    red_team_required: false
-    notes: LT-021 detection integration activates when G019 merges (still in remediation).
+    red_team_required: true
+    notes: Parallel to G026 (disjoint paths). CI-031..041 subset binds here.
+  G026:
+    agent_role: implementer
+    objective: Walk-forward engine — folds, purge/embargo execution, Clock (real fit/signal stamps), event-time discipline (CI-007/009/010/015 execution side)
+    github_issue: 26
+    branch: agent/implementer/G026-walkforward
+    worktree: .worktrees/G026-implementer
+    status: IN_PROGRESS
+    dependencies: [G023, G014]
+    owned_paths: ["src/lasr/validation/**", "tests/unit/test_validation*.py", "grants: RT-G023-2 fix in src/lasr/targets/engine.py (flip ratchet), skills/walk-forward-validation P3-p.59 referent one-liner, CI-009 testing_strategy G028 coverage one-liner"]
+    read_only_paths: ["docs/methodology/**", "src/lasr/targets/**", "src/lasr/core/**", "src/lasr/config/**"]
+    shared_interfaces: ["folds/Clock consumed by G027-G029; A-G023-08 terminal-return binding"]
+    started_at: 2026-08-04
+    last_updated_at: 2026-08-04
+    latest_commit: null
+    verification_required: true
+    red_team_required: true
+    notes: Parallel to G024. N2 universe listing-intersection binding applies.
+
   G022:
     agent_role: implementer
     objective: Feature registry + small audited feature library (MP SS18, D-007 pre-neutralization store)
     github_issue: 22
     branch: agent/implementer/G022-feature-registry
     worktree: .worktrees/G022-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION round 2 (remediated fede265; red-team r2 CLEAN e44d4c8; verifier r2 pending)
     dependencies: [G020, G013]
     owned_paths: ["src/lasr/features/**", "tests/unit/test_features*.py"]
     read_only_paths: ["docs/data/field_mapping.md", "docs/methodology/**", "src/lasr/data/**", "src/lasr/config/**"]
     shared_interfaces: ["FeatureSpec (G017); feature values consumed by G023-G029"]
     started_at: 2026-07-23
-    last_updated_at: 2026-07-23
-    latest_commit: null
+    last_updated_at: 2026-07-24
+    latest_commit: f572b91 (final; 112 tests; 9-feature library)
     verification_required: true
     red_team_required: true
     notes: CI-020..024 bind here (cross-sectional fitting discipline).
-  G023:
-    agent_role: implementer
-    objective: Target & label engine — all 4 target families per version specs (CI-012..019)
-    github_issue: 23
-    branch: agent/implementer/G023-target-engine
-    worktree: .worktrees/G023-implementer
-    status: IN_PROGRESS
-    dependencies: [G020, G014, G043]
-    owned_paths: ["src/lasr/targets/**", "tests/unit/test_targets*.py"]
-    read_only_paths: ["docs/methodology/**", "src/lasr/core/timing.py", "src/lasr/config/**", "src/lasr/data/**"]
-    shared_interfaces: ["training examples (CI-018 schema) consumed by G024-G026"]
-    started_at: 2026-07-23
-    last_updated_at: 2026-07-23
-    latest_commit: null
-    verification_required: true
-    red_team_required: true
-    notes: TimingRecord + purge/embargo metadata mandatory per record.
-
 history:
+  - goal_id: G023
+    agent_role: implementer
+    branch: agent/implementer/G023-target-engine (deleted after merge)
+    final_commit: 23f1700 (engine) + 2ead56b (verify PASS) + 00ea5a9 (red-team 0-BLOCKING)
+    pr: 65
+    verification: PASS + red-team clear (docs/verification+red_team/G023.md; 2 ratchets queued)
+    worktree: removed
+  - goal_id: G021
+    agent_role: implementer
+    branch: agent/implementer/G021-data-quality (deleted after merge)
+    final_commit: c50acad (battery+hardening) + 4e80cc7/bfc9c05 (verification PASS)
+    pr: 66
+    verification: PASS (docs/verification/G021.md; 0 blocking; R2-N1/NB-6/N11/N3 re-attacked and held)
+    worktree: removed
   - goal_id: G019
     agent_role: implementer
     branch: agent/implementer/G019-synthetic-provider (deleted after merge)

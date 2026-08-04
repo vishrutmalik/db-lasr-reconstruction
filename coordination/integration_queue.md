@@ -76,5 +76,21 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   LT-016 leak shape at the contract level). Owner: next goal touching the CT
   suite (G018-descendant contract work or G029 integration hardening).
 
+## Ratcheted defects from G023 red-team (strict-xfails on main)
+- RT-G023-1: close_to_open real-time overlap not in metadata — MUST fix before
+  any close_to_open config reaches CV purging (owners: G031/G033 configs,
+  G026 purge execution). Ratchet: red_team_g023_target_attacks_test.py.
+- RT-G023-2: empty-universe grid point missing from skip ledger — GRANTED to
+  G026 (small targets/engine.py fix; flip the ratchet).
+- O-4/A-G023-08: G026 must realize terminal returns on held positions even
+  when no label window captured the delisting.
+
+## Policy/binding additions from G022 remediation
+- N5 -> G033 acceptance: config-time guard that registered features touching a
+  floor-lagged family carry spec.publication_lag >= floor (or explicit accept).
+- N8 -> G029 persistence binding: feature stamps are batch properties;
+  feature_values PK excludes knowledge_time — key stamps per batch.
+- PIT owner follow-up: promote PitStore._effective_lag to public API.
+
 ## Conflicts requiring resolution
 - (none)

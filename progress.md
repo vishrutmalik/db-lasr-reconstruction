@@ -30,6 +30,12 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-08-04: 11-day interruption (session limits + process restart killed 4
+  review agents mid-flight; 2026-07-24 -> 2026-08-04). Recovery: G022 red-team
+  had UNCOMMITTED report + 2 keeper files preserved in the worktree (its last
+  status claims a B1 blocking finding the verifier missed — verdict pending its
+  committed report); G021 verifier, G023 verifier + red-team resumed from
+  transcripts. No repo state lost; all branches/PRs intact (#64/#65/#66).
 - 2026-07-23: CI typecheck red on main since the PR #61 merge (many emails) —
   cross-branch semantic conflict (numpy 2.5 PEP-695 stubs vs mypy
   python_version=3.11, surfaced only when G018's pandas import met G043's

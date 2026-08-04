@@ -2,23 +2,6 @@
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
 active:
-  G021:
-    agent_role: implementer
-    objective: Data-quality checks + integrity hardening (R2-N1 first commit, NB-6 manifest self-hash, N11, N3 raw sort keys)
-    github_issue: 21
-    branch: agent/implementer/G021-data-quality
-    worktree: .worktrees/G021-implementer
-    status: IN_VERIFICATION (PR #66)
-    dependencies: [G020]
-    owned_paths: ["src/lasr/data/quality/**", "tests/unit/test_quality*.py", "explicit grants: verified_records one-liner in data/canonical (R2-N1), manifest self-hash (NB-6), raw sort-key PK append in data/schemas/raw_*.py (N3)"]
-    read_only_paths: ["docs/architecture/**", "src/lasr/data/{canonical,point_in_time,providers}/** (beyond grants)"]
-    shared_interfaces: ["quality battery consumed by G029/G038"]
-    started_at: 2026-07-23
-    last_updated_at: 2026-07-24
-    latest_commit: c50acad (final; hardening closed; LT-021 live 6/6)
-    verification_required: true
-    red_team_required: false
-    notes: LT-021 detection integration activates when G019 merges (still in remediation).
   G022:
     agent_role: implementer
     objective: Feature registry + small audited feature library (MP SS18, D-007 pre-neutralization store)
@@ -55,6 +38,13 @@ active:
     notes: TimingRecord + purge/embargo metadata mandatory per record.
 
 history:
+  - goal_id: G021
+    agent_role: implementer
+    branch: agent/implementer/G021-data-quality (deleted after merge)
+    final_commit: c50acad (battery+hardening) + 4e80cc7/bfc9c05 (verification PASS)
+    pr: 66
+    verification: PASS (docs/verification/G021.md; 0 blocking; R2-N1/NB-6/N11/N3 re-attacked and held)
+    worktree: removed
   - goal_id: G019
     agent_role: implementer
     branch: agent/implementer/G019-synthetic-provider (deleted after merge)

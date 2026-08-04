@@ -8,14 +8,14 @@ active:
     github_issue: 21
     branch: agent/implementer/G021-data-quality
     worktree: .worktrees/G021-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #66)
     dependencies: [G020]
     owned_paths: ["src/lasr/data/quality/**", "tests/unit/test_quality*.py", "explicit grants: verified_records one-liner in data/canonical (R2-N1), manifest self-hash (NB-6), raw sort-key PK append in data/schemas/raw_*.py (N3)"]
     read_only_paths: ["docs/architecture/**", "src/lasr/data/{canonical,point_in_time,providers}/** (beyond grants)"]
     shared_interfaces: ["quality battery consumed by G029/G038"]
     started_at: 2026-07-23
-    last_updated_at: 2026-07-23
-    latest_commit: null
+    last_updated_at: 2026-07-24
+    latest_commit: c50acad (final; hardening closed; LT-021 live 6/6)
     verification_required: true
     red_team_required: false
     notes: LT-021 detection integration activates when G019 merges (still in remediation).
@@ -25,14 +25,14 @@ active:
     github_issue: 22
     branch: agent/implementer/G022-feature-registry
     worktree: .worktrees/G022-implementer
-    status: IN_PROGRESS
+    status: FAILED_VERIFICATION (verifier PASS; red-team 1 BLOCKING at 430c56b; remediation in progress)
     dependencies: [G020, G013]
     owned_paths: ["src/lasr/features/**", "tests/unit/test_features*.py"]
     read_only_paths: ["docs/data/field_mapping.md", "docs/methodology/**", "src/lasr/data/**", "src/lasr/config/**"]
     shared_interfaces: ["FeatureSpec (G017); feature values consumed by G023-G029"]
     started_at: 2026-07-23
-    last_updated_at: 2026-07-23
-    latest_commit: null
+    last_updated_at: 2026-07-24
+    latest_commit: f572b91 (final; 112 tests; 9-feature library)
     verification_required: true
     red_team_required: true
     notes: CI-020..024 bind here (cross-sectional fitting discipline).
@@ -42,14 +42,14 @@ active:
     github_issue: 23
     branch: agent/implementer/G023-target-engine
     worktree: .worktrees/G023-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #65; verifier PASS 2ead56b; red-team pending)
     dependencies: [G020, G014, G043]
     owned_paths: ["src/lasr/targets/**", "tests/unit/test_targets*.py"]
     read_only_paths: ["docs/methodology/**", "src/lasr/core/timing.py", "src/lasr/config/**", "src/lasr/data/**"]
     shared_interfaces: ["training examples (CI-018 schema) consumed by G024-G026"]
     started_at: 2026-07-23
-    last_updated_at: 2026-07-23
-    latest_commit: null
+    last_updated_at: 2026-07-24
+    latest_commit: 23f1700 (final; 87 tests; 4 families; CR-029 pinned)
     verification_required: true
     red_team_required: true
     notes: TimingRecord + purge/embargo metadata mandatory per record.

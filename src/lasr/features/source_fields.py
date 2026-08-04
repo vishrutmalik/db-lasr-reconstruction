@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 
 from lasr.core.errors import LasrError
 from lasr.data.schemas.registry import SCHEMAS
@@ -76,7 +77,9 @@ class SourceFieldCatalog:
 
     ``metric_ids`` maps each metric-namespaced table to its declared metric
     ids; tables absent from the mapping are column-shaped and validate
-    against their :class:`TableSchema` columns.
+    against their :class:`TableSchema` columns. The mapping is coerced to a
+    read-only proxy over frozensets (RT-G022-N3): in-place mutation raises,
+    so :meth:`with_metrics` (copy-on-extend) is the ONLY extension path.
     """
 
     metric_ids: Mapping[str, frozenset[str]] = field(
@@ -90,6 +93,14 @@ class SourceFieldCatalog:
                     f"metric namespace declared for unknown canonical table "
                     f"{table!r}; known: {sorted(SCHEMAS)}"
                 )
+        # deep immutability (RT-G022-N3): read-only mapping of frozensets
+        object.__setattr__(
+            self,
+            "metric_ids",
+            MappingProxyType(
+                {table: frozenset(ids) for table, ids in self.metric_ids.items()}
+            ),
+        )
 
     @property
     def metric_tables(self) -> frozenset[str]:

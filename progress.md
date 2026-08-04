@@ -2,8 +2,9 @@
 
 Session-independent status. Update at every session end and major milestone.
 
-- **Last orchestrator update:** 2026-07-22
-- **Current milestone:** M4 — implementation wave, data layer (M0-M3 complete)
+- **Last orchestrator update:** 2026-08-04
+- **Current milestone:** M5 — model phase (M0-M4 complete: data layer through
+  targets fully merged; G019/G020/G022 red-team remediation cycles complete)
 - **Remote:** git@github.com:vishrutmalik/db-lasr-reconstruction.git (PRIVATE)
 
 ## Completed & merged
@@ -17,12 +18,11 @@ Session-independent status. Update at every session end and major milestone.
 - Evidence matrix federated over per-source row files (D-005).
 
 ## Active assignments
-- G021 data quality + hardening → implementer, .worktrees/G021-implementer
-- G022 feature registry + library → implementer, .worktrees/G022-implementer (red-team on completion)
-- G023 target & label engine → implementer, .worktrees/G023-implementer (red-team on completion)
-- Merged in M4: G015-G020, G039, G042, G043 — G019/G020 each survived
-  4-blocking red-team rounds + clean round-2 re-checks; leakage-fast CI job
-  now ACTIVE on every PR
+- G024 N-LASR 2012 kernel → implementer, .worktrees/G024-implementer (red-team required)
+- G026 walk-forward engine → implementer, .worktrees/G026-implementer (red-team required)
+- Merged in M4/M5: G015-G023, G039, G042, G043 (29 goals total). Review-matrix
+  scorecard: G019 4-blocking/G020 4-blocking/G022 1-blocking red-team findings,
+  all remediated with clean round-2 re-checks; every attack is a permanent test.
 - Full detail: `coordination/agent_assignments.yaml`
 
 ## Blockers
@@ -96,10 +96,11 @@ Session-independent status. Update at every session end and major milestone.
   deleting branches (see 2026-07-22 incident).
 
 ## Next dependency-ready goals
-1. Verify+merge G019, G020 (both need red-team review too), G039 (PR #59)
-2. On G020 merge: G021 (quality) ∥ G022 (features) ∥ G023 (targets) in parallel
-3. On G023(+G043 done): G024 N-LASR 2012 kernel; G026 backtester parallel
-4. Then G025/G027/G028 → G029 vertical slice → variants + red-team audit
+1. Verify+merge G024 (kernel) and G026 (walk-forward), both with red-team
+2. Then G025 (ensembles, zscore-corner binding) ∥ G027 (portfolio L1/2)
+3. G028 reporting → G029 end-to-end vertical slice (CLI + determinism gate)
+4. Then variants G030/G031/G033 ∥ G034 costs → G035/G036 → G037 red-team audit
+   → G038 reproducibility → G040 final audit (gated on E-1 user decision)
 
 ## Major open risks
 - Workbooks appear current-vintage only → PIT reconstruction for backtests will

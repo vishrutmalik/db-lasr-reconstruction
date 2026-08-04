@@ -27,10 +27,13 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 
-from lasr.core.time_semantics import ensure_utc
 from lasr.data.point_in_time import PitStore
 from lasr.data.schemas.features import FeatureSpec, FeatureValueRow
-from lasr.features.computation import FeatureComputationError, FeatureContext
+from lasr.features.computation import (
+    FeatureComputationError,
+    FeatureContext,
+    require_utc_datetime,
+)
 from lasr.features.registry import FeatureRegistry
 
 __all__ = ["FeatureComputationResult", "FeatureEngine"]
@@ -43,8 +46,11 @@ class FeatureComputationResult:
     """One feature's cross-section at one ``as_of``.
 
     ``coverage`` = covered / requested; ``eligible`` applies the registry's
-    ``min_coverage`` gate (MP §18 eligibility). An ineligible cross-section
-    still carries its rows — the CONSUMER decides to drop it, loudly.
+    ``min_coverage`` gate (MP §18 eligibility) AND requires at least one
+    covered row — an empty cross-section is never eligible, even under
+    ``min_coverage = 0.0`` (RT-G022-N7: an empty-but-eligible result is a
+    silent-empty flavor). An ineligible cross-section still carries its
+    rows — the CONSUMER decides to drop it, loudly.
     """
 
     spec: FeatureSpec
@@ -82,7 +88,7 @@ class FeatureEngine:
         """
         registered = self._registry.get(feature_id, version)
         spec = registered.spec
-        as_of_utc = ensure_utc(as_of)
+        as_of_utc = require_utc_datetime(as_of, "as_of")  # RT-G022-N6
         requested = frozenset(str(s) for s in securities)
         if not requested:
             raise FeatureComputationError(
@@ -147,7 +153,9 @@ class FeatureEngine:
                 for security_id in sorted(kept)  # CI-043 canonical order
             )
         coverage = len(rows) / len(requested)
-        eligible = coverage >= spec.min_coverage
+        # RT-G022-N7: zero covered rows can never be eligible, even when
+        # the registry gate is min_coverage = 0.0 (silent-empty discipline).
+        eligible = bool(rows) and coverage >= spec.min_coverage
         logger.debug(
             "feature %s v%d at %s: %d/%d covered (%.3f), eligible=%s",
             feature_id,

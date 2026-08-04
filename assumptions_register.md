@@ -104,6 +104,14 @@ sample std (03); asymmetric-basis window-end anchoring (04); delisting terminal
 leg + cash-to-window-end (05); purged retention tiling anchor (06); demeaning
 over eligible members only (07).
 
+### A-G023-08 — halt-spanning-delisting outcomes enter no label (O-4)
+- A trading halt spanning a window boundary before a delisting effective date
+  yields typed skips in every window: PIT-honest, but extreme losers vanish
+  from label distributions (mild optimistic bias in label priors). G026 MUST
+  realize the terminal return on held positions regardless (red-team O-4,
+  docs/red_team/G023.md). Sensitivity: LT-009-style delisting-materiality
+  comparison with/without halt-spanning cases.
+
 ### A-G021-01..04 — quality/identity conventions (G021, PR #66)
 Identity digest excludes retrieval_time (N11 compensates) (01); config-default
 detector thresholds visible in QualityConfig (02); U3_EXEMPT_TABLES enumeration

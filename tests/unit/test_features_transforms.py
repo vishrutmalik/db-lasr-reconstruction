@@ -20,6 +20,7 @@ are a known erratum (F-P2-2 note) and are NOT used here.
 from __future__ import annotations
 
 import math
+import sys
 
 import pytest
 from hypothesis import given
@@ -215,13 +216,23 @@ class TestCi022ZScoreLocality:
 
     @given(_VALUES)
     def test_zscore_moments_property(self, values):
+        """Standardized moments up to float conditioning: subtracting a
+        mean much larger than the spread cancels catastrophically, so the
+        residual standardized mean is O(n·eps·max|x|/sigma) — the
+        tolerance must scale with that condition number (hypothesis found
+        e.g. {3.579e8, 3.579e8±40} breaching a fixed 1e-9)."""
         scores = zscore(values)
         if len(scores) >= 2 and any(s != 0.0 for s in scores.values()):
+            covered = [v for v in values.values() if v is not None and math.isfinite(v)]
+            mu = sum(covered) / len(covered)
+            sigma = math.sqrt(sum((x - mu) ** 2 for x in covered) / len(covered))
+            condition = max(abs(v) for v in covered) / sigma
+            tol = max(1e-12, 16 * len(covered) * sys.float_info.epsilon * condition)
             data = list(scores.values())
             mean = sum(data) / len(data)
             var = sum((x - mean) ** 2 for x in data) / len(data)
-            assert mean == pytest.approx(0.0, abs=1e-9)
-            assert var == pytest.approx(1.0, rel=1e-6)
+            assert mean == pytest.approx(0.0, abs=tol)
+            assert var == pytest.approx(1.0, rel=max(1e-9, tol))
 
 
 class TestCi023FrozenWinsorizer:

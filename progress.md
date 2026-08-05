@@ -30,6 +30,16 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-08-05: Runtime-vs-narrative reconciliation (user-flagged via Background
+  Tasks UI). Root causes: (1) G024/G026 were never actually launched after the
+  G023 merge — registry said IN_PROGRESS with no live agent; (2) the corrective
+  "resume" reused retired G018/G020 agent threads, whose UI labels are frozen
+  at launch — the user saw 'G018'/'G020' running while the registry said
+  G024/G026. Both reused threads died at limits with ZERO writes; retired.
+  Fixes: fresh correctly-labeled agents launched for G024/G026; runtime
+  lines (launch date + UI label + liveness evidence) now recorded per active
+  registry entry; rule adopted — a goal is 'running' ONLY on a successful
+  Agent-launch record plus disk evidence (pushed commits), never narrative.
 - 2026-08-04 (2): OneDrive resurrected 8 previously-removed worktrees of merged
   goals (the .git/worktrees metadata + directories re-synced during the 11-day
   gap). All HEADs verified fully merged; dirt was sync residue; all removed +

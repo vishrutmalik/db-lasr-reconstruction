@@ -194,6 +194,12 @@ def residualize(
     """Weighting score over the selected set per the pinned A-G027-02 rule."""
     selected = tuple(sorted(long_ids + short_ids))
     if mode == "none":
+        if beta is not None:
+            raise PortfolioConfigError(
+                "a beta exposure vector was provided but "
+                "beta_residualization='none' — refusing to silently ignore "
+                "it (CI-044: no hidden behavior)"
+            )
         return _centered(scores, selected)
     if beta is None:
         raise MissingExposureError(

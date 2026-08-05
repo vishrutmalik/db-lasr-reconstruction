@@ -117,6 +117,13 @@ Identity digest excludes retrieval_time (N11 compensates) (01); config-default
 detector thresholds visible in QualityConfig (02); U3_EXEMPT_TABLES enumeration
 (03); raw re-hash requires full-column records, fails loudly (04).
 
+### A-G034-01..06 — cost-model conventions (G034, PR #67)
+Defined in the G034 report/PR + module docstrings: additive currency-space
+composition with post-hoc multiplicative modifiers (01); ACT/365 borrow
+day-count (02); power-law impact form with config exponent (03); size-scaling
+form (04); short-book accrual_days convention (05); P4 sweep interior grids
+INFERRED from chart-only exhibits (06).
+
 ### Toolchain conventions (G016, merged PR #54)
 - Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per
   docs/runbooks/dev_setup.md. TEST_SEED=1729 root test seed (tests/conftest.py).

@@ -59,22 +59,22 @@ active:
     notes: Parallel to G026 (disjoint paths). CI-031..041 subset binds here.
   G026:
     agent_role: implementer
-    runtime: resumed 2026-08-06 post-limit; 8 uncommitted paths (commit-first instruction sent); nothing pushed yet
+    runtime: IMPLEMENTED 2026-08-06 at ebe9a93; V+RT dispatched
     objective: Walk-forward engine — folds, purge/embargo execution, Clock (real fit/signal stamps), event-time discipline (CI-007/009/010/015 execution side)
     github_issue: 26
     branch: agent/implementer/G026-walkforward
     worktree: .worktrees/G026-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #69; verifier + red-team parallel)
     dependencies: [G023, G014]
     owned_paths: ["src/lasr/validation/**", "tests/unit/test_validation*.py", "grants: RT-G023-2 fix in src/lasr/targets/engine.py (flip ratchet), skills/walk-forward-validation P3-p.59 referent one-liner, CI-009 testing_strategy G028 coverage one-liner"]
     read_only_paths: ["docs/methodology/**", "src/lasr/targets/**", "src/lasr/core/**", "src/lasr/config/**"]
     shared_interfaces: ["folds/Clock consumed by G027-G029; A-G023-08 terminal-return binding"]
     started_at: 2026-08-04
     last_updated_at: 2026-08-04
-    latest_commit: null
+    latest_commit: ebe9a93 (final; 70 tests; ratchet flipped)
     verification_required: true
     red_team_required: true
-    notes: Parallel to G024. N2 universe listing-intersection binding applies.
+    notes: FoldSpec doc drift (fold_id) queued; embargo-wording skill clarification proposed.
 
   G024:
     agent_role: implementer
@@ -96,22 +96,22 @@ active:
     notes: Parallel to G026 (disjoint paths). CI-031..041 subset binds here.
   G026:
     agent_role: implementer
-    runtime: resumed 2026-08-06 post-limit; 8 uncommitted paths (commit-first instruction sent); nothing pushed yet
+    runtime: IMPLEMENTED 2026-08-06 at ebe9a93; V+RT dispatched
     objective: Walk-forward engine — folds, purge/embargo execution, Clock (real fit/signal stamps), event-time discipline (CI-007/009/010/015 execution side)
     github_issue: 26
     branch: agent/implementer/G026-walkforward
     worktree: .worktrees/G026-implementer
-    status: IN_PROGRESS
+    status: IN_VERIFICATION (PR #69; verifier + red-team parallel)
     dependencies: [G023, G014]
     owned_paths: ["src/lasr/validation/**", "tests/unit/test_validation*.py", "grants: RT-G023-2 fix in src/lasr/targets/engine.py (flip ratchet), skills/walk-forward-validation P3-p.59 referent one-liner, CI-009 testing_strategy G028 coverage one-liner"]
     read_only_paths: ["docs/methodology/**", "src/lasr/targets/**", "src/lasr/core/**", "src/lasr/config/**"]
     shared_interfaces: ["folds/Clock consumed by G027-G029; A-G023-08 terminal-return binding"]
     started_at: 2026-08-04
     last_updated_at: 2026-08-04
-    latest_commit: null
+    latest_commit: ebe9a93 (final; 70 tests; ratchet flipped)
     verification_required: true
     red_team_required: true
-    notes: Parallel to G024. N2 universe listing-intersection binding applies.
+    notes: FoldSpec doc drift (fold_id) queued; embargo-wording skill clarification proposed.
 
   G022:
     agent_role: implementer

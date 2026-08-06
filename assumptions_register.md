@@ -131,6 +131,12 @@ scaling (04); accounting conventions incl. zero cash yield + cost/borrow
 timing (05); missing-return-is-typed (06); zero-beta-variance slope-0 fallback
 (07); terminated-id re-entry ban (08).
 
+### A-G026-01..06 — walk-forward boundary conventions (G026, PR #69)
+Defined in the report + module docstrings: purge strict at first test decision
+(01); embargo zone (B, B+e*H_row] post-test only (02); embargo inert for H=1
+(03); refit-grid anchor = first in-window rebalance (04); signal_time =
+decision_time (05); grant-(a) enum line in targets/returns.py (06).
+
 ### Toolchain conventions (G016, merged PR #54)
 - Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per
   docs/runbooks/dev_setup.md. TEST_SEED=1729 root test seed (tests/conftest.py).

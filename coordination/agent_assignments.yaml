@@ -27,7 +27,7 @@ active:
     github_issue: 33
     branch: agent/implementer/G034-costs
     worktree: .worktrees/G034-implementer
-    status: IN_VERIFICATION (PR #67; verifier PASS 81758d6; red-team pending)
+    status: FAILED_VERIFICATION (verifier PASS; red-team 1 BLOCKING + 4 ratchets at f47400e; remediation in progress)
     dependencies: [G043 (merged); G027 integration binds at G029 (dependency re-analysis, issue #33)]
     owned_paths: ["src/lasr/costs/**", "tests/unit/test_costs*.py"]
     read_only_paths: ["docs/methodology/versions/**", "docs/evidence/**", "src/lasr/config/**"]

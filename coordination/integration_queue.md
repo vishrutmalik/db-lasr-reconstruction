@@ -97,5 +97,10 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   +/-1 scores instead of documented 0.0 (mean round-off, std = 1 ulp). Fix =
   degeneracy detection + tolerance cap when G025 consumes zscore machinery.
 
+## G029 adapter contract (from G027 verification)
+- G027 CostModel hook <-> G034 interface mismatches M-1..M-6 enumerated in
+  docs/verification/G027.md — the G029 vertical slice owns the adapter; no
+  redesign of either module.
+
 ## Conflicts requiring resolution
 - (none)

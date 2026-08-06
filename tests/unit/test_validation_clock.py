@@ -156,9 +156,7 @@ class TestTiming:
     def test_model_fit_time_is_the_governing_refit_close(self) -> None:
         clock = _weekly_clock("every_4_weeks")
         # 3rd Friday (2020-01-17) is governed by the 1st (2020-01-03).
-        assert clock.model_fit_time(date(2020, 1, 17), YEAR) == _close(
-            date(2020, 1, 3)
-        )
+        assert clock.model_fit_time(date(2020, 1, 17), YEAR) == _close(date(2020, 1, 3))
         # A refit day governs itself.
         assert clock.model_fit_time(date(2020, 1, 31), YEAR) == _close(
             date(2020, 1, 31)

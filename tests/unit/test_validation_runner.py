@@ -192,9 +192,7 @@ class TestPlanValidation:
 
     def test_duplicate_fold_ids_refused(self) -> None:
         with pytest.raises(FoldConfigError, match="duplicate"):
-            WalkForwardPlan(
-                config_hash="cfg", folds=(self.FOLD, self.FOLD), seed=1
-            )
+            WalkForwardPlan(config_hash="cfg", folds=(self.FOLD, self.FOLD), seed=1)
 
     def test_empty_plan_refused(self) -> None:
         with pytest.raises(FoldConfigError, match="at least one fold"):
@@ -257,9 +255,7 @@ class TestRun1M:
             fit_function=_toy_fit(),
         )
         assert result.config_hash == "cfg"
-        assert [f.fold_id for f in result.fits] == [
-            f"fold_{k:04d}" for k in range(4)
-        ]
+        assert [f.fold_id for f in result.fits] == [f"fold_{k:04d}" for k in range(4)]
         # monthly refit: the governing fit is the close of the test start.
         first = result.fits[0]
         assert first.model_fit_time == _close(date(2020, 4, 30))
@@ -307,9 +303,7 @@ class TestRun1M:
         )
         days_by_fold: dict[str, set[date]] = {}
         for p in result.predictions:
-            days_by_fold.setdefault(p.fold_id, set()).add(
-                p.timing.decision_time.date()
-            )
+            days_by_fold.setdefault(p.fold_id, set()).add(p.timing.decision_time.date())
         assert days_by_fold["fold_0000"] == {date(2020, 4, 30), date(2020, 5, 29)}
         assert days_by_fold["fold_0003"] == {date(2020, 10, 30), date(2020, 11, 30)}
 
@@ -458,57 +452,49 @@ class TestLeakageRefusals:
             session=SESSION,
             refit_cadence="quarterly",
         )
+        # Plan bounds start at test.start (2020-01-15, off-grid); the first
+        # in-bounds month-end — and hence the first quarterly refit day —
+        # is 2020-01-31, AFTER the test window opens: no governing refit.
         fold = FoldSpec(
             fold_id="fold_early",
-            train=DateRange(date(2019, 11, 1), date(2019, 12, 31)),
-            test=DateRange(date(2020, 1, 31), date(2020, 2, 28)),
+            train=DateRange(date(2020, 2, 5), date(2020, 3, 30)),
+            test=DateRange(date(2020, 1, 15), date(2020, 2, 4)),
             purge="required",
             embargo_horizons=1.0,
             overlap_mode="pooled_as_paper",
         )
         plan = WalkForwardPlan(config_hash="cfg", folds=(fold,), seed=1)
-        # plan bounds start 2019-11-01; the first month-end in bounds is
-        # 2019-12-31, hence the first quarterly refit day. 2020-01-31 is
-        # after it, so this plan works; shrink bounds to break it.
-        tight = FoldSpec(
-            fold_id="fold_early",
-            train=DateRange(date(2020, 2, 5), date(2020, 3, 30)),
-            test=DateRange(date(2020, 1, 31), date(2020, 2, 4)),
-            purge="required",
-            embargo_horizons=1.0,
-            overlap_mode="pooled_as_paper",
-        )
-        tight_plan = WalkForwardPlan(config_hash="cfg", folds=(tight,), seed=1)
         with pytest.raises(ClockError, match="no refit day"):
             run_walk_forward(
-                plan=tight_plan,
+                plan=plan,
                 clock=clock,
                 records=panel_1m.records,
                 fit_function=_toy_fit(),
             )
-        del plan  # documented-good sibling; the tight variant is the probe
+
+
+@pytest.fixture(scope="module")
+def panel_4w() -> BuildOutput:
+    return _panel(
+        _spec(horizon="4W", grid="weekly", grid_anchor="friday"),
+        date(2020, 1, 3),
+        date(2020, 6, 26),
+    )
+
+
+@pytest.fixture(scope="module")
+def clock_4w() -> WalkForwardClock:
+    return WalkForwardClock(
+        trading_days=CAL,
+        grid_name="weekly",
+        grid_anchor="friday",
+        session=SESSION,
+        refit_cadence="every_4_weeks",
+    )
 
 
 class TestSparserRefit4W:
     """CR-006: nlasr_2020 shape — weekly rebalance, 4-weekly refit."""
-
-    @pytest.fixture(scope="class")
-    def panel_4w(self) -> BuildOutput:
-        return _panel(
-            _spec(horizon="4W", grid="weekly", grid_anchor="friday"),
-            date(2020, 1, 3),
-            date(2020, 6, 26),
-        )
-
-    @pytest.fixture(scope="class")
-    def clock_4w(self) -> WalkForwardClock:
-        return WalkForwardClock(
-            trading_days=CAL,
-            grid_name="weekly",
-            grid_anchor="friday",
-            session=SESSION,
-            refit_cadence="every_4_weeks",
-        )
 
     def test_intra_fold_rebalances_share_one_fit_stamp(
         self, panel_4w: BuildOutput, clock_4w: WalkForwardClock

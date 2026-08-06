@@ -236,10 +236,30 @@ class TestGenerateFolds:
             overlap_mode="pooled_as_paper",
         )
         expected = (
-            (date(2020, 1, 31), date(2020, 3, 31), date(2020, 4, 30), date(2020, 5, 29)),
-            (date(2020, 3, 31), date(2020, 5, 29), date(2020, 6, 30), date(2020, 7, 31)),
-            (date(2020, 5, 29), date(2020, 7, 31), date(2020, 8, 31), date(2020, 9, 30)),
-            (date(2020, 7, 31), date(2020, 9, 30), date(2020, 10, 30), date(2020, 11, 30)),
+            (
+                date(2020, 1, 31),
+                date(2020, 3, 31),
+                date(2020, 4, 30),
+                date(2020, 5, 29),
+            ),
+            (
+                date(2020, 3, 31),
+                date(2020, 5, 29),
+                date(2020, 6, 30),
+                date(2020, 7, 31),
+            ),
+            (
+                date(2020, 5, 29),
+                date(2020, 7, 31),
+                date(2020, 8, 31),
+                date(2020, 9, 30),
+            ),
+            (
+                date(2020, 7, 31),
+                date(2020, 9, 30),
+                date(2020, 10, 30),
+                date(2020, 11, 30),
+            ),
         )
         assert len(folds) == 4  # trailing partial test window (Dec) emits none
         for k, (fold, exp) in enumerate(zip(folds, expected, strict=True)):
@@ -444,15 +464,14 @@ class TestPurgeHandFixture:
                 ExclusionReason.UNREALIZED_AT_FIT
             )
         out_of_range = [
-            e for e in selection.excluded
+            e
+            for e in selection.excluded
             if e.reason is ExclusionReason.OUT_OF_TRAIN_RANGE
         ]
         assert len(out_of_range) == 24  # 12 months of 2020 x 2 securities
         assert len(selection.retained) + len(selection.excluded) == 48
 
-    def test_ci006_maxima_reflect_the_retained_set(
-        self, panel_3m: BuildOutput
-    ) -> None:
+    def test_ci006_maxima_reflect_the_retained_set(self, panel_3m: BuildOutput) -> None:
         selection = select_training_records(
             panel_3m.records,
             FOLD_3M,
@@ -619,14 +638,10 @@ class TestEmbargoBoundary:
         retained_days = sorted({r.row.as_of.date() for r in selection.retained})
         assert retained_days[0] == date(2020, 3, 13)
         assert not [
-            e
-            for e in selection.excluded
-            if e.reason is ExclusionReason.EMBARGOED
+            e for e in selection.excluded if e.reason is ExclusionReason.EMBARGOED
         ]
 
-    def test_half_horizon_embargo_scales_the_zone(
-        self, panel_4w: BuildOutput
-    ) -> None:
+    def test_half_horizon_embargo_scales_the_zone(self, panel_4w: BuildOutput) -> None:
         """embargo_horizons=0.5 → zone (03-06, 03-20 close]: 03-13 embargoed,
         03-20 (target_start == zone end) retained."""
         fold = FoldSpec(
@@ -685,7 +700,5 @@ class TestEmbargoInertForNonOverlapping:
         retained_days = sorted({r.row.as_of.date() for r in selection.retained})
         assert retained_days[0] == date(2020, 4, 30)  # month after test end
         assert not [
-            e
-            for e in selection.excluded
-            if e.reason is ExclusionReason.EMBARGOED
+            e for e in selection.excluded if e.reason is ExclusionReason.EMBARGOED
         ]

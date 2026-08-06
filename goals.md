@@ -38,7 +38,7 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G024 | N-LASR 2012 weak learner + AdaBoost loop (formula-level tests) | implementer | G007, G023 | IN_PROGRESS | [#24](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/24) | |
 | G025 | Temporal ensemble framework | implementer | G024 | BLOCKED | [#25](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/25) | |
 | G026 | Walk-forward backtester (purge/embargo, event-time) | implementer | G023, G014 | IN_PROGRESS | [#26](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/26) | |
-| G027 | Level-1/2 portfolio construction + accounting | implementer | G026 | IN_PROGRESS | [#27](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/27) | |
+| G027 | Level-1/2 portfolio construction + accounting | implementer | G026 | IN_VERIFICATION | [#27](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/27) | [#68](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/68) |
 | G028 | Reporting & diagnostics (signal + portfolio metrics) | implementer | G026, G027 | BLOCKED | [#28](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/28) | |
 | G029 | End-to-end synthetic vertical slice (CLI, reproducible) | implementer | G019–G028 | BLOCKED | [#29](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/29) | |
 | G030 | N-LASR2 neutralization + hedge learner | implementer | G008, G029 | BLOCKED | [#40](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/40) | |

@@ -124,6 +124,13 @@ day-count (02); power-law impact form with config exponent (03); size-scaling
 form (04); short-book accrual_days convention (05); P4 sweep interior grids
 INFERRED from chart-only exhibits (06).
 
+### A-G027-01..08 — portfolio conventions (G027, PR #68)
+Defined in the PR body + module docstrings: fractile bin rule (01); Level-2
+weighting-score + sign-flip pin per OQ-P4-12 (02); cap waterfall (03); leg
+scaling (04); accounting conventions incl. zero cash yield + cost/borrow
+timing (05); missing-return-is-typed (06); zero-beta-variance slope-0 fallback
+(07); terminated-id re-entry ban (08).
+
 ### Toolchain conventions (G016, merged PR #54)
 - Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per
   docs/runbooks/dev_setup.md. TEST_SEED=1729 root test seed (tests/conftest.py).

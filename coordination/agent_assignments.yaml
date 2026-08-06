@@ -4,7 +4,7 @@
 active:
   G027:
     agent_role: implementer
-    runtime: resumed 2026-08-05 after limit kill (UI label 'G027: portfolio L1/L2 + accounting'); zero commits yet
+    runtime: ALIVE 2026-08-06; 3 commits pushed (95ebcab/c34db37/00a64bf), worktree clean; finish-or-report message queued
     objective: Level-1/2 portfolio construction + accounting (MP SS24; CI-045..050)
     github_issue: 27
     branch: agent/implementer/G027-portfolio
@@ -22,7 +22,7 @@ active:
     notes: CI-046 turnover units are /mo (G042 ruling). A-G023-08 terminal-return realization on held positions binds here (accounting side).
   G034:
     agent_role: implementer
-    runtime: IMPLEMENTED 2026-08-05; verifier + red-team dispatched (UI labels 'Verify G034...'/'Red-team G034...')
+    runtime: verifier PASS 81758d6; red-team resumed 2026-08-06 at probe 8
     objective: Modular transaction-cost & borrow model (MP SS25; evidence-fixed scenario defaults)
     github_issue: 33
     branch: agent/implementer/G034-costs
@@ -41,7 +41,7 @@ active:
 
   G024:
     agent_role: implementer
-    runtime: FRESH agent launched 2026-08-05 (UI label 'G024: N-LASR 2012 kernel'); prior misnamed thread-reuse retired with zero writes (see incident log)
+    runtime: resumed 2026-08-06 post-limit; core commit 3d52050 pushed; selection tests in progress
     objective: N-LASR 2012 weak learner + shared AdaBoost loop + min_z objective (D-008 plugins; formula-level P1 golden tests)
     github_issue: 24
     branch: agent/implementer/G024-nlasr-kernel
@@ -59,7 +59,7 @@ active:
     notes: Parallel to G026 (disjoint paths). CI-031..041 subset binds here.
   G026:
     agent_role: implementer
-    runtime: FRESH agent launched 2026-08-05 (UI label 'G026: walk-forward engine'); prior misnamed thread-reuse retired with zero writes
+    runtime: resumed 2026-08-06 post-limit; 8 uncommitted paths (commit-first instruction sent); nothing pushed yet
     objective: Walk-forward engine — folds, purge/embargo execution, Clock (real fit/signal stamps), event-time discipline (CI-007/009/010/015 execution side)
     github_issue: 26
     branch: agent/implementer/G026-walkforward
@@ -78,7 +78,7 @@ active:
 
   G024:
     agent_role: implementer
-    runtime: FRESH agent launched 2026-08-05 (UI label 'G024: N-LASR 2012 kernel'); prior misnamed thread-reuse retired with zero writes (see incident log)
+    runtime: resumed 2026-08-06 post-limit; core commit 3d52050 pushed; selection tests in progress
     objective: N-LASR 2012 weak learner + shared AdaBoost loop + min_z objective (D-008 plugins; formula-level P1 golden tests)
     github_issue: 24
     branch: agent/implementer/G024-nlasr-kernel
@@ -96,7 +96,7 @@ active:
     notes: Parallel to G026 (disjoint paths). CI-031..041 subset binds here.
   G026:
     agent_role: implementer
-    runtime: FRESH agent launched 2026-08-05 (UI label 'G026: walk-forward engine'); prior misnamed thread-reuse retired with zero writes
+    runtime: resumed 2026-08-06 post-limit; 8 uncommitted paths (commit-first instruction sent); nothing pushed yet
     objective: Walk-forward engine — folds, purge/embargo execution, Clock (real fit/signal stamps), event-time discipline (CI-007/009/010/015 execution side)
     github_issue: 26
     branch: agent/implementer/G026-walkforward

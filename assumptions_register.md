@@ -137,6 +137,13 @@ Defined in the report + module docstrings: purge strict at first test decision
 (03); refit-grid anchor = first in-window rebalance (04); signal_time =
 decision_time (05); grant-(a) enum line in targets/returns.py (06).
 
+### A-G024-01..07 — kernel/boosting conventions (G024, PR #70)
+Defined in the PR body + module docstrings: inverted-CDF equal-count edge rule
+(01); all-missing factor = hard error (02); no coverage renormalization in Z —
+selection-bias hazard flagged for G037 (03); missing-feature h=0 extends to
+training weight update (04); fixed-eps not config-constructible (05); sorted
+weight-trace hash (06); LT-005 world-native pool (07).
+
 ### Toolchain conventions (G016, merged PR #54)
 - Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per
   docs/runbooks/dev_setup.md. TEST_SEED=1729 root test seed (tests/conftest.py).

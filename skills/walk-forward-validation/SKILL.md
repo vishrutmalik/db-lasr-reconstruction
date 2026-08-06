@@ -33,8 +33,9 @@ rebalance calendar, timing enum, hyperparameter grid + selection protocol.
      months prior to the rebalance date (P3 extraction, p.58); add an
      embargo of at least one full target horizon after the test period,
      configurable and defaulting ON for overlapping families (CI-015(b),
-     correctness_criteria.md); serial correlation is real (~80% at 6M
-     horizon per P3 p.59 — §19.2 requires purging or embargoing).
+     correctness_criteria.md); serial correlation is real (the 6M model's
+     SIGNAL serial correlation is ~80%, P3 p.59 — §19.2 requires purging
+     or embargoing).
    - 1W (HF): purge 1 week; respect open/close timing.
    - 4W weekly-sampled (P4): overlapping labels — purge 4 weeks between
      train end and test start (P4 discloses no de-overlap treatment;

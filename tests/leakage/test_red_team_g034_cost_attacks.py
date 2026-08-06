@@ -59,24 +59,14 @@ def _linear_stack(bps: float) -> CostStackConfig:
 
 
 # ---------------------------------------------------------------------------
-# RT-G034-1 (BLOCKING): break-even must reconcile with the CostModel's own
-# charging. The module's drag convention (rate x ONE-WAY turnover, docstring)
-# is half of what CostModel charges for the identical rebalance (rate x every
-# traded dollar, both legs) -> the reported break-even is 2x too high.
+# RT-G034-1 (BLOCKING, FIXED): break-even must reconcile with the CostModel's
+# own charging. Was: drag = rate x ONE-WAY turnover (half of what CostModel
+# charges -> break-even overstated 2x). Fixed: drag = rate x 2 x one-way
+# turnover (per-dollar-traded on both legs); ratchet flipped to a permanent
+# regression per the red_team_g019/g023 precedent.
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "RT-G034-1: breakeven_one_way_bps computes drag = rate x one-way "
-        "turnover (CI-046: half the sum of |dw|), but CostModel charges "
-        "rate x |notional| on EVERY trade of the same rebalance (= rate x "
-        "two-way traded notional, per P4's '5 bp per dollar traded'). The "
-        "claimed break-even therefore overstates the survivable cost 2x "
-        "(docs/red_team/G034.md)"
-    ),
-)
 def test_rt1_breakeven_zeroes_the_cost_models_own_net() -> None:
     # NAV 100; one period; rebalance sells 50 of A and buys 50 of B.
     # CI-046 one-way turnover = 0.5 * (0.5 + 0.5) = 0.5. Gross = 1%.
@@ -104,8 +94,9 @@ def test_rt1_independent_true_breakeven_for_the_same_history() -> None:
     model = CostModel(_linear_stack(true_be_bps))
     net = 0.01 * nav - model.run(trades).totals.total
     assert net == pytest.approx(0.0, abs=1e-12)
-    # and the module's answer is exactly 2x this reconciled rate today
-    assert breakeven_one_way_bps([0.01], [0.5]) == pytest.approx(2.0 * true_be_bps)
+    # post-fix: the module's answer IS the reconciled per-dollar-traded rate
+    # (pre-fix it was exactly 2x this value - docs/red_team/G034.md RT-G034-1)
+    assert breakeven_one_way_bps([0.01], [0.5]) == pytest.approx(true_be_bps)
 
 
 # ---------------------------------------------------------------------------

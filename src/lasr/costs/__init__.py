@@ -12,6 +12,7 @@ the break-even one-way-cost utility. Execution delay is TIMING metadata
 from lasr.costs.breakeven import breakeven_one_way_bps
 from lasr.costs.components import (
     PARTICIPATION_EXCEEDED_FLAG,
+    ZERO_FEE_RESOLVED_FLAG,
     AdvParticipation,
     BorrowAccruer,
     ComponentCharge,
@@ -46,11 +47,13 @@ from lasr.costs.interface import (
     CostModelProtocol,
     CostRunResult,
     CostTotals,
+    CoverageGap,
     PeriodCostRow,
     RunContext,
     ShortPosition,
     Trade,
     TradeCost,
+    short_book_coverage_gaps,
 )
 from lasr.costs.model import ZERO_BORROW_BANNER_PREFIX, CostModel
 from lasr.costs.scenarios import (
@@ -66,6 +69,7 @@ __all__ = [
     "PRESETS",
     "TRADE_BUCKETS",
     "ZERO_BORROW_BANNER_PREFIX",
+    "ZERO_FEE_RESOLVED_FLAG",
     "AdvParticipation",
     "AdvParticipationConfig",
     "BorrowAccrual",
@@ -81,6 +85,7 @@ __all__ = [
     "CostScenario",
     "CostStackConfig",
     "CostTotals",
+    "CoverageGap",
     "DayCount",
     "FixedCommission",
     "FixedCommissionConfig",
@@ -103,5 +108,6 @@ __all__ = [
     "TradeCostComponent",
     "breakeven_one_way_bps",
     "grid_variants",
+    "short_book_coverage_gaps",
     "stack_from_version_config",
 ]

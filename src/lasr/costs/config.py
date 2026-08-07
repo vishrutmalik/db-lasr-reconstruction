@@ -29,9 +29,17 @@ Assumption-register candidates documented here:
 
 from __future__ import annotations
 
-from typing import Literal
+from collections.abc import Mapping
+from types import MappingProxyType
+from typing import Annotated, Any, Literal
 
-from pydantic import Field, model_validator
+from pydantic import (
+    Field,
+    SerializerFunctionWrapHandler,
+    WrapSerializer,
+    model_validator,
+)
+from pydantic.functional_validators import AfterValidator
 
 from lasr.config.provenance import ConfigModel, Param
 from lasr.costs.errors import CostConfigError
@@ -53,6 +61,29 @@ __all__ = [
 DayCount = Literal["act_365", "act_360"]
 
 DAY_COUNT_DENOMINATORS: dict[str, int] = {"act_365": 365, "act_360": 360}
+
+
+def _freeze_param_map(
+    value: Mapping[str, Param[float]],
+) -> Mapping[str, Param[float]]:
+    """Deep-freeze hook (RT-G034-4; the G022-N3 pattern): registered
+    presets are shared data - in-place mutation of a rate map must raise,
+    not silently re-rate every later caller."""
+    return MappingProxyType(dict(value))
+
+
+def _serialize_param_map(
+    value: Mapping[str, Param[float]], handler: SerializerFunctionWrapHandler
+) -> Any:
+    return handler(dict(value))
+
+
+#: Read-only region->rate mapping; mutation raises ``TypeError``.
+FrozenParamMap = Annotated[
+    Mapping[str, Param[float]],
+    AfterValidator(_freeze_param_map),
+    WrapSerializer(_serialize_param_map),
+]
 
 
 class FixedCommissionConfig(ConfigModel):
@@ -101,7 +132,9 @@ class LinearCostConfig(ConfigModel):
     """
 
     one_way_bps: Param[float]
-    region_overrides: dict[str, Param[float]] = Field(default_factory=dict)
+    region_overrides: FrozenParamMap = Field(
+        default_factory=dict, validate_default=True
+    )
 
     @model_validator(mode="after")
     def _rates_non_negative(self) -> LinearCostConfig:
@@ -190,7 +223,9 @@ class BorrowFeeConfig(ConfigModel):
 
     fee_bps_pa: Param[float]
     day_count: Param[DayCount]  # A-G034-02
-    region_overrides: dict[str, Param[float]] = Field(default_factory=dict)
+    region_overrides: FrozenParamMap = Field(
+        default_factory=dict, validate_default=True
+    )
 
     @model_validator(mode="after")
     def _rates_non_negative(self) -> BorrowFeeConfig:
@@ -274,7 +309,9 @@ class CostStackConfig(ConfigModel):
     participation: AdvParticipationConfig | None = None
     borrow: BorrowFeeConfig | None = None
     zero_borrow_assumption: Param[str] | None = None
-    region_multipliers: dict[str, Param[float]] = Field(default_factory=dict)
+    region_multipliers: FrozenParamMap = Field(
+        default_factory=dict, validate_default=True
+    )
     size_scaling: SizeScalingConfig | None = None
     hard_to_borrow_policy: Literal["flag", "forbid"] = "flag"  # structural
 

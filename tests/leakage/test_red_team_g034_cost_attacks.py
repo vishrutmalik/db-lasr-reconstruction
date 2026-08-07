@@ -190,22 +190,14 @@ def test_rt3_bridge_must_not_silently_drop_regional_borrow() -> None:
 
 
 # ---------------------------------------------------------------------------
-# RT-G034-4: registered presets are not deeply immutable - dict-typed fields
-# (region_overrides / region_multipliers) mutate in place, silently re-rating
-# every subsequent user of PRESETS.
+# RT-G034-4 (FIXED): registered presets were not deeply immutable - dict-typed
+# fields (region_overrides / region_multipliers) mutated in place, silently
+# re-rating every subsequent user of PRESETS. Fixed: mapping fields validate
+# into MappingProxyType (the G022-N3 pattern); mutation raises TypeError;
+# ratchet flipped.
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "RT-G034-4: pydantic frozen models refuse attribute assignment but "
-        "their dict FIELDS are plain mutable dicts; poking "
-        "region_overrides['latam'] on the registered p3_tiers preset "
-        "re-rates LATAM from 50 bps to anything, for every later caller "
-        "(docs/red_team/G034.md)"
-    ),
-)
 def test_rt4_registered_preset_dict_fields_are_immutable() -> None:
     linear = PRESETS["p3_tiers"].stack.linear
     assert linear is not None

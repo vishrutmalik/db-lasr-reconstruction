@@ -100,6 +100,25 @@ class TestRegistryIntegrity:
             for path, param in params:
                 assert param.src.strip(), f"{scenario.scenario_id}:{path}"
 
+    def test_mapping_fields_are_deeply_frozen(self) -> None:
+        """RT-G034-4: every mapping field on every registered preset is
+        read-only - in-place mutation raises TypeError."""
+        probe = Param[float](value=0.01, prov=Provenance.ASSUMED, src="mutation probe")
+        for scenario in PRESETS.values():
+            stack = scenario.stack
+            targets = [stack.region_multipliers]
+            if stack.linear is not None:
+                targets.append(stack.linear.region_overrides)
+            if stack.borrow is not None:
+                targets.append(stack.borrow.region_overrides)
+            for mapping in targets:
+                with pytest.raises(TypeError):
+                    mapping["poke"] = probe  # type: ignore[index]
+                if mapping:  # existing keys can't be re-rated either
+                    key = next(iter(mapping))
+                    with pytest.raises(TypeError):
+                        mapping[key] = probe  # type: ignore[index]
+
     def test_every_preset_builds_a_runnable_model(self) -> None:
         for scenario in PRESETS.values():
             model = CostModel(scenario.stack)

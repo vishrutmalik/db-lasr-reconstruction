@@ -93,16 +93,29 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
 - PIT owner follow-up: promote PitStore._effective_lag to public API.
 
 ## G025/G029 dispatch pre-condition (R-1, from G024 verification, docs/verification/G024.md)
-- A-G024-03 (no coverage renormalization in min-Z factor selection) is a
-  QUANTIFIED selection-bias hazard (verifier: noise factor at 40% coverage
-  scores Z=0.206 vs 0.498; a sparse twin of the same signal wins every round).
-  Verifier ruled the G037-audit deferral too weak: resolution (coverage floor
-  or `z_coverage_renormalization` A/B config knob) is a NAMED PRE-CONDITION of
-  G025 and G029 dispatch — must be in the dispatched goal's charter.
+- SUPERSEDED BY RT-G024-1 (red-team escalated A-G024-03 to BLOCKING,
+  docs/red_team/G024.md): resolution moved INTO G024 remediation itself
+  (coverage-honest objective, in progress 2026-08-07). Once PR #70 merges with
+  the fix, R-1 is satisfied; G025/G029 charters need only reference the
+  resulting config knob for A/B sensitivity runs.
+- (historical) A-G024-03 quantification — verifier: noise at 40% coverage
+  scores Z=0.206 vs 0.498; red-team: noise@50% beats a real full-coverage
+  signal 50/50 seeds, selection inverted in the PR's own smoke matrix.
 - NB-2 (same report): LT-005 activation criterion is weaker than the scenario
   doc's phrasing; verifier's own seed lands below band (IC 0.0673, 26.7%).
   Owner: LT-005 scenario owner (G025 or next leakage-battery-touching goal).
 - R-2: training-path propagate_nan pin → G025 acceptance.
+
+## Owner-routed NBs from G026 verification (docs/verification/G026.md, PASS)
+- Zero-test-row folds run SILENTLY — reconcile (typed skip or ledger entry)
+  before G029 end-to-end integration. Owner: G029.
+- LT-012 IC-detector activation must flip once G024 merges (test currently
+  scoped out pending the kernel). Owner: G024 merge follow-through /
+  orchestrator integration duty.
+- walk-forward skill one-liner contradicts CI-015b post-test embargo wording —
+  implementer's clarification proposal should land (small doc pass). Also:
+  arch LT-012 "HARD ERROR" wording now unreachable; FoldSpec fold_id doc
+  drift (already queued); testing_strategy path drift. Owner: next docs pass.
 
 ## G025 binding (from G022 round-2 verification)
 - zscore numerical-degeneracy corner: all-identical large values yield constant

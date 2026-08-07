@@ -163,9 +163,7 @@ def _random_termination_panels(
         mags = rng.uniform(0.2, 1.8, n)
         signs = np.where(rng.random(n) < 0.5, 1.0, -1.0)
         mags = mags / mags.sum() * 2.0
-        weights = {
-            s: float(m * g) for s, m, g in zip(alive, mags, signs, strict=True)
-        }
+        weights = {s: float(m * g) for s, m, g in zip(alive, mags, signs, strict=True)}
         steps: list[tuple[date, dict[str, float], set[str]]] = []
         for j in range(3):
             rets = {
@@ -207,9 +205,7 @@ class TestIndependentNavChain:
             assert row.portfolio_return == pytest.approx(r_ref, abs=1e-11)
             assert row.turnover_one_way == pytest.approx(t_ref, rel=1e-9)
             # the identity the engine does not assert at runtime:
-            assert row.nav_end == pytest.approx(
-                row.nav_start + row.net_pnl, abs=1e-6
-            )
+            assert row.nav_end == pytest.approx(row.nav_start + row.net_pnl, abs=1e-6)
         assert ledger.final_nav == pytest.approx(ref_final, rel=1e-11)
         assert ledger.final_nav == pytest.approx(
             1e6 * prod(1.0 + r.portfolio_return for r in ledger.periods),
@@ -407,10 +403,8 @@ class TestReconciliationScaleAttack:
         ids = [f"S{i:05d}" for i in range(n)]
         mags = 10.0 ** rng.uniform(-8, -4, n)
         signs = np.where(rng.random(n) < 0.5, 1.0, -1.0)
-        weights = {
-            s: float(m * g) for s, m, g in zip(ids, mags, signs, strict=True)
-        }
-        steps = [
+        weights = {s: float(m * g) for s, m, g in zip(ids, mags, signs, strict=True)}
+        steps: list[tuple[date, dict[str, float], set[str]]] = [
             (
                 D + timedelta(days=j + 1),
                 {

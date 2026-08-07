@@ -29,6 +29,7 @@ Assumption-register candidates documented here:
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Annotated, Any, Literal
@@ -78,6 +79,11 @@ def _serialize_param_map(
     return handler(dict(value))
 
 
+def _finite_non_negative(value: float) -> bool:
+    """RT-G034-5 config hardening: rates must be finite, never inf/NaN."""
+    return math.isfinite(value) and value >= 0.0
+
+
 #: Read-only region->rate mapping; mutation raises ``TypeError``.
 FrozenParamMap = Annotated[
     Mapping[str, Param[float]],
@@ -93,9 +99,10 @@ class FixedCommissionConfig(ConfigModel):
 
     @model_validator(mode="after")
     def _non_negative(self) -> FixedCommissionConfig:
-        if self.per_trade.value < 0:
+        if not _finite_non_negative(self.per_trade.value):
             raise CostConfigError(
-                f"commission per_trade must be >= 0, got {self.per_trade.value}"
+                "commission per_trade must be finite and >= 0, got "
+                f"{self.per_trade.value}"
             )
         return self
 
@@ -138,14 +145,16 @@ class LinearCostConfig(ConfigModel):
 
     @model_validator(mode="after")
     def _rates_non_negative(self) -> LinearCostConfig:
-        if self.one_way_bps.value < 0:
+        if not _finite_non_negative(self.one_way_bps.value):
             raise CostConfigError(
-                f"linear one_way_bps must be >= 0, got {self.one_way_bps.value}"
+                "linear one_way_bps must be finite and >= 0, got "
+                f"{self.one_way_bps.value}"
             )
         for region, rate in self.region_overrides.items():
-            if rate.value < 0:
+            if not _finite_non_negative(rate.value):
                 raise CostConfigError(
-                    f"linear region override {region!r} must be >= 0, got {rate.value}"
+                    f"linear region override {region!r} must be finite and "
+                    f">= 0, got {rate.value}"
                 )
         return self
 
@@ -163,13 +172,14 @@ class MarketImpactConfig(ConfigModel):
 
     @model_validator(mode="after")
     def _well_formed(self) -> MarketImpactConfig:
-        if self.coefficient_bps.value < 0:
+        if not _finite_non_negative(self.coefficient_bps.value):
             raise CostConfigError(
-                f"impact coefficient_bps must be >= 0, got {self.coefficient_bps.value}"
+                "impact coefficient_bps must be finite and >= 0, got "
+                f"{self.coefficient_bps.value}"
             )
-        if self.exponent.value <= 0:
+        if not (math.isfinite(self.exponent.value) and self.exponent.value > 0):
             raise CostConfigError(
-                f"impact exponent must be > 0, got {self.exponent.value}"
+                f"impact exponent must be finite and > 0, got {self.exponent.value}"
             )
         return self
 
@@ -192,9 +202,12 @@ class AdvParticipationConfig(ConfigModel):
 
     @model_validator(mode="after")
     def _well_formed(self) -> AdvParticipationConfig:
-        if self.max_participation.value <= 0:
+        if not (
+            math.isfinite(self.max_participation.value)
+            and self.max_participation.value > 0
+        ):
             raise CostConfigError(
-                "participation max_participation must be > 0, got "
+                "participation max_participation must be finite and > 0, got "
                 f"{self.max_participation.value}"
             )
         if self.adv_window_days.value < 1:
@@ -202,12 +215,11 @@ class AdvParticipationConfig(ConfigModel):
                 "participation adv_window_days must be >= 1, got "
                 f"{self.adv_window_days.value}"
             )
-        if (
-            self.penalty_bps_on_excess is not None
-            and self.penalty_bps_on_excess.value < 0
+        if self.penalty_bps_on_excess is not None and not _finite_non_negative(
+            self.penalty_bps_on_excess.value
         ):
             raise CostConfigError(
-                "participation penalty_bps_on_excess must be >= 0, got "
+                "participation penalty_bps_on_excess must be finite and >= 0, got "
                 f"{self.penalty_bps_on_excess.value}"
             )
         return self
@@ -229,14 +241,16 @@ class BorrowFeeConfig(ConfigModel):
 
     @model_validator(mode="after")
     def _rates_non_negative(self) -> BorrowFeeConfig:
-        if self.fee_bps_pa.value < 0:
+        if not _finite_non_negative(self.fee_bps_pa.value):
             raise CostConfigError(
-                f"borrow fee_bps_pa must be >= 0, got {self.fee_bps_pa.value}"
+                "borrow fee_bps_pa must be finite and >= 0, got "
+                f"{self.fee_bps_pa.value}"
             )
         for region, rate in self.region_overrides.items():
-            if rate.value < 0:
+            if not _finite_non_negative(rate.value):
                 raise CostConfigError(
-                    f"borrow region override {region!r} must be >= 0, got {rate.value}"
+                    f"borrow region override {region!r} must be finite and "
+                    f">= 0, got {rate.value}"
                 )
         return self
 
@@ -259,14 +273,17 @@ class SizeScalingConfig(ConfigModel):
 
     @model_validator(mode="after")
     def _well_formed(self) -> SizeScalingConfig:
-        if self.reference_aum.value <= 0:
+        if not (
+            math.isfinite(self.reference_aum.value) and self.reference_aum.value > 0
+        ):
             raise CostConfigError(
-                "size scaling reference_aum must be > 0, got "
+                "size scaling reference_aum must be finite and > 0, got "
                 f"{self.reference_aum.value}"
             )
-        if self.exponent.value < 0:
+        if not _finite_non_negative(self.exponent.value):
             raise CostConfigError(
-                f"size scaling exponent must be >= 0, got {self.exponent.value}"
+                "size scaling exponent must be finite and >= 0, got "
+                f"{self.exponent.value}"
             )
         bad = [b for b in self.applies_to.value if b not in TRADE_BUCKETS]
         if bad:
@@ -337,8 +354,9 @@ class CostStackConfig(ConfigModel):
                 "contradictory tag"
             )
         for region, mult in self.region_multipliers.items():
-            if mult.value < 0:
+            if not _finite_non_negative(mult.value):
                 raise CostConfigError(
-                    f"region multiplier {region!r} must be >= 0, got {mult.value}"
+                    f"region multiplier {region!r} must be finite and >= 0, "
+                    f"got {mult.value}"
                 )
         return self

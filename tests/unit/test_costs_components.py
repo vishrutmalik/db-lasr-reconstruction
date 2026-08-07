@@ -199,6 +199,37 @@ class TestMarketImpact:
         with pytest.raises(ValidationError):
             MarketImpactConfig(coefficient_bps=pf(25.0), exponent=pf(0.0))
 
+    def test_zero_coefficient_short_circuits_to_honest_zero(self) -> None:
+        """RT-G034-5: 0-rate impact charges exactly 0 even when the
+        participation ratio would overflow (no 0 * inf = NaN)."""
+        component = MarketImpact(
+            MarketImpactConfig(coefficient_bps=pf(0.0), exponent=pf(0.5))
+        )
+        charge = component.charge(trade(1e155, adv=1e-155), CTX)
+        assert charge.amount == 0.0
+
+    def test_overflowing_participation_is_typed_refusal(self) -> None:
+        """RT-G034-5: with a non-zero coefficient the same overflow is a
+        typed refusal, never +inf into totals."""
+        with pytest.raises(InvalidCostInputError):
+            self.component().charge(trade(1e155, adv=1e-155), CTX)
+
+    def test_pow_overflow_is_typed_not_raw_overflowerror(self) -> None:
+        """RT-G034-5: exponent 2 with a huge (finite) participation used
+        to raise a raw OverflowError - now a typed refusal."""
+        component = MarketImpact(
+            MarketImpactConfig(coefficient_bps=pf(10.0), exponent=pf(2.0))
+        )
+        with pytest.raises(InvalidCostInputError):
+            component.charge(trade(1e160, adv=1e-160), CTX)
+
+    def test_non_finite_config_rates_rejected(self) -> None:
+        """RT-G034-5 hardening: inf/NaN rates are config errors."""
+        with pytest.raises(ValidationError):
+            MarketImpactConfig(coefficient_bps=pf(float("inf")), exponent=pf(0.5))
+        with pytest.raises(ValidationError):
+            LinearCostConfig(one_way_bps=pf(float("nan")))
+
 
 class TestAdvParticipation:
     def component(self, penalty: float | None = 50.0) -> AdvParticipation:

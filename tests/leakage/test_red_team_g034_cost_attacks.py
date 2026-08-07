@@ -222,24 +222,15 @@ def test_rt4_pristine_preset_charges_the_evidence_rate() -> None:
 
 
 # ---------------------------------------------------------------------------
-# RT-G034-5: non-finite charges. All INPUTS are individually valid (finite,
-# positive) but the CHARGE is never validated: participation overflow with
-# coefficient_bps=0 (legal) yields 0*inf = NaN flowing through totals and
-# net_of with no refusal and no flag - "costs >= 0 always" broken silently.
+# RT-G034-5 (FIXED): non-finite charges. All INPUTS individually valid but
+# the CHARGE was never validated: 0 * inf = NaN (and +inf, and an untyped
+# OverflowError) flowed through totals and net_of silently. Fixed: zero
+# coefficient short-circuits to an honest 0; overflowing participation /
+# pow raise typed refusals; every component charge and borrow accrual is
+# finiteness-guarded before entering totals; ratchet flipped.
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=(CostError, AssertionError),
-    reason=(
-        "RT-G034-5: impact charge is not finiteness-checked; "
-        "coefficient_bps=0 with an overflowing participation produces a "
-        "NaN cost that poisons totals and net_of silently; coefficient>0 "
-        "produces +inf; exponent=2 raises an untyped OverflowError "
-        "(docs/red_team/G034.md)"
-    ),
-)
 def test_rt5_charges_are_finite_or_refused_loudly() -> None:
     stack = CostStackConfig(
         linear=LinearCostConfig(one_way_bps=_pf(5.0)),

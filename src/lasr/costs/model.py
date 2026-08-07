@@ -69,6 +69,16 @@ logger = logging.getLogger(__name__)
 ZERO_BORROW_BANNER_PREFIX = "ZERO-BORROW ASSUMPTION"
 
 
+def _require_finite_charge(component: str, amount: float, subject: object) -> None:
+    """RT-G034-5: no NaN/inf (or negative) charge may enter totals or
+    ``net_of`` - the skill invariant is "costs >= 0 always", loudly."""
+    if not (math.isfinite(amount) and amount >= 0.0):
+        raise InvalidCostInputError(
+            f"component {component!r} produced a non-finite or negative "
+            f"charge {amount!r} for {subject} - refused (RT-G034-5)"
+        )
+
+
 class CostModel:
     """Concrete :class:`~lasr.costs.interface.CostModelProtocol`."""
 
@@ -140,6 +150,7 @@ class CostModel:
         flags: list[str] = []
         for component in self._components:
             charge: ComponentCharge = component.charge(trade, context, group)
+            _require_finite_charge(component.name, charge.amount, trade)
             amounts[component.bucket] += charge.amount
             flags.extend(charge.flags)
 
@@ -155,6 +166,9 @@ class CostModel:
             size_multiplier = self._size_multiplier(context)
             for bucket in scaling.applies_to.value:
                 amounts[bucket] *= size_multiplier
+
+        for bucket, amount in amounts.items():
+            _require_finite_charge(f"{bucket.value} (post-modifier)", amount, trade)
 
         return TradeCost(
             trade=trade,
@@ -189,7 +203,9 @@ class CostModel:
         accruals: list[BorrowAccrual] = []
         for position in short_book:
             if self._borrow is not None:
-                accruals.append(self._borrow.accrue(position))
+                accrual = self._borrow.accrue(position)
+                _require_finite_charge("borrow", accrual.amount, position)
+                accruals.append(accrual)
             else:
                 flags = ("hard_to_borrow",) if position.hard_to_borrow else ()
                 accruals.append(

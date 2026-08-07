@@ -37,6 +37,7 @@ group's gross traded notional):
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -234,14 +235,27 @@ class MarketImpact:
                 f"{_trade_subject(trade)}: adv_notional must be > 0 for the "
                 f"impact component, got {trade.adv_notional!r}"
             )
+        if self.config.coefficient_bps.value == 0.0:
+            # A zero rate charges exactly 0 regardless of participation
+            # (avoids the 0 * inf = NaN path, RT-G034-5).
+            return ComponentCharge(0.0)
         group = group_notional if group_notional is not None else trade.notional
         participation = group / trade.adv_notional
-        amount = (
-            self.config.coefficient_bps.value
-            * BPS
-            * participation**self.config.exponent.value
-            * trade.notional
-        )
+        if not math.isfinite(participation):
+            raise InvalidCostInputError(
+                f"{_trade_subject(trade)}: participation "
+                f"{group!r}/{trade.adv_notional!r} is not finite - impact "
+                "charge refused (RT-G034-5)"
+            )
+        try:
+            scaled = participation**self.config.exponent.value
+        except OverflowError:
+            raise InvalidCostInputError(
+                f"{_trade_subject(trade)}: participation "
+                f"{participation!r}^{self.config.exponent.value!r} overflows "
+                "- impact charge refused (RT-G034-5)"
+            ) from None
+        amount = self.config.coefficient_bps.value * BPS * scaled * trade.notional
         return ComponentCharge(amount)
 
 

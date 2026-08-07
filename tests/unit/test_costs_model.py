@@ -509,6 +509,37 @@ class TestSameDayAggregation:
         assert costs[1].total == 0.0
 
 
+class TestFiniteChargeGuard:
+    """RT-G034-5: no NaN/inf charge may enter totals or net_of."""
+
+    def test_spread_overflow_refused_at_model_boundary(self) -> None:
+        # 0.5 x huge spread x huge notional overflows to inf: typed refusal
+        stack = CostStackConfig(
+            half_spread=HalfSpreadConfig(crossing_fraction=pf(0.5)),
+            zero_borrow_assumption=ZERO_TAG,
+        )
+        huge = Trade("X", D1, 1e308, spread_bps=1e308)
+        with pytest.raises(InvalidCostInputError):
+            CostModel(stack).price_trades((huge,))
+
+    def test_run_totals_always_finite_on_extreme_inputs(self) -> None:
+        # extreme-but-valid magnitudes stay finite end to end
+        result = CostModel(full_stack()).run(
+            (Trade("X", D1, 1e12, adv_notional=1.0, spread_bps=1e4),)
+        )
+        for value in (
+            result.totals.commission,
+            result.totals.spread,
+            result.totals.linear,
+            result.totals.impact,
+            result.totals.participation_penalty,
+            result.totals.total,
+        ):
+            assert value >= 0.0
+            assert value != float("inf")
+            assert value == value  # not NaN
+
+
 class TestDeterminismAndProtocol:
     def test_double_run_identical(self) -> None:
         shorts = (ShortPosition("S", D1, 1000.0),)

@@ -60,6 +60,7 @@ from lasr.costs.interface import (
 
 __all__ = [
     "PARTICIPATION_EXCEEDED_FLAG",
+    "ZERO_FEE_RESOLVED_FLAG",
     "AdvParticipation",
     "BorrowAccruer",
     "ComponentCharge",
@@ -74,6 +75,11 @@ BPS = 1e-4
 
 #: Flag attached to a trade whose participation exceeds the configured cap.
 PARTICIPATION_EXCEEDED_FLAG = "adv_participation_exceeded"
+
+#: Flag attached to a positive short mark whose RESOLVED borrow fee is 0
+#: (RT-G034-N2): free borrowing is data, but never silent - reports can
+#: total the free-borrow notional from this flag.
+ZERO_FEE_RESOLVED_FLAG = "zero_fee_resolved"
 
 
 @dataclass(frozen=True, slots=True)
@@ -333,7 +339,11 @@ class BorrowAccruer:
         amount = (
             fee * BPS * position.short_notional * position.accrual_days / denominator
         )
-        flags = ("hard_to_borrow",) if position.hard_to_borrow else ()
+        flags: tuple[str, ...] = ()
+        if position.hard_to_borrow:
+            flags += ("hard_to_borrow",)
+        if fee == 0.0 and position.short_notional > 0:
+            flags += (ZERO_FEE_RESOLVED_FLAG,)  # RT-G034-N2: never silent
         return BorrowAccrual(
             position=position,
             fee_bps_pa=fee,

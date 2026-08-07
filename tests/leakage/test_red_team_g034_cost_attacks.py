@@ -1,13 +1,15 @@
 """Red-team G034: adversarial attacks on the transaction-cost & borrow
 model (docs/red_team/G034.md).
 
-Keepers promoted from the executed probe battery. Defects ride as
-strict-xfail ratchets (RT-G034-1 break-even 2x overstatement; RT-G034-2
-participation/impact evasion by trade splitting; RT-G034-3 bridge drops
-configured regional borrow; RT-G034-4 in-place preset mutation;
-RT-G034-5 non-finite charges flow through silently): when a fix lands
-the XPASS flips the marker and the test becomes a permanent regression,
-per the red_team_g019/g023 precedent. Everything else pins an invariant
+Keepers promoted from the executed probe battery. All five ratchets
+(RT-G034-1 break-even 2x overstatement; RT-G034-2 participation/impact
+evasion by trade splitting; RT-G034-3 bridge drops configured regional
+borrow; RT-G034-4 in-place preset mutation; RT-G034-5 non-finite
+charges flow through silently) have been FIXED and their strict-xfail
+markers flipped to permanent regressions, per the red_team_g019/g023
+precedent. The N2/N3 loudness pins were upgraded with the remediation
+(free-borrow flag + banner; both entry points guarded) — pre-fix
+behavior is preserved in comments. Everything else pins an invariant
 that held under attack (or an interface convention whose silent misuse
 G029 must guard) and must keep holding.
 """
@@ -34,7 +36,7 @@ from lasr.costs import (
     Trade,
     breakeven_one_way_bps,
 )
-from lasr.costs.errors import CostConfigError, CostError
+from lasr.costs.errors import CostConfigError
 from lasr.costs.scenarios import PRESETS
 
 pytestmark = pytest.mark.leakage
@@ -289,13 +291,14 @@ def test_n1_borrow_exact_in_covered_days_but_daily_default_undercovers() -> None
 
 
 # ---------------------------------------------------------------------------
-# RT-G034-N2 pin: per-security borrow overrides of 0 on a fee>0 stack accrue
-# nothing, with no banner and no flag (total borrow stays > 0). Executable
-# documentation: only override DATA protects the P4 borrow number.
+# RT-G034-N2 pin (behavior upgraded): per-security borrow overrides of 0 on a
+# fee>0 stack used to accrue nothing with no banner and no flag. Now the
+# zero-fee accrual is flagged and the borrow-free share of short
+# notional-days above free_borrow_banner_threshold banners the run.
 # ---------------------------------------------------------------------------
 
 
-def test_n2_zero_fee_override_shorts_borrow_free_without_banner_today() -> None:
+def test_n2_zero_fee_override_shorts_are_flagged_and_bannered() -> None:
     model = CostModel(PRESETS["p4_base"].stack)
     result = model.run(
         [],
@@ -311,20 +314,25 @@ def test_n2_zero_fee_override_shorts_borrow_free_without_banner_today() -> None:
         ],
     )
     assert result.totals.borrow == pytest.approx(50e-4 * 1_000_000.0)
-    # 99% of the short book borrowed free; today that is silent:
-    assert result.zero_borrow_banner is None
+    # 99% of the short book borrowed free; pre-fix this was silent:
+    assert result.zero_borrow_banner is not None
+    assert "99.0%" in result.zero_borrow_banner
     assert result.borrow_accruals[0].amount == 0.0
-    assert result.borrow_accruals[0].flags == ()
+    assert result.borrow_accruals[0].flags == ("zero_fee_resolved",)
+    assert result.borrow_accruals[1].flags == ()  # paid leg stays clean
 
 
 # ---------------------------------------------------------------------------
-# RT-G034-N3 pin: the HTB "forbid" tripwire and the zero-borrow banner exist
-# ONLY on run(); the protocol's price_trades()/accrue_borrow() bypass both.
-# G029 must route full-run pricing through run().
+# RT-G034-N3 pin (behavior upgraded): the HTB "forbid" tripwire and the
+# zero-borrow banner WARNING used to exist only on run(); the protocol's
+# accrue_borrow() bypassed both. Now both public entry points enforce the
+# HTB policy and log the banner; the banner STRING lives on run()'s result.
 # ---------------------------------------------------------------------------
 
 
-def test_n3_htb_forbid_and_banner_guard_only_the_run_entrypoint() -> None:
+def test_n3_htb_forbid_and_banner_guard_every_entrypoint(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     stack = CostStackConfig(
         linear=LinearCostConfig(one_way_bps=_pf(5.0)),
         borrow=BorrowFeeConfig(
@@ -339,16 +347,18 @@ def test_n3_htb_forbid_and_banner_guard_only_the_run_entrypoint() -> None:
     htb_book = [ShortPosition("HTB", D, 1e6, accrual_days=30, hard_to_borrow=True)]
     with pytest.raises(HardToBorrowError):
         model.run([], htb_book)
-    # same book, same stack, protocol method: accrues quietly (flagged only)
-    accruals = model.accrue_borrow(htb_book)
-    assert accruals[0].amount > 0.0
-    assert accruals[0].flags == ("hard_to_borrow",)
+    # same book, same stack, protocol method: raises too (pre-fix: quiet)
+    with pytest.raises(HardToBorrowError):
+        model.accrue_borrow(htb_book)
 
-    # banner likewise only exists on the run() result object
+    # the zero-borrow banner WARNING fires on the protocol path as well
     p2 = CostModel(PRESETS["p2_flat_20"].stack)
     shorts = [ShortPosition("S", D, 1e6, accrual_days=30)]
     assert p2.run([], shorts).zero_borrow_banner is not None
-    assert sum(a.amount for a in p2.accrue_borrow(shorts)) == 0.0  # no banner path
+    with caplog.at_level("WARNING", logger="lasr.costs.model"):
+        accruals = p2.accrue_borrow(shorts)
+    assert sum(a.amount for a in accruals) == 0.0
+    assert any("ZERO-BORROW ASSUMPTION" in r.message for r in caplog.records)
 
 
 # ---------------------------------------------------------------------------

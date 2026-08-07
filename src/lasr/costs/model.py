@@ -16,11 +16,16 @@ docstring), so capacity breaches and convex impact survive row slicing.
 Rows of one group must agree on ``adv_notional``; disagreement is a
 typed refusal, never a silent pick.
 
-Zero-borrow banner (skill §3): a run holding shorts that accrues zero
-borrow ALWAYS carries a banner built from the stack's mandatory
-``zero_borrow_assumption`` tag, and logs a warning — P1/P2/P3 faithful
-replications short for free and must say so in every report (CI-048:
-the tag's existence is the tested invariant).
+Zero-borrow banner (skill §3; RT-G034-N2): a run holding shorts whose
+borrow accrues at zero rates ALWAYS carries a banner — full-free runs
+banner the stack's mandatory ``zero_borrow_assumption`` tag (P1/P2/P3
+faithful replications short for free and must say so in every report;
+CI-048: the tag's existence is the tested invariant), and PARTIAL free
+coverage (zero-fee overrides on a charging stack) banners the free
+share of short notional-days above ``free_borrow_banner_threshold``.
+The banner warning is emitted from BOTH public entry points
+(``run`` and ``accrue_borrow`` — RT-G034-N3); the banner STRING lives
+on ``run``'s result object.
 
 Determinism (CI-042): no RNG, no wall clock; outputs preserve input
 order for trades/marks and sort period rows by date. Double runs are
@@ -35,6 +40,7 @@ from collections.abc import Sequence
 from datetime import date
 
 from lasr.costs.components import (
+    ZERO_FEE_RESOLVED_FLAG,
     AdvParticipation,
     BorrowAccruer,
     ComponentCharge,
@@ -59,6 +65,7 @@ from lasr.costs.interface import (
     Trade,
     TradeCost,
     aggregate_periods,
+    short_book_coverage_gaps,
     totals_of,
 )
 
@@ -194,12 +201,25 @@ class CostModel:
             )
         return tuple(self.price_trade(trade, ctx) for trade in trades)
 
-    def accrue_borrow(
-        self, short_book: Sequence[ShortPosition]
-    ) -> tuple[BorrowAccrual, ...]:
-        """Accrue borrow on each short-book mark; without a borrow
-        component every accrual is an explicit zero-amount record (the
-        marks still appear in reporting — nothing vanishes silently)."""
+    def _accrue(self, short_book: Sequence[ShortPosition]) -> tuple[BorrowAccrual, ...]:
+        """Accrual records for each mark; without a borrow component
+        every accrual is an explicit zero-amount record (the marks still
+        appear in reporting — nothing vanishes silently). A resolved
+        zero fee on a positive short is flagged (RT-G034-N2), and
+        calendar-coverage gaps between consecutive marks are warned
+        about (RT-G034-N1; ``short_book_coverage_gaps``)."""
+        gaps = short_book_coverage_gaps(short_book)
+        if gaps:
+            missing = sum(g.missing_days for g in gaps)
+            logger.warning(
+                "short-book coverage gaps: %d mark(s) whose accrual_days != "
+                "calendar gap since the previous mark (net %+d day(s)); "
+                "business-daily marks with the default accrual_days=1 "
+                "under-accrue borrow ~28.5%% - set accrual_days to the "
+                "calendar-day gap (A-G034-05 / RT-G034-N1)",
+                len(gaps),
+                missing,
+            )
         accruals: list[BorrowAccrual] = []
         for position in short_book:
             if self._borrow is not None:
@@ -207,7 +227,11 @@ class CostModel:
                 _require_finite_charge("borrow", accrual.amount, position)
                 accruals.append(accrual)
             else:
-                flags = ("hard_to_borrow",) if position.hard_to_borrow else ()
+                flags: tuple[str, ...] = ()
+                if position.hard_to_borrow:
+                    flags += ("hard_to_borrow",)
+                if position.short_notional > 0:
+                    flags += (ZERO_FEE_RESOLVED_FLAG,)
                 accruals.append(
                     BorrowAccrual(
                         position=position,
@@ -218,6 +242,18 @@ class CostModel:
                     )
                 )
         return tuple(accruals)
+
+    def accrue_borrow(
+        self, short_book: Sequence[ShortPosition]
+    ) -> tuple[BorrowAccrual, ...]:
+        """Protocol entry point: enforces the HTB policy and emits the
+        zero-borrow banner WARNING exactly like :meth:`run` (RT-G034-N3:
+        no protocol path bypasses the tripwires; the banner STRING only
+        exists on ``run``'s result object)."""
+        self._hard_to_borrow_check(short_book)
+        accruals = self._accrue(short_book)
+        self._zero_borrow_banner(accruals)
+        return accruals
 
     def _hard_to_borrow_check(
         self, short_book: Sequence[ShortPosition]
@@ -237,14 +273,31 @@ class CostModel:
             )
         return violations
 
-    def _zero_borrow_banner(
-        self, short_book: Sequence[ShortPosition], borrow_total: float
-    ) -> str | None:
-        holds_shorts = any(p.short_notional > 0 for p in short_book)
-        if not holds_shorts or borrow_total != 0.0:
+    def _zero_borrow_banner(self, accruals: Sequence[BorrowAccrual]) -> str | None:
+        """Banner whenever the borrow-FREE share of short notional-days
+        exceeds ``free_borrow_banner_threshold`` (RT-G034-N2; default 0:
+        ANY free borrowing banners, full-free included)."""
+        total_nd = 0.0
+        free_nd = 0.0
+        for accrual in accruals:
+            position = accrual.position
+            if position.short_notional <= 0:
+                continue
+            notional_days = position.short_notional * position.accrual_days
+            total_nd += notional_days
+            if accrual.fee_bps_pa == 0.0:
+                free_nd += notional_days
+        if total_nd == 0.0:
+            return None
+        fraction = free_nd / total_nd
+        if fraction == 0.0:
+            return None
+        # Full-free (the CI-048 / skill §3 case) ALWAYS banners; the
+        # threshold gates only PARTIAL free coverage (RT-G034-N2).
+        if fraction < 1.0 and fraction <= self._stack.free_borrow_banner_threshold:
             return None
         tag = self._stack.zero_borrow_assumption
-        if tag is not None:
+        if fraction == 1.0 and tag is not None:
             banner = (
                 f"{ZERO_BORROW_BANNER_PREFIX}: short positions held with "
                 f"zero borrow cost - {tag.value} "
@@ -252,10 +305,16 @@ class CostModel:
                 + (f"; assumption={tag.assumption}" if tag.assumption else "")
                 + "]"
             )
-        else:  # zero-rated overrides on a fee>0 stack: still banner it
+        elif fraction == 1.0:
             banner = (
                 f"{ZERO_BORROW_BANNER_PREFIX}: short positions held with "
-                "zero borrow cost - untagged (rate overrides resolved to 0)"
+                "zero borrow cost - untagged (rates resolved to 0)"
+            )
+        else:
+            banner = (
+                f"{ZERO_BORROW_BANNER_PREFIX}: {fraction:.1%} of short-book "
+                "notional-days accrued zero borrow (free-borrow overrides "
+                "on a charging stack, RT-G034-N2)"
             )
         logger.warning(banner)
         return banner
@@ -271,9 +330,9 @@ class CostModel:
         ctx = context if context is not None else RunContext()
         violations = self._hard_to_borrow_check(short_book)
         trade_costs = self.price_trades(trades, context=ctx)
-        borrow_accruals = self.accrue_borrow(short_book)
+        borrow_accruals = self._accrue(short_book)
         totals = totals_of(trade_costs, borrow_accruals)
-        banner = self._zero_borrow_banner(short_book, totals.borrow)
+        banner = self._zero_borrow_banner(borrow_accruals)
         result = CostRunResult(
             trade_costs=trade_costs,
             borrow_accruals=borrow_accruals,

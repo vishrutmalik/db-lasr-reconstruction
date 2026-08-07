@@ -331,9 +331,21 @@ class CostStackConfig(ConfigModel):
     )
     size_scaling: SizeScalingConfig | None = None
     hard_to_borrow_policy: Literal["flag", "forbid"] = "flag"  # structural
+    #: RT-G034-N2 (structural): banner when the borrow-FREE share of short
+    #: notional-days exceeds this fraction. 0.0 = ANY free borrowing
+    #: banners (full-free zero-borrow stacks included).
+    free_borrow_banner_threshold: float = 0.0
 
     @model_validator(mode="after")
     def _borrow_tag_discipline(self) -> CostStackConfig:
+        if not (
+            math.isfinite(self.free_borrow_banner_threshold)
+            and 0.0 <= self.free_borrow_banner_threshold <= 1.0
+        ):
+            raise CostConfigError(
+                "free_borrow_banner_threshold must be in [0, 1], got "
+                f"{self.free_borrow_banner_threshold}"
+            )
         # Charging-capable = the stack CAN accrue borrow on some position:
         # base fee > 0 OR any regional override > 0 (RT-G034-3: a zero/None
         # base must never let non-zero overrides masquerade as zero-borrow).

@@ -32,6 +32,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
+from itertools import pairwise
 from typing import Protocol, runtime_checkable
 
 from lasr.costs.errors import InvalidCostInputError
@@ -43,11 +44,13 @@ __all__ = [
     "CostModelProtocol",
     "CostRunResult",
     "CostTotals",
+    "CoverageGap",
     "PeriodCostRow",
     "RunContext",
     "ShortPosition",
     "Trade",
     "TradeCost",
+    "short_book_coverage_gaps",
 ]
 
 
@@ -130,15 +133,28 @@ class Trade:
 class ShortPosition:
     """One short-book mark (A-G034-05 convention, module docstring).
 
+    .. warning:: **accrual_days defaults to 1 CALENDAR day** (RT-G034-N1).
+        Borrow accrues only over the days the marks COVER: a short held
+        all year but marked business-daily with the default covers
+        ~261/365 calendar days — 28.5% of the true borrow silently
+        evaporates. Any ledger that marks less often than calendar-daily
+        MUST set ``accrual_days`` to the calendar-day gap since the
+        security's previous mark (weekend/holiday-inclusive). The model
+        cross-checks consecutive marks and WARNS on coverage gaps
+        (:func:`short_book_coverage_gaps` is the executable contract for
+        the G027/G029 adapter).
+
     ``borrow_fee_bps_pa_override`` carries a security-level fee (e.g.
     from ``borrow_daily``, modernized M-12); it outranks the scenario's
-    region override, which outranks the base fee.
+    region override, which outranks the base fee. An override of 0 on a
+    charging stack is legitimate data but is flagged and bannered
+    (RT-G034-N2): free borrowing is never silent.
     """
 
     security_id: str
     position_date: date
     short_notional: float  # positive magnitude of the short-leg value
-    accrual_days: int = 1  # calendar days this mark covers (>= 1)
+    accrual_days: int = 1  # calendar days this mark covers (>= 1); see warning
     region: str | None = None
     borrow_fee_bps_pa_override: float | None = None
     hard_to_borrow: bool = False
@@ -381,3 +397,57 @@ def totals_of(
         participation_penalty=_sum_field(c.participation_penalty for c in trade_costs),
         borrow=_sum_field(a.amount for a in borrow_accruals),
     )
+
+
+@dataclass(frozen=True, slots=True)
+class CoverageGap:
+    """A short-book mark whose ``accrual_days`` does not equal the
+    calendar-day gap since the security's previous mark (RT-G034-N1).
+
+    A positive ``missing_days`` means borrow silently under-accrues
+    (e.g. business-daily marks with the default ``accrual_days=1`` skip
+    weekends); negative means double-counting.
+    """
+
+    security_id: str
+    previous_date: date
+    position_date: date
+    accrual_days: int
+    calendar_gap_days: int
+
+    @property
+    def missing_days(self) -> int:
+        return self.calendar_gap_days - self.accrual_days
+
+
+def short_book_coverage_gaps(
+    short_book: Sequence[ShortPosition],
+) -> tuple[CoverageGap, ...]:
+    """The A-G034-05 calendar-coverage reconciliation (RT-G034-N1):
+    for each security's consecutive marks, ``accrual_days`` of the later
+    mark must equal the calendar-day gap between the marks.
+
+    The first mark of each security has no previous mark and is not
+    checked (its coverage is the caller's opening convention). The model
+    WARNS on gaps; refusing is the G027/G029 adapter's call — gaps are
+    legitimate when a short was closed and reopened.
+    """
+    by_security: dict[str, list[ShortPosition]] = {}
+    for position in short_book:
+        by_security.setdefault(position.security_id, []).append(position)
+    gaps: list[CoverageGap] = []
+    for security_id in sorted(by_security):
+        marks = sorted(by_security[security_id], key=lambda p: p.position_date)
+        for prev, cur in pairwise(marks):
+            calendar_gap = (cur.position_date - prev.position_date).days
+            if cur.accrual_days != calendar_gap:
+                gaps.append(
+                    CoverageGap(
+                        security_id=security_id,
+                        previous_date=prev.position_date,
+                        position_date=cur.position_date,
+                        accrual_days=cur.accrual_days,
+                        calendar_gap_days=calendar_gap,
+                    )
+                )
+    return tuple(gaps)

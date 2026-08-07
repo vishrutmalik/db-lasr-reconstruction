@@ -509,6 +509,128 @@ class TestSameDayAggregation:
         assert costs[1].total == 0.0
 
 
+class TestCoverageGapsAndFreeBorrow:
+    """RT-G034-N1/N2/N3 loudness: coverage-gap warnings, free-borrow
+    flags + partial banner, tripwires on every public entry point."""
+
+    def borrow_stack(self) -> CostStackConfig:
+        return CostStackConfig(
+            borrow=BorrowFeeConfig(fee_bps_pa=pf(50.0), day_count=pdc()),
+        )
+
+    def test_coverage_gap_detection(self) -> None:
+        from datetime import date as _date
+
+        from lasr.costs.interface import short_book_coverage_gaps
+
+        # Fri -> Mon marks with the default accrual_days=1: gap of 3 days
+        friday, monday = _date(2020, 6, 5), _date(2020, 6, 8)
+        gaps = short_book_coverage_gaps(
+            (
+                ShortPosition("S", friday, 1000.0),
+                ShortPosition("S", monday, 1000.0),
+            )
+        )
+        assert len(gaps) == 1
+        assert gaps[0].calendar_gap_days == 3
+        assert gaps[0].missing_days == 2
+        # correct calendar-gap accruals: no gaps
+        assert (
+            short_book_coverage_gaps(
+                (
+                    ShortPosition("S", friday, 1000.0),
+                    ShortPosition("S", monday, 1000.0, accrual_days=3),
+                )
+            )
+            == ()
+        )
+        # different securities are independent
+        assert (
+            short_book_coverage_gaps(
+                (
+                    ShortPosition("A", friday, 1000.0),
+                    ShortPosition("B", monday, 1000.0),
+                )
+            )
+            == ()
+        )
+
+    def test_coverage_gap_warning_logged(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        from datetime import date as _date
+
+        model = CostModel(self.borrow_stack())
+        with caplog.at_level("WARNING", logger="lasr.costs.model"):
+            model.accrue_borrow(
+                (
+                    ShortPosition("S", _date(2020, 6, 5), 1000.0),
+                    ShortPosition("S", _date(2020, 6, 8), 1000.0),
+                )
+            )
+        assert any("coverage gap" in r.message for r in caplog.records)
+
+    def test_partial_free_borrow_flags_and_banner(self) -> None:
+        model = CostModel(self.borrow_stack())
+        result = model.run(
+            (),
+            (
+                ShortPosition("FREE", D1, 3000.0, borrow_fee_bps_pa_override=0.0),
+                ShortPosition("PAID", D1, 1000.0),
+            ),
+        )
+        assert result.borrow_accruals[0].flags == ("zero_fee_resolved",)
+        assert result.borrow_accruals[1].flags == ()
+        assert result.zero_borrow_banner is not None
+        assert "75.0%" in result.zero_borrow_banner  # 3000/4000 notional-days
+
+    def test_threshold_gates_partial_but_never_full_free(self) -> None:
+        stack = CostStackConfig(
+            borrow=BorrowFeeConfig(fee_bps_pa=pf(50.0), day_count=pdc()),
+            free_borrow_banner_threshold=0.9,
+        )
+        model = CostModel(stack)
+        partial = model.run(
+            (),
+            (
+                ShortPosition("FREE", D1, 3000.0, borrow_fee_bps_pa_override=0.0),
+                ShortPosition("PAID", D1, 1000.0),
+            ),
+        )
+        assert partial.zero_borrow_banner is None  # 75% <= 90% threshold
+        # full-free ALWAYS banners regardless of threshold (CI-048 case)
+        tagged = CostStackConfig(
+            zero_borrow_assumption=ZERO_TAG, free_borrow_banner_threshold=0.9
+        )
+        full = CostModel(tagged).run((), (ShortPosition("S", D1, 1000.0),))
+        assert full.zero_borrow_banner is not None
+
+    def test_threshold_out_of_range_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            CostStackConfig(
+                zero_borrow_assumption=ZERO_TAG,
+                free_borrow_banner_threshold=1.5,
+            )
+
+    def test_htb_forbid_enforced_on_accrue_borrow(self) -> None:
+        stack = CostStackConfig(
+            borrow=BorrowFeeConfig(fee_bps_pa=pf(50.0), day_count=pdc()),
+            hard_to_borrow_policy="forbid",
+        )
+        with pytest.raises(HardToBorrowError):
+            CostModel(stack).accrue_borrow(
+                (ShortPosition("H", D1, 1000.0, hard_to_borrow=True),)
+            )
+
+    def test_banner_warning_logged_on_accrue_borrow(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        model = CostModel(CostStackConfig(zero_borrow_assumption=ZERO_TAG))
+        with caplog.at_level("WARNING", logger="lasr.costs.model"):
+            model.accrue_borrow((ShortPosition("S", D1, 1000.0),))
+        assert any("ZERO-BORROW" in r.message for r in caplog.records)
+
+
 class TestFiniteChargeGuard:
     """RT-G034-5: no NaN/inf charge may enter totals or net_of."""
 

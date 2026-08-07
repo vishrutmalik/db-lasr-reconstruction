@@ -74,7 +74,7 @@ def signal_vs_noise_panel(
     rng.shuffle(labels)
     sig = rank_of(signal_strength * labels + rng.standard_normal(n_obs))
     noise_raw = rng.standard_normal(n_obs)
-    n_missing = int(round((1.0 - noise_coverage) * n_obs))
+    n_missing = round((1.0 - noise_coverage) * n_obs)
     noise_raw[rng.choice(n_obs, size=n_missing, replace=False)] = np.nan
     noise = rank_of(noise_raw)
     return TrainingMatrix(

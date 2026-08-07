@@ -11,9 +11,9 @@ active:
     worktree: .worktrees/G024-implementer (recreated at checkpoint; primary checkout had drifted onto this branch — repaired)
     status: IN_VERIFICATION (PR #70)
     latest_commit: 99b4a7f (IMPLEMENTED; goldens pinned; LT-005 flipped)
-    runtime_verifier: RESUMED FROM TRANSCRIPT 2026-08-07 (agent ac210e9ac88d3fb70, live) — continuing test audit; goldens + falsification controls already confirmed
+    runtime_verifier: PASS COLLECTED 2026-08-07 (agent ac210e9ac88d3fb70) — report a6d04a8 on branch; 0 blocking, 4 NB, R-1 binding (A-G024-03 resolution pre-condition on G025/G029 dispatch)
     runtime_red_team: RESUMED FROM TRANSCRIPT 2026-08-07 (agent a4ec6daaac4eed90d, live) — continuing A-G024-03 bias probe
-    next_action: collect both verdicts; on dual PASS merge PR #70, then dispatch G025
+    next_action: collect red-team verdict; on PASS merge PR #70, then dispatch G025 (with R-1 resolution in its charter)
     owned_paths: ["src/lasr/models/boosting.py", "src/lasr/models/selection.py", "src/lasr/models/nlasr/**", "tests/unit/test_models*.py", "LT-005 grant"]
   G026:
     agent_role: implementer
@@ -24,8 +24,8 @@ active:
     worktree: .worktrees/G026-implementer
     status: IN_VERIFICATION (PR #69)
     latest_commit: ebe9a93 (IMPLEMENTED; RT-G023-2 ratchet flipped; grants b/c applied)
-    runtime_verifier: QUEUED FOR TRANSCRIPT RESUME (agent a7c141cedfb0ee972) — interrupted 2026-08-06 (boundary rules confirmed date-by-date; was starting refusal probes); resumes when a concurrency slot frees (4-lane cap, resource constraint)
-    runtime_red_team: QUEUED FOR TRANSCRIPT RESUME (agent ad8685235cc0be8db) — interrupted 2026-08-06 (no output yet)
+    runtime_verifier: RESUMED FROM TRANSCRIPT 2026-08-07 (agent a7c141cedfb0ee972, live) — continuing from refusal probes; boundary rules already confirmed
+    runtime_red_team: QUEUED FOR TRANSCRIPT RESUME (agent ad8685235cc0be8db) — interrupted 2026-08-06 (no output yet); resumes when a concurrency slot frees (4-lane cap)
     next_action: resume both as slots free; on dual PASS merge PR #69
     owned_paths: ["src/lasr/validation/**", "tests/unit/test_validation*.py", "3 grants (targets/engine.py fix, skill one-liner, CI-009 two-line)"]
   G027:

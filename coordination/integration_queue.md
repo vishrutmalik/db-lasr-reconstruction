@@ -92,6 +92,18 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   feature_values PK excludes knowledge_time — key stamps per batch.
 - PIT owner follow-up: promote PitStore._effective_lag to public API.
 
+## G025/G029 dispatch pre-condition (R-1, from G024 verification, docs/verification/G024.md)
+- A-G024-03 (no coverage renormalization in min-Z factor selection) is a
+  QUANTIFIED selection-bias hazard (verifier: noise factor at 40% coverage
+  scores Z=0.206 vs 0.498; a sparse twin of the same signal wins every round).
+  Verifier ruled the G037-audit deferral too weak: resolution (coverage floor
+  or `z_coverage_renormalization` A/B config knob) is a NAMED PRE-CONDITION of
+  G025 and G029 dispatch — must be in the dispatched goal's charter.
+- NB-2 (same report): LT-005 activation criterion is weaker than the scenario
+  doc's phrasing; verifier's own seed lands below band (IC 0.0673, 26.7%).
+  Owner: LT-005 scenario owner (G025 or next leakage-battery-touching goal).
+- R-2: training-path propagate_nan pin → G025 acceptance.
+
 ## G025 binding (from G022 round-2 verification)
 - zscore numerical-degeneracy corner: all-identical large values yield constant
   +/-1 scores instead of documented 0.0 (mean round-off, std = 1 ulp). Fix =

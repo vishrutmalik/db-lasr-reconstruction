@@ -8,6 +8,14 @@ portfolio-size scaling hook — multiply the per-trade bucket amounts
 AFTER component math (multiplicative modifiers commute, so their order
 is immaterial; also pinned by test).
 
+Same-day aggregation (A-G034-07, RT-G034-2): when ADV participation or
+market impact is enabled, the model first aggregates GROSS traded
+notional per ``(security, trade_date)`` and prices those components off
+the group total (pro-rata allocation — ``lasr.costs.components``
+docstring), so capacity breaches and convex impact survive row slicing.
+Rows of one group must agree on ``adv_notional``; disagreement is a
+typed refusal, never a silent pick.
+
 Zero-borrow banner (skill §3): a run holding shorts that accrues zero
 borrow ALWAYS carries a banner built from the stack's mandatory
 ``zero_borrow_assumption`` tag, and logs a warning — P1/P2/P3 faithful
@@ -24,6 +32,7 @@ from __future__ import annotations
 import logging
 import math
 from collections.abc import Sequence
+from datetime import date
 
 from lasr.costs.components import (
     AdvParticipation,
@@ -36,7 +45,11 @@ from lasr.costs.components import (
     TradeCostComponent,
 )
 from lasr.costs.config import CostStackConfig
-from lasr.costs.errors import HardToBorrowError, MissingCostInputError
+from lasr.costs.errors import (
+    HardToBorrowError,
+    InvalidCostInputError,
+    MissingCostInputError,
+)
 from lasr.costs.interface import (
     BorrowAccrual,
     CostBucket,
@@ -88,13 +101,45 @@ class CostModel:
         base = context.aum / scaling.reference_aum.value
         return math.pow(base, scaling.exponent.value)
 
-    def price_trade(self, trade: Trade, context: RunContext) -> TradeCost:
+    @property
+    def _needs_group_totals(self) -> bool:
+        """Participation/impact price off the (security, date) group
+        gross total (A-G034-07)."""
+        return self._stack.impact is not None or self._stack.participation is not None
+
+    def _group_gross_notionals(
+        self, trades: Sequence[Trade]
+    ) -> dict[tuple[str, date], float]:
+        """Gross traded notional per (security, trade_date) + the
+        A-G034-07 ADV-consistency check (typed refusal on disagreement)."""
+        totals: dict[tuple[str, date], float] = {}
+        advs: dict[tuple[str, date], float | None] = {}
+        for trade in trades:
+            key = (trade.security_id, trade.trade_date)
+            totals[key] = totals.get(key, 0.0) + trade.notional
+            if key in advs and advs[key] != trade.adv_notional:
+                raise InvalidCostInputError(
+                    f"inconsistent adv_notional within the same-day group "
+                    f"{trade.security_id!r} on {trade.trade_date}: "
+                    f"{advs[key]!r} vs {trade.adv_notional!r} - participation/"
+                    "impact need one ADV fact per (security, date) (A-G034-07)"
+                )
+            advs[key] = trade.adv_notional
+        return totals
+
+    def price_trade(
+        self, trade: Trade, context: RunContext, group_notional: float | None = None
+    ) -> TradeCost:
         """Price one trade: independent component charges (A-G034-01),
-        then regional multiplier, then the size-scaling hook."""
+        then regional multiplier, then the size-scaling hook.
+
+        ``group_notional`` defaults to the trade's own gross notional
+        (a lone trade is its own group, A-G034-07)."""
+        group = trade.notional if group_notional is None else group_notional
         amounts: dict[CostBucket, float] = dict.fromkeys(CostBucket, 0.0)
         flags: list[str] = []
         for component in self._components:
-            charge: ComponentCharge = component.charge(trade, context)
+            charge: ComponentCharge = component.charge(trade, context, group)
             amounts[component.bucket] += charge.amount
             flags.extend(charge.flags)
 
@@ -125,6 +170,14 @@ class CostModel:
         self, trades: Sequence[Trade], *, context: RunContext | None = None
     ) -> tuple[TradeCost, ...]:
         ctx = context if context is not None else RunContext()
+        if self._needs_group_totals:
+            groups = self._group_gross_notionals(trades)
+            return tuple(
+                self.price_trade(
+                    trade, ctx, groups[(trade.security_id, trade.trade_date)]
+                )
+                for trade in trades
+            )
         return tuple(self.price_trade(trade, ctx) for trade in trades)
 
     def accrue_borrow(

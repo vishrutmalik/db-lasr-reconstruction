@@ -100,22 +100,14 @@ def test_rt1_independent_true_breakeven_for_the_same_history() -> None:
 
 
 # ---------------------------------------------------------------------------
-# RT-G034-2: ADV-participation breaches (and convex impact) are evaded by
-# splitting one (security, date) trade into duplicate rows. Participation is
-# a fact about TOTAL traded notional per name per day.
+# RT-G034-2 (FIXED): ADV-participation breaches (and convex impact) were
+# evaded by splitting one (security, date) trade into duplicate rows. Fixed:
+# the model aggregates GROSS traded notional per (security, trade_date)
+# before participation/impact pricing (A-G034-07) with pro-rata allocation;
+# ratchet flipped to a permanent regression.
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "RT-G034-2: the P2/P3 capacity surface flags per ROW, so 4x500k "
-        "duplicate rows (2M traded vs a 1M cap) raise no flag at all; "
-        "same-day buy+sell pairs likewise. Capacity reporting can be "
-        "silently evaded by any multi-fill or two-leg ledger "
-        "(docs/red_team/G034.md)"
-    ),
-)
 def test_rt2_participation_flag_survives_trade_splitting() -> None:
     model = CostModel(PRESETS["p2_flat_20"].stack)
     adv = 10_000_000.0  # cap = 10% x ADV = 1M
@@ -142,10 +134,10 @@ def test_rt2_single_row_breach_is_flagged_and_linear_is_split_invariant() -> Non
 
 
 def test_rt2_convex_impact_shrinks_under_splitting_documented() -> None:
-    """Executable documentation of the convexity hole (sqrt law): slicing
-    1M @ 1M ADV into two rows cuts the impact charge to 1/sqrt(2). Any
-    G029 wiring MUST aggregate per (security, date) before impact pricing
-    (A-G034-03 component; faithful presets keep impact off)."""
+    """Was executable documentation of the convexity hole (sqrt law):
+    slicing 1M @ 1M ADV into two rows cut the impact charge to 1/sqrt(2).
+    Post-fix (A-G034-07): the model itself aggregates per (security,
+    date) before impact pricing, so splitting is charge-INVARIANT."""
     stack = CostStackConfig(
         linear=LinearCostConfig(one_way_bps=_pf(0.0)),
         impact=MarketImpactConfig(coefficient_bps=_pf(10.0), exponent=_pf(0.5)),
@@ -156,7 +148,11 @@ def test_rt2_convex_impact_shrinks_under_splitting_documented() -> None:
     two = model.run(
         [Trade("X", D, 5e5, adv_notional=1e6) for _ in range(2)]
     ).totals.impact
-    assert two == pytest.approx(one / math.sqrt(2.0), rel=1e-12)
+    ten = model.run(
+        [Trade("X", D, 1e5, adv_notional=1e6) for _ in range(10)]
+    ).totals.impact
+    assert two == pytest.approx(one, rel=1e-12)  # pre-fix: one / sqrt(2)
+    assert ten == pytest.approx(one, rel=1e-12)  # pre-fix: 0.316 x one
 
 
 # ---------------------------------------------------------------------------

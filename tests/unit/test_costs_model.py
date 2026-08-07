@@ -383,6 +383,104 @@ class TestModifiers:
             )
 
 
+class TestSameDayAggregation:
+    """A-G034-07 (RT-G034-2): participation/impact price off the GROSS
+    (security, trade_date) group total; allocation is pro-rata; the
+    decomposition is split-invariant."""
+
+    def stack(self) -> CostStackConfig:
+        return CostStackConfig(
+            impact=MarketImpactConfig(coefficient_bps=pf(25.0), exponent=pf(0.5)),
+            participation=AdvParticipationConfig(
+                max_participation=pf(0.10),
+                adv_window_days=pi(20),
+                penalty_bps_on_excess=pf(50.0),
+            ),
+            zero_borrow_assumption=ZERO_TAG,
+        )
+
+    def test_split_rows_price_like_the_single_trade(self) -> None:
+        model = CostModel(self.stack())
+        adv = 800_000.0
+        single = model.run((Trade("X", D1, -200_000.0, adv_notional=adv),))
+        split = model.run(
+            (
+                Trade("X", D1, -150_000.0, adv_notional=adv),
+                Trade("X", D1, -50_000.0, adv_notional=adv),
+            )
+        )
+        assert split.totals.impact == pytest.approx(single.totals.impact)
+        assert split.totals.participation_penalty == pytest.approx(
+            single.totals.participation_penalty
+        )
+        # every non-zero row of the breaching group carries the flag
+        for cost in split.trade_costs:
+            assert "adv_participation_exceeded" in cost.flags
+
+    def test_pro_rata_penalty_allocation_hand_values(self) -> None:
+        # group T = 200k, cap = 80k, excess = 120k -> penalty 50bps = 600.0
+        # rows 150k/50k -> 450.0 / 150.0
+        model = CostModel(self.stack())
+        adv = 800_000.0
+        costs = model.price_trades(
+            (
+                Trade("X", D1, -150_000.0, adv_notional=adv),
+                Trade("X", D1, -50_000.0, adv_notional=adv),
+            )
+        )
+        assert costs[0].participation_penalty == pytest.approx(450.0)
+        assert costs[1].participation_penalty == pytest.approx(150.0)
+
+    def test_same_day_buy_and_sell_combine_gross(self) -> None:
+        """Both legs consume liquidity: 0.9M buy + 0.9M sell breaches a
+        1M cap even though each leg alone is under it."""
+        model = CostModel(self.stack())
+        adv = 10_000_000.0  # cap 1M
+        result = model.run(
+            (
+                Trade("X", D1, +900_000.0, adv_notional=adv),
+                Trade("X", D1, -900_000.0, adv_notional=adv),
+            )
+        )
+        flags = [f for tc in result.trade_costs for f in tc.flags]
+        assert flags.count("adv_participation_exceeded") == 2
+
+    def test_distinct_securities_and_dates_not_aggregated(self) -> None:
+        model = CostModel(self.stack())
+        adv = 10_000_000.0  # cap 1M; each trade 0.9M -> no breach
+        result = model.run(
+            (
+                Trade("X", D1, 900_000.0, adv_notional=adv),
+                Trade("Y", D1, 900_000.0, adv_notional=adv),
+                Trade("X", D2, 900_000.0, adv_notional=adv),
+            )
+        )
+        assert all(tc.flags == () for tc in result.trade_costs)
+
+    def test_inconsistent_adv_within_group_is_typed_refusal(self) -> None:
+        model = CostModel(self.stack())
+        with pytest.raises(InvalidCostInputError):
+            model.price_trades(
+                (
+                    Trade("X", D1, 1000.0, adv_notional=1_000_000.0),
+                    Trade("X", D1, 1000.0, adv_notional=2_000_000.0),
+                )
+            )
+
+    def test_zero_rows_stay_silent_in_breaching_group(self) -> None:
+        model = CostModel(self.stack())
+        adv = 800_000.0
+        costs = model.price_trades(
+            (
+                Trade("X", D1, -200_000.0, adv_notional=adv),
+                Trade("X", D1, 0.0, adv_notional=adv),
+            )
+        )
+        assert "adv_participation_exceeded" in costs[0].flags
+        assert costs[1].flags == ()
+        assert costs[1].total == 0.0
+
+
 class TestDeterminismAndProtocol:
     def test_double_run_identical(self) -> None:
         shorts = (ShortPosition("S", D1, 1000.0),)

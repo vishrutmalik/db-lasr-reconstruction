@@ -6,16 +6,31 @@ assumption, ``lasr.costs.config`` docstring) and returns a
 input raises :class:`~lasr.costs.errors.MissingCostInputError` — the
 typed refusal, never a silent zero.
 
-Formulas (all rates in bps of notional unless stated):
+Same-day aggregation (A-G034-07, RT-G034-2): ADV participation and
+market impact are facts about the TOTAL notional traded per
+``(security, trade_date)`` — GROSS, i.e. ``sum(|signed_notional|)``,
+because both legs of a same-day buy+sell pair consume liquidity (the
+papers' per-dollar-traded semantics, E-P4-25). ``charge`` therefore
+receives ``group_notional`` (the group's gross total, computed by the
+model; == ``trade.notional`` for a lone trade) and allocates the group
+charge pro-rata by ``|notional|`` so the decomposition stays additive
+and split-INVARIANT: slicing one trade into duplicate rows changes
+neither the flags nor the totals. Components whose economics are
+per-trade (commission, spread, linear) ignore ``group_notional``.
+
+Formulas (all rates in bps of notional unless stated; ``T`` = the
+group's gross traded notional):
 
 - fixed commission: ``per_trade`` for any non-zero trade, 0 otherwise;
 - half-spread: ``crossing_fraction * spread_bps/1e4 * |notional|``;
 - linear (also MP §25 "slippage"): ``rate_bps/1e4 * |notional|`` where
   ``rate_bps`` = region override else base (CI-048 formula);
-- impact (A-G034-03): ``coeff_bps/1e4 * (|notional|/adv)^exponent *
-  |notional|``;
-- ADV participation: excess = ``max(0, |notional| - max_participation *
-  adv)``; flag when excess > 0; optional ``penalty_bps * excess``;
+- impact (A-G034-03): ``coeff_bps/1e4 * (T/adv)^exponent * |notional|``
+  (group total = ``coeff_bps/1e4 * (T/adv)^exponent * T``);
+- ADV participation: excess = ``max(0, T - max_participation * adv)``;
+  every non-zero row of a breaching group is flagged; optional penalty
+  ``penalty_bps/1e4 * excess * |notional|/T`` (group total =
+  ``penalty_bps/1e4 * excess``);
 - borrow (CI-048): ``fee_bps_pa/1e4 * short_notional *
   accrual_days/denominator`` (A-G034-02 day count), short leg only.
 """
@@ -69,7 +84,12 @@ class ComponentCharge:
 
 
 class TradeCostComponent(Protocol):
-    """Typed protocol every per-trade component implements."""
+    """Typed protocol every per-trade component implements.
+
+    ``group_notional`` is the gross traded notional of the trade's
+    ``(security, trade_date)`` group (A-G034-07; >= ``trade.notional``);
+    per-trade components ignore it.
+    """
 
     @property
     def name(self) -> str: ...
@@ -77,7 +97,12 @@ class TradeCostComponent(Protocol):
     @property
     def bucket(self) -> CostBucket: ...
 
-    def charge(self, trade: Trade, context: RunContext) -> ComponentCharge: ...
+    def charge(
+        self,
+        trade: Trade,
+        context: RunContext,
+        group_notional: float | None = None,
+    ) -> ComponentCharge: ...
 
 
 def _trade_subject(trade: Trade) -> str:
@@ -98,7 +123,12 @@ class FixedCommission:
     def bucket(self) -> CostBucket:
         return CostBucket.COMMISSION
 
-    def charge(self, trade: Trade, context: RunContext) -> ComponentCharge:
+    def charge(
+        self,
+        trade: Trade,
+        context: RunContext,
+        group_notional: float | None = None,
+    ) -> ComponentCharge:
         if trade.notional == 0.0:
             return ComponentCharge(0.0)
         return ComponentCharge(self.config.per_trade.value)
@@ -118,7 +148,12 @@ class HalfSpread:
     def bucket(self) -> CostBucket:
         return CostBucket.SPREAD
 
-    def charge(self, trade: Trade, context: RunContext) -> ComponentCharge:
+    def charge(
+        self,
+        trade: Trade,
+        context: RunContext,
+        group_notional: float | None = None,
+    ) -> ComponentCharge:
         if trade.notional == 0.0:
             return ComponentCharge(0.0)
         if trade.spread_bps is None:
@@ -154,13 +189,23 @@ class LinearCost:
                 return override.value
         return self.config.one_way_bps.value
 
-    def charge(self, trade: Trade, context: RunContext) -> ComponentCharge:
+    def charge(
+        self,
+        trade: Trade,
+        context: RunContext,
+        group_notional: float | None = None,
+    ) -> ComponentCharge:
         return ComponentCharge(self.rate_bps(trade.region) * BPS * trade.notional)
 
 
 @dataclass(frozen=True, slots=True)
 class MarketImpact:
-    """Nonlinear participation power law — form ASSUMED (A-G034-03)."""
+    """Nonlinear participation power law — form ASSUMED (A-G034-03).
+
+    Participation is computed from the GROUP's gross traded notional
+    (A-G034-07) and the charge allocated pro-rata by ``|notional|``, so
+    slicing a trade into duplicate rows cannot shrink the convex charge
+    (RT-G034-2)."""
 
     config: MarketImpactConfig
 
@@ -172,7 +217,12 @@ class MarketImpact:
     def bucket(self) -> CostBucket:
         return CostBucket.IMPACT
 
-    def charge(self, trade: Trade, context: RunContext) -> ComponentCharge:
+    def charge(
+        self,
+        trade: Trade,
+        context: RunContext,
+        group_notional: float | None = None,
+    ) -> ComponentCharge:
         if trade.notional == 0.0:
             return ComponentCharge(0.0)
         if trade.adv_notional is None:
@@ -184,7 +234,8 @@ class MarketImpact:
                 f"{_trade_subject(trade)}: adv_notional must be > 0 for the "
                 f"impact component, got {trade.adv_notional!r}"
             )
-        participation = trade.notional / trade.adv_notional
+        group = group_notional if group_notional is not None else trade.notional
+        participation = group / trade.adv_notional
         amount = (
             self.config.coefficient_bps.value
             * BPS
@@ -197,7 +248,12 @@ class MarketImpact:
 @dataclass(frozen=True, slots=True)
 class AdvParticipation:
     """ADV participation surface: flag breaches, optionally penalize the
-    excess notional. Enforcement lives in portfolio construction."""
+    excess notional. Enforcement lives in portfolio construction.
+
+    The cap binds on the GROUP's gross traded notional (A-G034-07): a
+    breach flags every non-zero row of the group and the penalty on the
+    excess is allocated pro-rata, so multi-fill or two-leg same-day
+    ledgers cannot evade capacity reporting (RT-G034-2)."""
 
     config: AdvParticipationConfig
 
@@ -209,19 +265,26 @@ class AdvParticipation:
     def bucket(self) -> CostBucket:
         return CostBucket.PARTICIPATION_PENALTY
 
-    def charge(self, trade: Trade, context: RunContext) -> ComponentCharge:
+    def charge(
+        self,
+        trade: Trade,
+        context: RunContext,
+        group_notional: float | None = None,
+    ) -> ComponentCharge:
         if trade.notional == 0.0:
             return ComponentCharge(0.0)
         if trade.adv_notional is None:
             raise MissingCostInputError(
                 self.name, "adv_notional", _trade_subject(trade)
             )
+        group = group_notional if group_notional is not None else trade.notional
         cap = self.config.max_participation.value * trade.adv_notional
-        excess = trade.notional - cap
+        excess = group - cap
         if excess <= 0.0:
             return ComponentCharge(0.0)
         penalty = self.config.penalty_bps_on_excess
-        amount = 0.0 if penalty is None else penalty.value * BPS * excess
+        share = trade.notional / group  # pro-rata allocation
+        amount = 0.0 if penalty is None else penalty.value * BPS * excess * share
         return ComponentCharge(amount, flags=(PARTICIPATION_EXCEEDED_FLAG,))
 
 

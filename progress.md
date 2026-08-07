@@ -2,7 +2,7 @@
 
 Session-independent status. Update at every session end and major milestone.
 
-- **Last orchestrator update:** 2026-08-04
+- **Last orchestrator update:** 2026-08-06 (controlled checkpoint; see coordination/session_handoff.md)
 - **Current milestone:** M5 — model phase (M0-M4 complete: data layer through
   targets fully merged; G019/G020/G022 red-team remediation cycles complete)
 - **Remote:** git@github.com:vishrutmalik/db-lasr-reconstruction.git (PRIVATE)
@@ -17,19 +17,30 @@ Session-independent status. Update at every session end and major milestone.
   - G012 workbook schema — PR #45, PASS round 2 (r1 FAIL on TM code count, remediated)
 - Evidence matrix federated over per-source row files (D-005).
 
-## Active assignments
-- G024 N-LASR 2012 kernel → implementer, .worktrees/G024-implementer (red-team required)
-- G026 walk-forward engine → implementer, .worktrees/G026-implementer (red-team required)
-- Merged in M4/M5: G015-G023, G039, G042, G043 (29 goals total). Review-matrix
-  scorecard: G019 4-blocking/G020 4-blocking/G022 1-blocking red-team findings,
-  all remediated with clean round-2 re-checks; every attack is a permanent test.
-- Full detail: `coordination/agent_assignments.yaml`
+## Active assignments (checkpoint 2026-08-06: all interrupted at usage limit)
+- G024 IN_VERIFICATION (PR #70; V+RT interrupted mid-work) — resume from transcripts
+- G026 IN_VERIFICATION (PR #69; V+RT interrupted) — resume from transcripts
+- G027 IN_VERIFICATION (PR #68; verifier PASS collected; red-team interrupted
+  with uncommitted keeper file preserved) — resume
+- G034 REMEDIATION (PR #67; RT-1 fix committed c1c1a40; 3 mid-edit files
+  preserved) — resume
+- Runtime truth + next actions: coordination/agent_assignments.yaml `active:`;
+  resumption rules: coordination/session_handoff.md
+- Merged total: 29 goals. Red-team scorecard: G019/G020 4-blocking each,
+  G022 1, G034 1 (+4 ratchets) — every finding remediated or in remediation;
+  every attack is a permanent test.
 
 ## Blockers
 - (none active). `gh` CLI at `~/.local/bin/gh` (NOT on default PATH), authenticated,
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-08-06 (checkpoint): 6-agent usage-limit kill during the full M5 review
+  wave; controlled checkpoint taken (session_handoff.md). Also repaired: the
+  PRIMARY checkout had drifted onto the G024 branch with the G024 worktree
+  entry lost (OneDrive/worktree metadata race) — main restored, worktree
+  recreated, zero uncommitted losses; registry active-section duplicates
+  rebuilt clean.
 - 2026-08-05: Runtime-vs-narrative reconciliation (user-flagged via Background
   Tasks UI). Root causes: (1) G024/G026 were never actually launched after the
   G023 merge — registry said IN_PROGRESS with no live agent; (2) the corrective

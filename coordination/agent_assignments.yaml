@@ -36,11 +36,12 @@ active:
     pr: 67
     branch: agent/implementer/G034-costs
     worktree: .worktrees/G034-implementer
-    status: FAILED_VERIFICATION -> REMEDIATION IN PROGRESS (red-team 1 BLOCKING + 4 ratchets at f47400e)
-    latest_commit: c1c1a40 (RT-G034-1 break-even fix COMMITTED by the interrupted remediation agent)
-    uncommitted: 3 modified paths in worktree (components.py, model.py, keeper test — mid-ratchet work) — PRESERVE
-    runtime_implementer: RESUMED FROM TRANSCRIPT 2026-08-07 (agent af95bca8c35fd6af8, live) — finishing RT-2..5 + N1/N2/N3 from the preserved mid-edit files; push c1c1a40 first
-    next_action: collect remediation; then round-2 red-team + narrow verifier re-checks; then merge PR #67
+    status: REMEDIATED -> IN_RE-VERIFICATION round 2 (PR #67 CI all green at HEAD)
+    latest_commit: 7ab0798 (remediation complete: RT-1..5 fixed + ratchets flipped, N1/N2/N3 dispositioned; 1745 passed local)
+    runtime_implementer: REMEDIATION COLLECTED 2026-08-07 (agent af95bca8c35fd6af8) — commits c1c1a40/d2ddec7/acb494e/965c883/e13a943/828a7ef/7ab0798; register candidates A-G034-07/08 + CI-048 wording routed to orchestrator
+    runtime_red_team_r2: LAUNCHED 2026-08-07 (agent a225d0fd214d65296, live) — replacement (round-1 identity unrecorded); keeper-edit integrity is priority check
+    runtime_verifier_r2: LAUNCHED 2026-08-07 (agent a813bff67ca5299fa, live) — narrow remediation-diff re-check (f47400e..7ab0798), RT-1 convention audit vs E-P4-25/CI-046
+    next_action: collect both round-2 verdicts; on dual PASS merge PR #67
     owned_paths: ["src/lasr/costs/**", "tests/unit/test_costs*.py"]
 
 history:

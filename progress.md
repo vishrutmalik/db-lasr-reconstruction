@@ -25,8 +25,15 @@ Session-independent status. Update at every session end and major milestone.
 - G026 IN_VERIFICATION (PR #69; V+RT interrupted) — resume from transcripts
 - G027 MERGED 2026-08-07 (PR #68, main c1cf2ad): verifier PASS + red-team
   NO_BLOCKING_FINDINGS (4 ratchets, RT-G027-8 seam -> G029 adapter)
-- G034 REMEDIATION resumed (PR #67; RT-1 fix committed c1c1a40; agent live,
-  worktree advancing)
+- G034 REMEDIATED 2026-08-07 (7ab0798; all 5 ratchets flipped; PR #67 CI
+  green) — round-2 red-team + narrow verifier re-checks live
+- G024 FAILED_VERIFICATION (RT-G024-1 coverage-bias BLOCKING) — remediation
+  agent live (coverage-honest min-Z objective)
+- CI-email triage 2026-08-07: 4 failed runs, all the single lint job on
+  freshly pushed review/remediation commits (expected side effect of the
+  commit-early crash-safety discipline); G027/G034 superseded and green at
+  HEAD/merge; G024 RUF046 assigned to the live remediation agent. Not
+  systemic; no new goals.
 - Runtime truth + next actions: coordination/agent_assignments.yaml `active:`;
   resumption rules: coordination/session_handoff.md
 - Merged total: 30 goals. Red-team scorecard: G019/G020 4-blocking each,

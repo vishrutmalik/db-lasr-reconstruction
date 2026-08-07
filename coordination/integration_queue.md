@@ -138,5 +138,12 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   diverges at gross >= 1e7. Owner: G029 integration hardening / next
   portfolio-touching goal (verifier N-1 = RT-G027-3 overlap).
 
+## Methodology-doc proposals routed to orchestrator (shared files)
+- CI-048 wording clarification from G034 remediation: break-even/cost rates
+  are one-way per-dollar-traded, charged per side — proposal: state "per-side
+  traded notional" explicitly in correctness_criteria.md. Apply at the next
+  orchestrator methodology pass (after G034 round-2 verdicts confirm the
+  convention).
+
 ## Conflicts requiring resolution
 - (none)

@@ -117,12 +117,17 @@ Identity digest excludes retrieval_time (N11 compensates) (01); config-default
 detector thresholds visible in QualityConfig (02); U3_EXEMPT_TABLES enumeration
 (03); raw re-hash requires full-column records, fails loudly (04).
 
-### A-G034-01..06 — cost-model conventions (G034, PR #67)
+### A-G034-01..08 — cost-model conventions (G034, PR #67)
 Defined in the G034 report/PR + module docstrings: additive currency-space
 composition with post-hoc multiplicative modifiers (01); ACT/365 borrow
 day-count (02); power-law impact form with config exponent (03); size-scaling
 form (04); short-book accrual_days convention (05); P4 sweep interior grids
-INFERRED from chart-only exhibits (06).
+INFERRED from chart-only exhibits (06). Added by RT-G034 remediation
+(2026-08-07): participation/impact price off same-day GROSS
+sum|signed_notional| per (security, trade_date) with pro-rata allocation —
+split-invariant decomposition (07); free_borrow_banner_threshold structural
+default 0.0 — full-free borrow always banners per CI-048 (08). Sensitivity:
+the red-team keeper split-invariance and banner tests are the pins.
 
 ### A-G027-01..08 — portfolio conventions (G027, PR #68)
 Defined in the PR body + module docstrings: fractile bin rule (01); Level-2

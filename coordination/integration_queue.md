@@ -109,10 +109,21 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   +/-1 scores instead of documented 0.0 (mean round-off, std = 1 ulp). Fix =
   degeneracy detection + tolerance cap when G025 consumes zscore machinery.
 
-## G029 adapter contract (from G027 verification)
+## G029 adapter contract (from G027 verification + red-team)
 - G027 CostModel hook <-> G034 interface mismatches M-1..M-6 enumerated in
   docs/verification/G027.md — the G029 vertical slice owns the adapter; no
   redesign of either module.
+- RT-G027-8 (red-team, docs/red_team/G027.md): 2x one-way/two-way cost rate
+  base seam between G027's charging convention and G034's rates — the G029
+  adapter MUST pin the convention with a test (establishment G/2 turnover
+  exactness is the exposed surface).
+- RT-G027-5 ratchet: portfolio accepts NEGATIVE charges from the cost hook
+  silently (a sign-buggy cost model fabricates +7.5%) — adapter must refuse or
+  the portfolio owner flips the ratchet.
+- RT-G027-2/-3 notes: CI-045 gate not independent of the cash-ledger path
+  ($600 planted hole passes); engine tolerance 1e-9 vs CI-045's written 1e-10
+  diverges at gross >= 1e7. Owner: G029 integration hardening / next
+  portfolio-touching goal (verifier N-1 = RT-G027-3 overlap).
 
 ## Conflicts requiring resolution
 - (none)

@@ -23,13 +23,13 @@ Session-independent status. Update at every session end and major milestone.
 ## Active assignments (checkpoint 2026-08-06: all interrupted at usage limit)
 - G024 IN_VERIFICATION (PR #70; V+RT interrupted mid-work) — resume from transcripts
 - G026 IN_VERIFICATION (PR #69; V+RT interrupted) — resume from transcripts
-- G027 IN_VERIFICATION (PR #68; verifier PASS collected; red-team interrupted
-  with uncommitted keeper file preserved) — resume
-- G034 REMEDIATION (PR #67; RT-1 fix committed c1c1a40; 3 mid-edit files
-  preserved) — resume
+- G027 MERGED 2026-08-07 (PR #68, main c1cf2ad): verifier PASS + red-team
+  NO_BLOCKING_FINDINGS (4 ratchets, RT-G027-8 seam -> G029 adapter)
+- G034 REMEDIATION resumed (PR #67; RT-1 fix committed c1c1a40; agent live,
+  worktree advancing)
 - Runtime truth + next actions: coordination/agent_assignments.yaml `active:`;
   resumption rules: coordination/session_handoff.md
-- Merged total: 29 goals. Red-team scorecard: G019/G020 4-blocking each,
+- Merged total: 30 goals. Red-team scorecard: G019/G020 4-blocking each,
   G022 1, G034 1 (+4 ratchets) — every finding remediated or in remediation;
   every attack is a permanent test.
 

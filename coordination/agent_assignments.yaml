@@ -28,18 +28,6 @@ active:
     runtime_red_team: QUEUED FOR TRANSCRIPT RESUME (agent ad8685235cc0be8db) — interrupted 2026-08-06 (no output yet); resumes when a concurrency slot frees (4-lane cap)
     next_action: resume both as slots free; on dual PASS merge PR #69
     owned_paths: ["src/lasr/validation/**", "tests/unit/test_validation*.py", "3 grants (targets/engine.py fix, skill one-liner, CI-009 two-line)"]
-  G027:
-    agent_role: implementer
-    objective: Level-1/2 portfolio + accounting (CI-045..050)
-    github_issue: 27
-    pr: 68
-    branch: agent/implementer/G027-portfolio
-    worktree: .worktrees/G027-implementer
-    status: IN_VERIFICATION (PR #68; verifier PASS f3d06d8 COLLECTED; red-team pending)
-    latest_commit: f3d06d8 (verification report)
-    runtime_red_team: RESUMED FROM TRANSCRIPT 2026-08-07 (agent ae6b9d94e492b9bdd, live) — instructed to commit the preserved keeper file FIRST, then report
-    next_action: collect red-team verdict; on PASS merge PR #68
-    owned_paths: ["src/lasr/portfolio/**", "tests/unit/test_portfolio*.py"]
   G034:
     agent_role: implementer
     objective: Cost & borrow model (MP SS25)
@@ -55,6 +43,15 @@ active:
     owned_paths: ["src/lasr/costs/**", "tests/unit/test_costs*.py"]
 
 history:
+  - goal_id: G027
+    agent_role: implementer
+    branch: agent/implementer/G027-portfolio (deleted after verified merge)
+    final_commit: 95ebcab/c34db37/00a64bf (portfolio+tests+fix) + f3d06d8 (verify PASS) + 34785d3/052b191 (red-team keepers/report NO_BLOCKING_FINDINGS)
+    pr: 68 (MERGED 2026-08-07, main c1cf2ad)
+    verification: PASS + red-team NO_BLOCKING_FINDINGS (docs/verification+red_team/G027.md;
+      4 strict-xfail ratchets RT-G027-1/-4/-5/-6; seam RT-G027-8 -> G029 adapter;
+      20 keeper tests in tests/leakage/test_red_team_g027_portfolio_attacks.py)
+    worktree: removed
   - goal_id: G022
     agent_role: implementer
     branch: agent/implementer/G022-feature-registry (deleted after merge)

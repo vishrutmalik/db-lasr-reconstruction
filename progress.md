@@ -2,7 +2,10 @@
 
 Session-independent status. Update at every session end and major milestone.
 
-- **Last orchestrator update:** 2026-08-06 (controlled checkpoint; see coordination/session_handoff.md)
+- **Last orchestrator update:** 2026-08-07 (post-compaction resume: 4 of 6
+  interrupted agents RESUMED from transcripts — G024 V+RT, G027 RT, G034
+  remediation; G026 V+RT queued behind the 4-lane cap; see
+  coordination/agent_assignments.yaml runtime lines)
 - **Current milestone:** M5 — model phase (M0-M4 complete: data layer through
   targets fully merged; G019/G020/G022 red-team remediation cycles complete)
 - **Remote:** git@github.com:vishrutmalik/db-lasr-reconstruction.git (PRIVATE)

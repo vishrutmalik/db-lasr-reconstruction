@@ -11,9 +11,9 @@ active:
     worktree: .worktrees/G024-implementer (recreated at checkpoint; primary checkout had drifted onto this branch — repaired)
     status: IN_VERIFICATION (PR #70)
     latest_commit: 99b4a7f (IMPLEMENTED; goldens pinned; LT-005 flipped)
-    runtime_verifier: usage-limit interrupted 2026-08-06 (goldens + falsification controls confirmed; was starting test audit) — RESUME FROM TRANSCRIPT
-    runtime_red_team: usage-limit interrupted 2026-08-06 (was building the A-G024-03 bias probe) — RESUME FROM TRANSCRIPT
-    next_action: resume both re-check agents; on dual PASS merge PR #70
+    runtime_verifier: RESUMED FROM TRANSCRIPT 2026-08-07 (agent ac210e9ac88d3fb70, live) — continuing test audit; goldens + falsification controls already confirmed
+    runtime_red_team: RESUMED FROM TRANSCRIPT 2026-08-07 (agent a4ec6daaac4eed90d, live) — continuing A-G024-03 bias probe
+    next_action: collect both verdicts; on dual PASS merge PR #70, then dispatch G025
     owned_paths: ["src/lasr/models/boosting.py", "src/lasr/models/selection.py", "src/lasr/models/nlasr/**", "tests/unit/test_models*.py", "LT-005 grant"]
   G026:
     agent_role: implementer
@@ -24,9 +24,9 @@ active:
     worktree: .worktrees/G026-implementer
     status: IN_VERIFICATION (PR #69)
     latest_commit: ebe9a93 (IMPLEMENTED; RT-G023-2 ratchet flipped; grants b/c applied)
-    runtime_verifier: usage-limit interrupted 2026-08-06 (boundary rules confirmed date-by-date; was starting refusal probes) — RESUME FROM TRANSCRIPT
-    runtime_red_team: usage-limit interrupted 2026-08-06 (no output yet) — RESUME FROM TRANSCRIPT
-    next_action: resume both; on dual PASS merge PR #69
+    runtime_verifier: QUEUED FOR TRANSCRIPT RESUME (agent a7c141cedfb0ee972) — interrupted 2026-08-06 (boundary rules confirmed date-by-date; was starting refusal probes); resumes when a concurrency slot frees (4-lane cap, resource constraint)
+    runtime_red_team: QUEUED FOR TRANSCRIPT RESUME (agent ad8685235cc0be8db) — interrupted 2026-08-06 (no output yet)
+    next_action: resume both as slots free; on dual PASS merge PR #69
     owned_paths: ["src/lasr/validation/**", "tests/unit/test_validation*.py", "3 grants (targets/engine.py fix, skill one-liner, CI-009 two-line)"]
   G027:
     agent_role: implementer
@@ -37,8 +37,8 @@ active:
     worktree: .worktrees/G027-implementer
     status: IN_VERIFICATION (PR #68; verifier PASS f3d06d8 COLLECTED; red-team pending)
     latest_commit: f3d06d8 (verification report)
-    runtime_red_team: usage-limit interrupted 2026-08-06 at the keeper-file stage; UNCOMMITTED tests/leakage/test_red_team_g027_portfolio_attacks.py preserved in worktree — RESUME FROM TRANSCRIPT (it must commit its report + keepers)
-    next_action: resume red-team; on its verdict merge or remediate
+    runtime_red_team: RESUMED FROM TRANSCRIPT 2026-08-07 (agent ae6b9d94e492b9bdd, live) — instructed to commit the preserved keeper file FIRST, then report
+    next_action: collect red-team verdict; on PASS merge PR #68
     owned_paths: ["src/lasr/portfolio/**", "tests/unit/test_portfolio*.py"]
   G034:
     agent_role: implementer
@@ -50,8 +50,8 @@ active:
     status: FAILED_VERIFICATION -> REMEDIATION IN PROGRESS (red-team 1 BLOCKING + 4 ratchets at f47400e)
     latest_commit: c1c1a40 (RT-G034-1 break-even fix COMMITTED by the interrupted remediation agent)
     uncommitted: 3 modified paths in worktree (components.py, model.py, keeper test — mid-ratchet work) — PRESERVE
-    runtime_implementer: usage-limit interrupted 2026-08-06 mid-remediation — RESUME FROM TRANSCRIPT (finish RT-2..5 + N1/N2/N3, commit, gates)
-    next_action: resume remediation; then round-2 red-team + narrow verifier re-checks; then merge PR #67
+    runtime_implementer: RESUMED FROM TRANSCRIPT 2026-08-07 (agent af95bca8c35fd6af8, live) — finishing RT-2..5 + N1/N2/N3 from the preserved mid-edit files; push c1c1a40 first
+    next_action: collect remediation; then round-2 red-team + narrow verifier re-checks; then merge PR #67
     owned_paths: ["src/lasr/costs/**", "tests/unit/test_costs*.py"]
 
 history:

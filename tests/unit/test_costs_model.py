@@ -292,6 +292,34 @@ class TestZeroBorrowBanner:
                 zero_borrow_assumption=ZERO_TAG,
             )
 
+    def test_zero_base_with_positive_override_is_charging_capable(self) -> None:
+        """RT-G034-3 semantics: base 0 + a positive regional override can
+        charge, so the zero-borrow tag is forbidden (and its absence is
+        legal)."""
+        borrow = BorrowFeeConfig(
+            fee_bps_pa=pf(0.0),
+            day_count=pdc(),
+            region_overrides={"em": pf(100.0)},
+        )
+        stack = CostStackConfig(borrow=borrow)  # no tag required
+        result = CostModel(stack).run(
+            (), (ShortPosition("S", D1, 1_000_000.0, accrual_days=365, region="em"),)
+        )
+        assert result.totals.borrow == pytest.approx(100e-4 * 1_000_000.0)
+        assert result.zero_borrow_banner is None
+        with pytest.raises(ValidationError):
+            CostStackConfig(borrow=borrow, zero_borrow_assumption=ZERO_TAG)
+
+    def test_zero_base_with_all_zero_overrides_requires_tag(self) -> None:
+        borrow = BorrowFeeConfig(
+            fee_bps_pa=pf(0.0),
+            day_count=pdc(),
+            region_overrides={"free": pf(0.0)},
+        )
+        with pytest.raises(ValidationError):
+            CostStackConfig(borrow=borrow)
+        CostStackConfig(borrow=borrow, zero_borrow_assumption=ZERO_TAG)
+
 
 class TestHardToBorrow:
     def test_flag_policy_records_and_still_charges(self) -> None:

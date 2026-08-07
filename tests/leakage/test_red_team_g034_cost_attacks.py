@@ -156,22 +156,14 @@ def test_rt2_convex_impact_shrinks_under_splitting_documented() -> None:
 
 
 # ---------------------------------------------------------------------------
-# RT-G034-3: the version-config bridge silently DROPS configured non-zero
-# regional borrow when the base borrow is 0/None - and banners the run as an
-# evidenced zero-borrow assumption.
+# RT-G034-3 (FIXED): the version-config bridge silently DROPPED configured
+# non-zero regional borrow when the base borrow was 0/None - and bannered the
+# run as an evidenced zero-borrow assumption. Fixed: base 0 + non-zero
+# overrides is carried as a charging-capable component (no tag); base None +
+# overrides is refused as contradictory; ratchet flipped.
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "RT-G034-3: stack_from_version_config builds borrow=None whenever "
-        "the BASE borrow_bps_pa is 0/None, discarding non-empty "
-        "borrow_bps_pa_region_override (100 bp p.a. configured -> 0 "
-        "charged) and tagging the run zero-borrow-per-version-spec "
-        "(docs/red_team/G034.md)"
-    ),
-)
 def test_rt3_bridge_must_not_silently_drop_regional_borrow() -> None:
     from lasr.costs.scenarios import stack_from_version_config
 

@@ -247,12 +247,14 @@ class SizeScalingConfig(ConfigModel):
 class CostStackConfig(ConfigModel):
     """The composable component stack (MP §25). Presence = enabled.
 
-    ``zero_borrow_assumption`` is MANDATORY whenever borrow is absent or
-    zero-rated: CI-048 requires P1-P3's zero borrow to be a TAGGED
-    assumption ("the test asserts the tag exists"), and building an
-    untagged borrow-free stack is a config error — silent free shorting
-    is structurally impossible. Conversely a stack that DOES charge
-    borrow must not carry the tag.
+    ``zero_borrow_assumption`` is MANDATORY whenever the stack cannot
+    charge borrow on ANY position (borrow absent, or base fee AND every
+    regional override zero — RT-G034-3): CI-048 requires P1-P3's zero
+    borrow to be a TAGGED assumption ("the test asserts the tag
+    exists"), and building an untagged borrow-free stack is a config
+    error — silent free shorting is structurally impossible. Conversely
+    a charging-capable stack (base fee > 0 OR any override > 0) must
+    not carry the tag.
 
     ``region_multipliers`` is the generic regional hook (MP §25
     "regional cost differences"): a multiplier applied to ALL per-trade
@@ -278,17 +280,24 @@ class CostStackConfig(ConfigModel):
 
     @model_validator(mode="after")
     def _borrow_tag_discipline(self) -> CostStackConfig:
-        base_fee = 0.0 if self.borrow is None else self.borrow.fee_bps_pa.value
-        if base_fee <= 0 and self.zero_borrow_assumption is None:
+        # Charging-capable = the stack CAN accrue borrow on some position:
+        # base fee > 0 OR any regional override > 0 (RT-G034-3: a zero/None
+        # base must never let non-zero overrides masquerade as zero-borrow).
+        charging_capable = self.borrow is not None and (
+            self.borrow.fee_bps_pa.value > 0
+            or any(p.value > 0 for p in self.borrow.region_overrides.values())
+        )
+        if not charging_capable and self.zero_borrow_assumption is None:
             raise CostConfigError(
                 "borrow is absent or zero-rated but zero_borrow_assumption "
                 "is not set - zero borrow must be a TAGGED assumption "
                 "(CI-048; A-G011-19 family)"
             )
-        if base_fee > 0 and self.zero_borrow_assumption is not None:
+        if charging_capable and self.zero_borrow_assumption is not None:
             raise CostConfigError(
-                "zero_borrow_assumption is set but borrow charges a "
-                f"non-zero fee ({base_fee} bps p.a.) - contradictory tag"
+                "zero_borrow_assumption is set but the borrow component can "
+                "charge a non-zero fee (base or regional override) - "
+                "contradictory tag"
             )
         for region, mult in self.region_multipliers.items():
             if mult.value < 0:

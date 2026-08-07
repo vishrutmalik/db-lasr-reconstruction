@@ -441,6 +441,50 @@ class TestVersionConfigBridge:
         with pytest.raises(CostConfigError):
             stack_from_version_config(config)
 
+    def test_zero_base_with_regional_borrow_is_carried(self) -> None:
+        """RT-G034-3: a zero base with non-zero regional overrides is a
+        charging-capable component - carried, never dropped-and-bannered."""
+        config = CostConfig(
+            model=Param(value="linear_one_way_bps", prov=Provenance.EXPLICIT, src="t"),
+            one_way_bps=Param(value=5.0, prov=Provenance.EXPLICIT, src="t"),
+            borrow_bps_pa=Param(value=0.0, prov=Provenance.ASSUMED, src="t"),
+            borrow_bps_pa_region_override={
+                "emerging": Param(value=100.0, prov=Provenance.EXPLICIT, src="t")
+            },
+        )
+        stack = stack_from_version_config(config)
+        assert stack.borrow is not None
+        assert stack.borrow.fee_bps_pa.value == 0.0
+        assert stack.borrow.region_overrides["emerging"].value == 100.0
+        assert stack.zero_borrow_assumption is None  # charging-capable
+
+    def test_absent_base_with_regional_borrow_is_refused(self) -> None:
+        """RT-G034-3: declared absence (None) + regional rates is a
+        contradictory section - typed refusal, never silent drop."""
+        config = CostConfig(
+            model=Param(value="linear_one_way_bps", prov=Provenance.EXPLICIT, src="t"),
+            one_way_bps=Param(value=5.0, prov=Provenance.EXPLICIT, src="t"),
+            borrow_bps_pa=Param(value=None, prov=Provenance.EXPLICIT_ABSENCE, src="t"),
+            borrow_bps_pa_region_override={
+                "emerging": Param(value=100.0, prov=Provenance.EXPLICIT, src="t")
+            },
+        )
+        with pytest.raises(CostConfigError):
+            stack_from_version_config(config)
+
+    def test_zero_base_with_all_zero_overrides_stays_tagged(self) -> None:
+        config = CostConfig(
+            model=Param(value="linear_one_way_bps", prov=Provenance.EXPLICIT, src="t"),
+            one_way_bps=Param(value=5.0, prov=Provenance.EXPLICIT, src="t"),
+            borrow_bps_pa=Param(value=0.0, prov=Provenance.ASSUMED, src="t"),
+            borrow_bps_pa_region_override={
+                "free": Param(value=0.0, prov=Provenance.ASSUMED, src="t")
+            },
+        )
+        stack = stack_from_version_config(config)
+        assert stack.borrow is None
+        assert stack.zero_borrow_assumption is not None
+
     def test_missing_rate_is_typed_refusal(self) -> None:
         config = CostConfig(
             model=Param(

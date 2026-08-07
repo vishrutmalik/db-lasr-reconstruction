@@ -214,16 +214,22 @@ def grid_variants(scenario: CostScenario) -> tuple[GridVariant, ...]:
                     day_count=borrow.day_count,
                     region_overrides=borrow.region_overrides,
                 )
+                # The swept stack needs a tag exactly when it can no longer
+                # charge on ANY position (fee 0 and no positive overrides -
+                # RT-G034-3 charging-capable semantics).
+                swept_charging_capable = borrow_rate > 0 or any(
+                    p.value > 0 for p in borrow.region_overrides.values()
+                )
                 zero_tag = (
-                    Param[str](
+                    None
+                    if swept_charging_capable
+                    else Param[str](
                         value="borrow rate swept to zero for sensitivity",
                         prov=bgrid.prov,
                         src=bgrid.src,
                         assumption=bgrid.assumption,
                         cr=bgrid.cr,
                     )
-                    if borrow_rate == 0
-                    else None
                 )
             label_ow = "base" if ow is None else f"{ow:g}bps"
             label_borrow = "base" if borrow_rate is None else f"{borrow_rate:g}bppa"
@@ -292,9 +298,22 @@ def stack_from_version_config(cost_config: CostConfig) -> CostStackConfig:
         region_overrides=overrides,
     )
     borrow_param = cost_config.borrow_bps_pa
+    borrow_overrides = dict(cost_config.borrow_bps_pa_region_override)
     borrow: BorrowFeeConfig | None = None
     zero_tag: Param[str] | None = None
-    if borrow_param.value is None or borrow_param.value == 0:
+    if borrow_param.value is None and borrow_overrides:
+        # RT-G034-3: declared absence + configured regional rates is a
+        # contradictory section - refuse, never drop-and-banner.
+        raise CostConfigError(
+            "version cost section declares borrow_bps_pa absent (None) but "
+            "carries non-empty borrow_bps_pa_region_override "
+            f"{sorted(borrow_overrides)} - contradictory; either state a "
+            "base rate (0 is allowed) or remove the overrides"
+        )
+    if borrow_param.value is None or (
+        borrow_param.value == 0
+        and not any(p.value > 0 for p in borrow_overrides.values())
+    ):
         zero_tag = Param[str](
             value="zero borrow per version spec",
             prov=borrow_param.prov,
@@ -303,6 +322,8 @@ def stack_from_version_config(cost_config: CostConfig) -> CostStackConfig:
             cr=borrow_param.cr,
         )
     else:
+        # RT-G034-3: a zero base with non-zero regional overrides is a
+        # charging-capable component - carried, never dropped.
         borrow = BorrowFeeConfig(
             fee_bps_pa=Param[float](
                 value=borrow_param.value,
@@ -312,7 +333,7 @@ def stack_from_version_config(cost_config: CostConfig) -> CostStackConfig:
                 cr=borrow_param.cr,
             ),
             day_count=_DAY_COUNT_ACT365_ASSUMED,
-            region_overrides=dict(cost_config.borrow_bps_pa_region_override),
+            region_overrides=borrow_overrides,
         )
     return CostStackConfig(
         linear=linear,

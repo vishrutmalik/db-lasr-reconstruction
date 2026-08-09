@@ -24,13 +24,16 @@ Session-independent status. Update at every session end and major milestone.
 - G026 MERGED 2026-08-09 (PR #69, main f863b1d): verifier PASS + red-team
   NO_BLOCKING_FINDINGS (3 ratchets RT-G026-1/2/3 routed in integration_queue)
 - G028 IN_PROGRESS (dispatched 2026-08-09; reporting/diagnostics; agent live)
-- G034 IN_RE-VERIFICATION round 2 (r2 verifier PASS c463c34 collected;
-  r2 red-team live; PR #67 body refresh queued for merge time)
+- G034 MERGED 2026-08-09 (PR #67, main bcb878f): remediated + r2 dual gates
+  (verifier PASS c463c34; red-team NO_BLOCKING cd76220; RT-G034-6/7 ratchets
+  routed). PR body refreshed per NB-1 before merge.
+- G035 IN_PROGRESS (dispatched 2026-08-09 on G034 merge; Level-3 + risk
+  substitute; agent live)
 - G027 MERGED 2026-08-07 (PR #68, main c1cf2ad): verifier PASS + red-team
   NO_BLOCKING_FINDINGS (4 ratchets, RT-G027-8 seam -> G029 adapter)
 - Runtime truth + next actions: coordination/agent_assignments.yaml `active:`;
   resumption rules: coordination/session_handoff.md
-- Merged total: 31 goals. Red-team scorecard: G019/G020 4-blocking each,
+- Merged total: 32 goals. Red-team scorecard: G019/G020 4-blocking each,
   G022 1, G034 1 (+4 ratchets, remediated, r2 in review), G024 1 (RT-G024-1,
   in remediation) — every finding remediated or in remediation; every attack
   is a permanent test.

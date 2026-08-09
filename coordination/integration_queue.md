@@ -94,6 +94,17 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   refused (typed, arguably over-strict) — G029 adapter contract should state
   the convention (add to M-1..M-6/RT-G027-8 adapter work).
 
+## Ratcheted defects from G034 round-2 red-team (strict-xfails on main since PR #67)
+- RT-G034-6: CostModel._size_multiplier unguarded math.pow — finite valid
+  inputs (aum 1e100) crash run() with raw OverflowError (src/lasr/costs/
+  model.py:119). RT-G034-7: breakeven_one_way_bps output unguarded — silent
+  inf (optimistic) or raw OverflowError from fsum at 1e308 magnitudes
+  (src/lasr/costs/breakeven.py:94). Both physically impossible magnitudes;
+  owner: next goal owning src/lasr/costs/** (G029 hardening or a costs
+  micro-pass). r2 observations for G029 contract: public price_trade()
+  lone-group bypass; free_borrow_banner_threshold=1.0 silences partial-free
+  banners (flags survive).
+
 ## Ratcheted defects from G023 red-team (strict-xfails on main)
 - RT-G023-1: close_to_open real-time overlap not in metadata — MUST fix before
   any close_to_open config reaches CV purging (owners: G031/G033 configs,

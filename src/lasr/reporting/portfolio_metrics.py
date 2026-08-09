@@ -17,7 +17,9 @@ Pinned conventions (register candidates A-G028-04..06, A-G028-08..10):
   cash yield at zero, so 0.0 is the consistent value — still a visible
   argument).
 - Sortino downside deviation uses the full-sample denominator
-  ``sqrt(Σ min(r-target,0)² / n)`` with ``target = rf_per_period``.
+  ``sqrt(Σ min(r-target,0)² / n)`` with ``target = rf_per_period``; a
+  sample with NO below-target period reports Sortino as a typed None
+  with a note (a lucky sample is legal input; inf is never emitted).
 - Max drawdown is measured on the mark-to-market NAV path (step rows,
   prefixed with the run's opening NAV), not just period ends.
 - **Turnover (CI-046)**: the ledger's per-period ``turnover_one_way`` /
@@ -118,7 +120,12 @@ class PortfolioSummary(ReportModel):
     annualized_return: float  # geometric (A-G028-04)
     annualized_volatility: float
     sharpe: float
-    sortino: float
+    #: None (with ``sortino_note``) when NO period fell below the
+    #: target: the downside deviation is zero and the ratio undefined —
+    #: a legitimate lucky sample must not refuse the whole summary, but
+    #: an infinite/NaN Sortino is never emitted (A-G028-05).
+    sortino: float | None
+    sortino_note: str = ""
     max_drawdown: float  # positive fraction (0.1 = -10% peak-to-trough)
     mean_cost_drag_per_period: float  # cost_t / nav_start_t (CI-046 units)
     mean_borrow_drag_per_period: float
@@ -258,12 +265,19 @@ def portfolio_summary(
         )
     excess = [r - rf_per_period for r in returns]
     downside_sq = fsum(min(e, 0.0) ** 2 for e in excess) / n
-    if downside_sq == 0.0:
-        raise MetricInputError(
-            "no period return fell below the target — Sortino's downside "
-            "deviation is zero and the ratio undefined (refused, never inf)"
-        )
     sqrt_ppy = periods_per_year**0.5
+    sortino: float | None
+    sortino_note = ""
+    if downside_sq == 0.0:
+        # a lucky sample, not an input error: the ratio is undefined and
+        # reported as a typed None — never inf, never a full refusal.
+        sortino = None
+        sortino_note = (
+            "no period return fell below the target: downside deviation "
+            "is zero and the Sortino ratio undefined (A-G028-05)"
+        )
+    else:
+        sortino = mean(excess) / downside_sq**0.5 * sqrt_ppy
     cost_drags, borrow_drags = cost_borrow_drag(ledger)
     mean_cost = mean(cost_drags)
     mean_borrow = mean(borrow_drags)
@@ -275,7 +289,8 @@ def portfolio_summary(
         annualized_return=ann_return,
         annualized_volatility=vol * sqrt_ppy,
         sharpe=mean(excess) / vol * sqrt_ppy,
-        sortino=mean(excess) / downside_sq**0.5 * sqrt_ppy,
+        sortino=sortino,
+        sortino_note=sortino_note,
         max_drawdown=max_drawdown(ledger),
         mean_cost_drag_per_period=mean_cost,
         mean_borrow_drag_per_period=mean_borrow,

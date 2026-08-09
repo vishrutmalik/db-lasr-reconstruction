@@ -25,6 +25,7 @@ when supplied.
 from __future__ import annotations
 
 import math
+import typing
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -173,9 +174,7 @@ class TestICSummaryCI051CI052:
             ((1.0 - 1 / 6) ** 2 + (0.5 - 1 / 6) ** 2 + (-1.0 - 1 / 6) ** 2) / 2
         )
         assert summary.ic_vol == pytest.approx(expected_vol)
-        assert summary.information_ratio == pytest.approx(
-            (1.0 / 6.0) / expected_vol
-        )
+        assert summary.information_ratio == pytest.approx((1.0 / 6.0) / expected_vol)
         assert summary.hit_rate == pytest.approx(2.0 / 3.0)  # A-G028-02
         assert summary.n_periods == 3
 
@@ -190,9 +189,7 @@ class TestICSummaryCI051CI052:
         assert s1.ic_mean_se != s4.ic_mean_se
 
     def test_single_period_refused(self) -> None:
-        panel = make_panel(
-            {0: {"a": (1.0, -0.02), "b": (2.0, 0.01), "c": (3.0, 0.05)}}
-        )
+        panel = make_panel({0: {"a": (1.0, -0.02), "b": (2.0, 0.01), "c": (3.0, 0.05)}})
         series = ic_series(panel, method="spearman")
         with pytest.raises(MetricInputError, match=">= 2 realized periods"):
             ic_summary(series, horizon_steps=1)
@@ -339,9 +336,7 @@ class TestPredictionDecay:
         assert decay.n_pairs_by_lag == (3, 2)
 
     def test_lag_beyond_panel_refused(self) -> None:
-        panel = make_panel(
-            {0: {"a": (1.0, 0.01), "b": (2.0, 0.02)}}
-        )
+        panel = make_panel({0: {"a": (1.0, 0.01), "b": (2.0, 0.02)}})
         with pytest.raises(MetricInputError, match="no computable pair"):
             prediction_decay(panel, max_lag=1)
 
@@ -396,7 +391,12 @@ class TestNotAvailableContracts:
 
 
 class TestGroupDiagnosticsCI030:
-    GROUPS = {"a1": "tech", "a2": "tech", "b1": "fin", "b2": "fin"}
+    GROUPS: typing.ClassVar[dict[str, str]] = {
+        "a1": "tech",
+        "a2": "tech",
+        "b1": "fin",
+        "b2": "fin",
+    }
 
     def test_sector_alpha_signal_is_flagged(self) -> None:
         """A signal that IS the sector bet: nonzero cell means and a
@@ -434,6 +434,4 @@ class TestGroupDiagnosticsCI030:
 
     def test_score_outcome_mismatch_refused(self) -> None:
         with pytest.raises(MetricInputError, match="same securities"):
-            group_attributable_ic(
-                {"a1": 1.0}, {"a1": 0.1, "b1": 0.2}, self.GROUPS
-            )
+            group_attributable_ic({"a1": 1.0}, {"a1": 0.1, "b1": 0.2}, self.GROUPS)

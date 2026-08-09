@@ -90,9 +90,7 @@ class TestOOSCoverageCI009:
         folds = self._folds()
         declared = DateRange(self.GRID[4], self.GRID[10])  # claims the tail
         # plan validation accepts the claim (containment only)...
-        WalkForwardPlan(
-            config_hash="cfg", folds=folds, seed=1729, oos_window=declared
-        )
+        WalkForwardPlan(config_hash="cfg", folds=folds, seed=1729, oos_window=declared)
         # ...but the metric side shows the last grid day is never tested.
         report = oos_coverage(
             [_fit_record(f) for f in folds], declared_oos=declared, grid=self.GRID
@@ -127,7 +125,8 @@ class TestOOSCoverageCI009:
         folds = self._folds()
         with pytest.raises(MetricInputError, match="no fit records"):
             oos_coverage(
-                [], declared_oos=DateRange(self.GRID[0], self.GRID[-1]),
+                [],
+                declared_oos=DateRange(self.GRID[0], self.GRID[-1]),
                 grid=self.GRID,
             )
         with pytest.raises(MetricInputError, match="empty grid"):
@@ -252,27 +251,21 @@ def run():  # type: ignore[no-untyped-def]
     result = run_walk_forward(
         plan=plan, clock=clock, records=build.records, fit_function=_toy_fit
     )
-    test_days = sorted(
-        {p.timing.decision_time.date() for p in result.predictions}
-    )
-    universe_by_date = {
-        day: frozenset(SECURITIES) for day in test_days
-    }
+    test_days = sorted({p.timing.decision_time.date() for p in result.predictions})
+    universe_by_date = {day: frozenset(SECURITIES) for day in test_days}
     return build, result, universe_by_date
 
 
 class TestVanishedNameAccountingN8:
-
     def test_vanished_name_is_invisible_in_the_prediction_set(self, run) -> None:  # type: ignore[no-untyped-def]
         """Precondition (the G026 keeper's contract): after it vanishes,
         'gone' has NO prediction and NO UnscoredEvent."""
-        build, result, universe_by_date = run
+        _build, result, universe_by_date = run
         vanish_days = [d for d in universe_by_date if d >= LAST_TRADED]
         assert vanish_days  # the fixture really covers the vanishing
         for day in vanish_days:
             assert not any(
-                p.security_id == "gone"
-                and p.timing.decision_time.date() == day
+                p.security_id == "gone" and p.timing.decision_time.date() == day
                 for p in result.predictions
             )
             assert not any(
@@ -294,21 +287,15 @@ class TestVanishedNameAccountingN8:
         )
         assert report.fully_accounted is True
         assert report.total_unaccounted == 0
-        vanished_rows = [
-            row for row in report.rows if "gone" not in row.predicted
-        ]
+        vanished_rows = [row for row in report.rows if "gone" not in row.predicted]
         assert vanished_rows
         for row in vanished_rows:
-            skipped_ids = {
-                sec for ids in row.skipped.values() for sec in ids
-            }
+            skipped_ids = {sec for ids in row.skipped.values() for sec in ids}
             assert "gone" in skipped_ids
             assert row.universe_count == len(SECURITIES)  # denominator intact
         # the halt-then-delist straddle day carries the red-team's named
         # reason: the window opened while traded, the END price vanished.
-        straddle = next(
-            row for row in vanished_rows if row.as_of < LAST_TRADED
-        )
+        straddle = next(row for row in vanished_rows if row.as_of < LAST_TRADED)
         assert "gone" in straddle.skipped["missing_end_price"]
         # decision days after the halt have no start price either.
         later = [row for row in vanished_rows if row.as_of >= LAST_TRADED]
@@ -316,13 +303,11 @@ class TestVanishedNameAccountingN8:
         for row in later:
             assert "gone" in row.skipped["missing_start_price"]
 
-    def test_without_the_skip_ledger_the_name_is_loudly_unaccounted(
-        self, run
-    ) -> None:  # type: ignore[no-untyped-def]
+    def test_without_the_skip_ledger_the_name_is_loudly_unaccounted(self, run) -> None:  # type: ignore[no-untyped-def]
         """Teeth: dropping the skip ledger must NOT silently shrink the
         denominator — the name surfaces as UNACCOUNTED and the run-level
         flag trips."""
-        build, result, universe_by_date = run
+        _build, result, universe_by_date = run
         report = coverage_accounting(
             predictions=result.predictions,
             unscored=result.unscored,
@@ -335,11 +320,9 @@ class TestVanishedNameAccountingN8:
 
     def test_unscored_names_are_accounted(self, run) -> None:  # type: ignore[no-untyped-def]
         """UnscoredEvents (model omissions) fill their own column."""
-        build, result, universe_by_date = run
+        build, _result, universe_by_date = run
 
-        def omitting_fit(
-            selection: TrainingSelection, context: FitContext
-        ) -> object:
+        def omitting_fit(selection: TrainingSelection, context: FitContext) -> object:
             @dataclass(frozen=True)
             class Omitting:
                 fit_as_of: datetime

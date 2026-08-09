@@ -107,7 +107,7 @@ map (restated so a verifier can diff).
 | CI-006 | U + I | `U/artifacts/test_model_artifact_fields.py`; engine assertions | G024,G026,G029 |
 | CI-007 | U + L | `U/models/ensembles/test_weight_history.py`; LT-014 | G025 |
 | CI-008 | U + L | `U/models/ensembles/test_hedge_backcast.py`; LT-017 | G030,G033 |
-| CI-009 | U | `U/validation/test_hp_window_rejection.py` | G026,G028,G038 |
+| CI-009 | U | `U/validation/test_hp_window_rejection.py`; G028 tests the metric side — declared-OOS-vs-actual-coverage reconciliation in `U/test_reporting_coverage.py` (reconciles CI-009's Tested-by, G042 verification finding 1) | G026,G028,G038 |
 | CI-010 | U + L | `U/targets/test_fit_boundary_purge.py`; LT-012 | G023,G032 |
 | CI-011 | U + L | `U/models/ensembles/test_sample_selectors.py`; LT-015 | G025,G033 |
 | CI-012 | U + L | `U/targets/test_timing_chain.py`; LT-011 | G023,G026 |

@@ -101,7 +101,7 @@ class TestSpearmanCI051:
 class TestNeweyWestCI052:
     #: x = [1,2,3,4]: gamma0 = 1.25, gamma1 = 0.3125, w1 = 0.5
     #: S = 1.25 + 2*0.5*0.3125 = 1.5625; se = sqrt(1.5625/4) = 0.625
-    X = [1.0, 2.0, 3.0, 4.0]
+    X = (1.0, 2.0, 3.0, 4.0)
 
     def test_hand_fixture_lags_1(self) -> None:
         assert newey_west_se(self.X, lags=1) == pytest.approx(0.625)

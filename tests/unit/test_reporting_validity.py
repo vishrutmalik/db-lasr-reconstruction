@@ -94,7 +94,7 @@ class TestSensitivity:
 
 
 class TestBootstrapA02807:
-    SERIES = [0.04, -0.01, 0.03, 0.02, -0.02, 0.05, 0.01, 0.00]
+    SERIES = (0.04, -0.01, 0.03, 0.02, -0.02, 0.05, 0.01, 0.00)
 
     def test_double_run_is_byte_identical(self) -> None:
         """CI-042: same seed -> identical result object AND identical
@@ -169,9 +169,7 @@ class TestBootstrapA02807:
 
 class TestMultipleTesting:
     def test_adjustments_by_hand(self) -> None:
-        result = multiple_testing_diagnostics(
-            raw_p_value=0.01, n_configurations=20
-        )
+        result = multiple_testing_diagnostics(raw_p_value=0.01, n_configurations=20)
         assert result.bonferroni_p == pytest.approx(0.2)
         assert result.sidak_p == pytest.approx(1.0 - 0.99**20)
         assert result.expected_max_abs_z_under_null == pytest.approx(
@@ -179,15 +177,11 @@ class TestMultipleTesting:
         )
 
     def test_bonferroni_caps_at_one(self) -> None:
-        result = multiple_testing_diagnostics(
-            raw_p_value=0.2, n_configurations=10
-        )
+        result = multiple_testing_diagnostics(raw_p_value=0.2, n_configurations=10)
         assert result.bonferroni_p == 1.0
 
     def test_single_configuration_yardstick_is_zero(self) -> None:
-        result = multiple_testing_diagnostics(
-            raw_p_value=0.05, n_configurations=1
-        )
+        result = multiple_testing_diagnostics(raw_p_value=0.05, n_configurations=1)
         assert result.bonferroni_p == pytest.approx(0.05)
         assert result.expected_max_abs_z_under_null == 0.0
 

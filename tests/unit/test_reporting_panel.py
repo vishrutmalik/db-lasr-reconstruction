@@ -216,9 +216,7 @@ class TestCompletedWindowsCI052:
         ]
         assert incomplete  # the trailing months
         # exactly the predictions with target_end > cutoff are excluded
-        expected = sum(
-            1 for p in result.predictions if p.timing.target_end > cutoff
-        )
+        expected = sum(1 for p in result.predictions if p.timing.target_end > cutoff)
         assert len(incomplete) == expected
         # ... and none of them leaked into the panel cross-sections
         excluded_keys = {(e.as_of, e.security_id) for e in incomplete}
@@ -269,9 +267,9 @@ class TestOverlapDedupN12:
         for p in result.predictions:
             if p.timing.target_end > DATA_END:
                 continue
-            by_key.setdefault(
-                (p.security_id, p.record.row.as_of), []
-            ).append(p.timing.model_fit_time)
+            by_key.setdefault((p.security_id, p.record.row.as_of), []).append(
+                p.timing.model_fit_time
+            )
         for as_of, obs in panel:
             for o in obs:
                 assert o.model_fit_time == max(by_key[(o.security_id, as_of)])
@@ -302,7 +300,7 @@ class TestOverlapDedupN12:
         refused under every policy."""
         result = _run(clock_1m, records_1m)
         doctored = replace(
-            result, predictions=result.predictions + (result.predictions[0],)
+            result, predictions=(*result.predictions, result.predictions[0])
         )
         for policy in ("refuse", "latest_fit"):
             with pytest.raises(PanelConstructionError, match="WITHIN one fold"):

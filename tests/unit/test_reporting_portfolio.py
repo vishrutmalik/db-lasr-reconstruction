@@ -23,6 +23,7 @@ participation without an ADV series name the missing producer.
 from __future__ import annotations
 
 import math
+import typing
 from collections.abc import Mapping
 from datetime import date
 
@@ -90,9 +91,7 @@ def _periods() -> tuple[RebalancePeriod, ...]:
 
 @pytest.fixture(scope="module")
 def ledger() -> Ledger:
-    return run_accounting(
-        _periods(), initial_nav=100.0, cost_model=ZeroCostModel()
-    )
+    return run_accounting(_periods(), initial_nav=100.0, cost_model=ZeroCostModel())
 
 
 class TestPortfolioSummary:
@@ -101,18 +100,12 @@ class TestPortfolioSummary:
         # returns [0.04, -0.03]
         assert summary.n_periods == 2
         assert summary.total_return == pytest.approx(1.04 * 0.97 - 1.0)
-        assert summary.annualized_return == pytest.approx(
-            (1.04 * 0.97) ** 6.0 - 1.0
-        )
+        assert summary.annualized_return == pytest.approx((1.04 * 0.97) ** 6.0 - 1.0)
         vol = 0.035 * math.sqrt(2.0)  # ddof=1 around mean 0.005
-        assert summary.annualized_volatility == pytest.approx(
-            vol * math.sqrt(12.0)
-        )
+        assert summary.annualized_volatility == pytest.approx(vol * math.sqrt(12.0))
         assert summary.sharpe == pytest.approx(0.005 / vol * math.sqrt(12.0))
         downside = math.sqrt(0.03**2 / 2.0)  # full-sample denominator
-        assert summary.sortino == pytest.approx(
-            0.005 / downside * math.sqrt(12.0)
-        )
+        assert summary.sortino == pytest.approx(0.005 / downside * math.sqrt(12.0))
         # zero-cost run: all drags exactly zero
         assert summary.mean_cost_drag_per_period == 0.0
         assert summary.annualized_borrow_drag == 0.0
@@ -122,20 +115,40 @@ class TestPortfolioSummary:
         assert max_drawdown(ledger) == pytest.approx(1.0 - 100.88 / 104.0)
 
     def test_rf_is_explicit_and_finite(self, ledger: Ledger) -> None:
-        higher_rf = portfolio_summary(
-            ledger, periods_per_year=12.0, rf_per_period=0.01
+        higher_rf = portfolio_summary(ledger, periods_per_year=12.0, rf_per_period=0.01)
+        assert (
+            higher_rf.sharpe < portfolio_summary(ledger, periods_per_year=12.0).sharpe
         )
-        assert higher_rf.sharpe < portfolio_summary(
-            ledger, periods_per_year=12.0
-        ).sharpe
         with pytest.raises(MetricInputError, match="rf_per_period"):
-            portfolio_summary(
-                ledger, periods_per_year=12.0, rf_per_period=float("nan")
-            )
+            portfolio_summary(ledger, periods_per_year=12.0, rf_per_period=float("nan"))
 
     def test_ppy_never_inferred(self, ledger: Ledger) -> None:
         with pytest.raises(MetricInputError, match="periods_per_year"):
             portfolio_summary(ledger, periods_per_year=0.0)
+
+    def test_lucky_sample_sortino_is_typed_none_never_inf(self) -> None:
+        """A run with no losing period has an undefined Sortino: typed
+        None + note (A-G028-05), while every other metric still
+        computes — never inf, never a full refusal."""
+        winning = (
+            RebalancePeriod(
+                rebalance_date=JAN,
+                target=BOOK,
+                steps=(MarkStep(mark_date=FEB, returns={"L": 0.10, "S": 0.02}),),
+                day_count_fraction=1.0 / 12.0,
+            ),
+            RebalancePeriod(
+                rebalance_date=FEB,
+                target=BOOK,
+                steps=(MarkStep(mark_date=MAR, returns={"L": 0.06, "S": 0.01}),),
+                day_count_fraction=1.0 / 12.0,
+            ),
+        )
+        lucky = run_accounting(winning, initial_nav=100.0, cost_model=ZeroCostModel())
+        summary = portfolio_summary(lucky, periods_per_year=12.0)
+        assert summary.sortino is None
+        assert "downside deviation" in summary.sortino_note
+        assert summary.sharpe > 0.0  # the rest of the summary survives
 
 
 class TestTurnoverCI046:
@@ -249,12 +262,8 @@ class TestGroupExposuresA02809:
 
 
 class TestPerformanceByGroup:
-    def test_contributions_sum_to_the_gross_period_return(
-        self, ledger: Ledger
-    ) -> None:
-        contributions = performance_by_group(
-            _periods(), {"L": "tech", "S": "fin"}
-        )
+    def test_contributions_sum_to_the_gross_period_return(self, ledger: Ledger) -> None:
+        contributions = performance_by_group(_periods(), {"L": "tech", "S": "fin"})
         # P1: tech = 0.5*0.10 = 0.05; fin = -0.5*0.02 = -0.01; total 0.04
         assert contributions[0].contribution_by_group == {
             "fin": pytest.approx(-0.01),
@@ -263,9 +272,7 @@ class TestPerformanceByGroup:
         assert contributions[0].total == pytest.approx(0.04)
         # cross-check against the engine's own reconciliation path
         # (zero costs: check_return == gross weighted return)
-        for row, contribution in zip(
-            ledger.periods, contributions, strict=True
-        ):
+        for row, contribution in zip(ledger.periods, contributions, strict=True):
             assert contribution.total == pytest.approx(row.check_return)
 
     def test_terminated_factor_freezes_and_missing_mark_refused(self) -> None:
@@ -284,9 +291,7 @@ class TestPerformanceByGroup:
             ),
             day_count_fraction=1.0 / 12.0,
         )
-        contributions = performance_by_group(
-            (period,), {"A": "tech", "B": "fin"}
-        )
+        contributions = performance_by_group((period,), {"A": "tech", "B": "fin"})
         assert contributions[0].contribution_by_group == {
             "fin": pytest.approx(0.4 * 0.05),
             "tech": pytest.approx(0.6 * 0.10),  # frozen after termination
@@ -317,9 +322,7 @@ class TestPerformanceByBucket:
         labels = calendar_year_labels(ledger)
         report = performance_by_bucket(ledger, labels)
         assert report.buckets == {"2020": 2}
-        assert report.cumulative_return["2020"] == pytest.approx(
-            1.04 * 0.97 - 1.0
-        )
+        assert report.cumulative_return["2020"] == pytest.approx(1.04 * 0.97 - 1.0)
 
     def test_unlabeled_date_refused(self, ledger: Ledger) -> None:
         with pytest.raises(MetricInputError, match="unlabeled"):
@@ -327,7 +330,7 @@ class TestPerformanceByBucket:
 
 
 class TestCapacityAndParticipation:
-    ADV = {JAN: 1000.0, FEB: 500.0}
+    ADV: typing.ClassVar[dict[date, float]] = {JAN: 1000.0, FEB: 500.0}
 
     def test_not_available_without_adv(self, ledger: Ledger) -> None:
         for result in (

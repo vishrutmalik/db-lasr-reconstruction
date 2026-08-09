@@ -65,7 +65,9 @@ def _artifact(*, synthetic: bool) -> ReportArtifact:
         ),
         bootstrap=(
             block_bootstrap_mean(
-                [0.04, -0.01, 0.03, 0.02], n_resamples=99, block_length=2,
+                [0.04, -0.01, 0.03, 0.02],
+                n_resamples=99,
+                block_length=2,
                 seed=SEED,
             ),
         ),

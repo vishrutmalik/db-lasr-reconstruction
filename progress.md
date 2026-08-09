@@ -19,9 +19,12 @@ Session-independent status. Update at every session end and major milestone.
 - Evidence matrix federated over per-source row files (D-005).
 
 ## Active assignments (2026-08-09)
-- G024 REMEDIATED 2026-08-09 (6595a23; coverage-honest min-Z default,
-  goldens bit-exact; PR #70 CI green) — r2 verifier + red-team re-checks live
-  (original reviewers resumed from transcripts)
+- G024 MERGED 2026-08-09 (PR #70, main 3851208): RT-G024-1 remediated
+  (coverage-honest min-Z default, goldens bit-exact); r2 dual gates —
+  verifier PASS 6c09c53 (config touch ratified) + red-team NO_BLOCKING
+  3bde555 (keeper integrity confirmed; O-R2 -> G037)
+- G025 IN_PROGRESS (dispatched 2026-08-09 on G024 merge; temporal ensembles;
+  agent live)
 - G026 MERGED 2026-08-09 (PR #69, main f863b1d): verifier PASS + red-team
   NO_BLOCKING_FINDINGS (3 ratchets RT-G026-1/2/3 routed in integration_queue)
 - G028 IN_PROGRESS (dispatched 2026-08-09; reporting/diagnostics; agent live)
@@ -34,10 +37,9 @@ Session-independent status. Update at every session end and major milestone.
   NO_BLOCKING_FINDINGS (4 ratchets, RT-G027-8 seam -> G029 adapter)
 - Runtime truth + next actions: coordination/agent_assignments.yaml `active:`;
   resumption rules: coordination/session_handoff.md
-- Merged total: 32 goals. Red-team scorecard: G019/G020 4-blocking each,
-  G022 1, G034 1 (+4 ratchets, remediated, r2 in review), G024 1 (RT-G024-1,
-  in remediation) — every finding remediated or in remediation; every attack
-  is a permanent test.
+- Merged total: 33 goals. Red-team scorecard: G019/G020 4-blocking each,
+  G022 1, G034 1 (+4 ratchets), G024 1 — ALL remediated, r2-cleared, and
+  merged; every attack is a permanent test.
 
 ## Blockers
 - (none active). `gh` CLI at `~/.local/bin/gh` (NOT on default PATH), authenticated,

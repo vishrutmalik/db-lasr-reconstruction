@@ -2,20 +2,17 @@
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
 active:
-  G024:
+  G025:
     agent_role: implementer
-    objective: N-LASR 2012 kernel + shared boosting loop + min-Z (D-008)
-    github_issue: 24
-    pr: 70
-    branch: agent/implementer/G024-nlasr-kernel
-    worktree: .worktrees/G024-implementer (recreated at checkpoint; primary checkout had drifted onto this branch — repaired)
-    status: REMEDIATED -> IN_RE-VERIFICATION round 2 (PR #70 CI green at HEAD 6595a23)
-    latest_commit: 6595a23 (remediation complete: coverage-honest default Z' = Z + U/2, bit-identical at full coverage — goldens exact; raw arm config-expressible with warning; ratchets flipped; raw defect pinned in TestRawModeDefectPinned; RT-G024-2/NB-1/NB-3 fixed)
-    runtime_implementer: REMEDIATION COLLECTED 2026-08-09 (agent ad7f53a7e2aaa0b23) — flagged one out-of-lane additive touch: src/lasr/config/selection.py optional coverage_adjustment leaf (default None); orchestrator PROVISIONALLY RATIFIED pending r2 verifier ruling (charter/R-1/red-team all required the knob)
-    runtime_verifier_r2: PASS COLLECTED 2026-08-09 (agent ac210e9ac88d3fb70) — addendum 6c09c53; 0 blocking, 3 NB (NB-A1 >= nuance; NB-A2 O(eps) argmin divergence inherent to raw-Z; NB-A3 factor_id-must-be-column -> G031/G033 protocol note); ratchet restructure ruled TEETH PRESERVED; config touch RATIFIED (R-1/R-2 both resolved)
-    runtime_red_team_r2: RESUMED FROM TRANSCRIPT 2026-08-09 (agent a4ec6daaac4eed90d, live) — keeper-edit integrity priority (ratchet restructure vs original attack intent); re-attack coverage-honest scoring
-    next_action: collect both r2 verdicts; on dual PASS merge PR #70 and dispatch G025
-    owned_paths: ["src/lasr/models/boosting.py", "src/lasr/models/selection.py", "src/lasr/models/nlasr/**", "tests/unit/test_models*.py", "LT-005 grant"]
+    objective: Temporal ensemble framework (ExpertSpec/EnsembleConfig over the G024 kernel)
+    github_issue: 25
+    pr: (pending — agent opens it)
+    branch: agent/implementer/G025-ensembles
+    worktree: .worktrees/G025-ensembles
+    status: IN_PROGRESS (dispatched 2026-08-09 on G024 merge)
+    runtime_implementer: LAUNCHED 2026-08-09 (agent a5fbdf23f8c1caf7c, live) — charter: version-spec ensemble rules, CI-007/011/022/043, epsilon+rounds inheritance, zscore-degeneracy fix (grant), LT-005 G025-marker flip + NB-2 reconcile, R-2 propagate_nan pin, coverage_adjustment A/B reachability, O-R3 interpretation note
+    next_action: collect implementation; then verifier + red-team (quantitatively sensitive)
+    owned_paths: ["src/lasr/models/ensembles/**", "tests/unit/test_models_ensembles*.py", "grants: LT-005 marker flip, kernel docstring one-liner, zscore degeneracy fix at definition site"]
   G028:
     agent_role: implementer
     objective: Reporting & diagnostics (signal + portfolio + research-validity metrics)
@@ -40,6 +37,13 @@ active:
     owned_paths: ["src/lasr/risk/**", "src/lasr/portfolio/level3*.py", "tests/unit/test_risk*.py", "tests/unit/test_portfolio_level3*.py", "grant: scipy dependency line in pyproject.toml"]
 
 history:
+  - goal_id: G024
+    agent_role: implementer
+    branch: agent/implementer/G024-nlasr-kernel (deleted after verified merge)
+    final_commit: 99b4a7f (kernel) + a6d04a8 (verify PASS r1) + 358db29/a94becb (red-team r1: RT-G024-1 BLOCKING) + 3306262..6595a23 (remediation: coverage-honest default) + 6c09c53 (r2 verify PASS, config touch ratified) + e141929/a5aee7f/3bde555 (r2 red-team NO_BLOCKING, keeper integrity confirmed)
+    pr: 70 (MERGED 2026-08-09, main 3851208)
+    verification: r1 verifier PASS + red-team BLOCKING -> remediated; r2 dual gates PASS/NO_BLOCKING (docs/verification+red_team/G024.md; A-G024-03 amended; O-R2 missingness channel -> G037; NB-A3 -> G031/G033)
+    worktree: removed
   - goal_id: G034
     agent_role: implementer
     branch: agent/implementer/G034-costs (deleted after verified merge)

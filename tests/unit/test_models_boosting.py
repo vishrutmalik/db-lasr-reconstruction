@@ -675,6 +675,49 @@ class TestFittedModelArtifact:
         with pytest.raises(BoostingError, match="no decoder"):
             deserialize_fitted_model(payload, {})
 
+    def test_bool_train_row_count_rejected(self) -> None:
+        """Verification NB-3: bool is a subclass of int — True must NOT
+        deserialize as row count 1."""
+        model = FittedModel(config_hash="cfg", boost=self.result(), train_row_count=10)
+        payload = dict(serialize_fitted_model(model))
+        payload["train_row_count"] = True
+        with pytest.raises(BoostingError, match="bool is not a row count"):
+            deserialize_fitted_model(payload, DECODERS)
+
+
+class TestPropagateNanTrainingDiagnostics:
+    """RT-G024-2 / verification NB-1 — under missing_policy='propagate_nan'
+    (the OQ-P1-05 declared alternative) a missing TRAINING rank makes the
+    selected factor's h NaN; the loop must refuse BEFORE the weight update
+    with an error that names the factor, the missing-rank count, and the
+    policy that caused it — not the downstream 'weight mass ... got nan'."""
+
+    @staticmethod
+    def matrix() -> TrainingMatrix:
+        return TrainingMatrix(
+            factor_ids=("SPARSE",),
+            ranks=np.array([[0.2], [0.4], [np.nan], [0.8], [1.0], [0.6]]),
+            labels=np.array([1, -1, 1, -1, 1, -1], dtype=np.int8),
+        )
+
+    def test_error_names_factor_policy_and_missing_count(self) -> None:
+        kernel = PiecewiseConstantBinKernel(n_bins=2, missing_policy="propagate_nan")
+        with pytest.raises(BoostingError) as excinfo:
+            boost(self.matrix(), kernel, MinZObjective(), boost_cfg(1))
+        message = str(excinfo.value)
+        assert "'SPARSE'" in message
+        assert "propagate_nan" in message
+        assert "1 missing training rank" in message
+        assert "RT-G024-2" in message
+        assert "h_zero" in message  # points at the policy that CAN train
+
+    def test_h_zero_trains_through_the_same_panel(self) -> None:
+        """Control: the default policy trains on the identical panel —
+        the refusal above is the policy, not the data."""
+        kernel = PiecewiseConstantBinKernel(n_bins=2, missing_policy="h_zero")
+        result = boost(self.matrix(), kernel, MinZObjective(), boost_cfg(1))
+        assert result.selected_factor_ids == ("SPARSE",)
+
 
 class TestPooledWindowDiscipline:
     """CI-024 — pooled months weight equally per OBSERVATION, and the loop

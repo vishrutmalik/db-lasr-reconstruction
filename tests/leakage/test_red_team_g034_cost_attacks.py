@@ -1,0 +1,474 @@
+"""Red-team G034: adversarial attacks on the transaction-cost & borrow
+model (docs/red_team/G034.md).
+
+Keepers promoted from the executed probe battery. All five ratchets
+(RT-G034-1 break-even 2x overstatement; RT-G034-2 participation/impact
+evasion by trade splitting; RT-G034-3 bridge drops configured regional
+borrow; RT-G034-4 in-place preset mutation; RT-G034-5 non-finite
+charges flow through silently) have been FIXED and their strict-xfail
+markers flipped to permanent regressions, per the red_team_g019/g023
+precedent. The N2/N3 loudness pins were upgraded with the remediation
+(free-borrow flag + banner; both entry points guarded) — pre-fix
+behavior is preserved in comments. Everything else pins an invariant
+that held under attack (or an interface convention whose silent misuse
+G029 must guard) and must keep holding.
+"""
+
+from __future__ import annotations
+
+import math
+from datetime import date, timedelta
+
+import pytest
+
+from lasr.config.provenance import Param, Provenance
+from lasr.config.sections import CostConfig
+from lasr.costs import (
+    PARTICIPATION_EXCEEDED_FLAG,
+    BorrowFeeConfig,
+    CostModel,
+    CostStackConfig,
+    DayCount,
+    HardToBorrowError,
+    LinearCostConfig,
+    MarketImpactConfig,
+    ShortPosition,
+    Trade,
+    breakeven_one_way_bps,
+)
+from lasr.costs.errors import CostConfigError
+from lasr.costs.scenarios import PRESETS
+
+pytestmark = pytest.mark.leakage
+
+D = date(2020, 6, 5)
+_A = Provenance.ASSUMED
+
+
+def _pf(value: float) -> Param[float]:
+    return Param[float](value=value, prov=_A, src="red-team G034 keeper")
+
+
+def _ps(value: str) -> Param[str]:
+    return Param[str](value=value, prov=_A, src="red-team G034 keeper")
+
+
+def _linear_stack(bps: float) -> CostStackConfig:
+    return CostStackConfig(
+        linear=LinearCostConfig(one_way_bps=_pf(bps)),
+        zero_borrow_assumption=_ps("keeper: no shorts in this scenario"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# RT-G034-1 (BLOCKING, FIXED): break-even must reconcile with the CostModel's
+# own charging. Was: drag = rate x ONE-WAY turnover (half of what CostModel
+# charges -> break-even overstated 2x). Fixed: drag = rate x 2 x one-way
+# turnover (per-dollar-traded on both legs); ratchet flipped to a permanent
+# regression per the red_team_g019/g023 precedent.
+# ---------------------------------------------------------------------------
+
+
+def test_rt1_breakeven_zeroes_the_cost_models_own_net() -> None:
+    # NAV 100; one period; rebalance sells 50 of A and buys 50 of B.
+    # CI-046 one-way turnover = 0.5 * (0.5 + 0.5) = 0.5. Gross = 1%.
+    nav = 100.0
+    gross = [0.01]
+    one_way_turnover = [0.5]
+    trades = [Trade("A", D, -50.0), Trade("B", D, +50.0)]
+
+    be_bps = breakeven_one_way_bps(gross, one_way_turnover)
+    model = CostModel(_linear_stack(be_bps))
+    net = gross[0] * nav - model.run(trades).totals.total
+    assert net == pytest.approx(0.0, abs=1e-9), (
+        f"net at the module's break-even is {net:+.4f} on NAV 100 (the "
+        "CostModel charges twice the drag the break-even assumed)"
+    )
+
+
+def test_rt1_independent_true_breakeven_for_the_same_history() -> None:
+    """Teeth for RT-G034-1: the per-dollar-traded break-even (half the
+    module's answer) DOES zero the CostModel's net exactly."""
+    nav = 100.0
+    trades = [Trade("A", D, -50.0), Trade("B", D, +50.0)]
+    total_traded = sum(t.notional for t in trades)  # 100.0, two-way
+    true_be_bps = (0.01 * nav) / total_traded / 1e-4  # 100 bps
+    model = CostModel(_linear_stack(true_be_bps))
+    net = 0.01 * nav - model.run(trades).totals.total
+    assert net == pytest.approx(0.0, abs=1e-12)
+    # post-fix: the module's answer IS the reconciled per-dollar-traded rate
+    # (pre-fix it was exactly 2x this value - docs/red_team/G034.md RT-G034-1)
+    assert breakeven_one_way_bps([0.01], [0.5]) == pytest.approx(true_be_bps)
+
+
+# ---------------------------------------------------------------------------
+# RT-G034-2 (FIXED): ADV-participation breaches (and convex impact) were
+# evaded by splitting one (security, date) trade into duplicate rows. Fixed:
+# the model aggregates GROSS traded notional per (security, trade_date)
+# before participation/impact pricing (A-G034-07) with pro-rata allocation;
+# ratchet flipped to a permanent regression.
+# ---------------------------------------------------------------------------
+
+
+def test_rt2_participation_flag_survives_trade_splitting() -> None:
+    model = CostModel(PRESETS["p2_flat_20"].stack)
+    adv = 10_000_000.0  # cap = 10% x ADV = 1M
+    split = model.run([Trade("X", D, 500_000.0, adv_notional=adv) for _ in range(4)])
+    flags = [f for tc in split.trade_costs for f in tc.flags]
+    assert PARTICIPATION_EXCEEDED_FLAG in flags, (
+        "2M traded in X on one day against a 1M cap must surface a "
+        "participation breach regardless of row slicing"
+    )
+
+
+def test_rt2_single_row_breach_is_flagged_and_linear_is_split_invariant() -> None:
+    """Teeth + held invariant: the same 2M as ONE row IS flagged, and the
+    linear bucket is identical either way (per-dollar charging is correct
+    for the linear component)."""
+    model = CostModel(PRESETS["p2_flat_20"].stack)
+    adv = 10_000_000.0
+    single = model.run([Trade("X", D, 2_000_000.0, adv_notional=adv)])
+    split = model.run([Trade("X", D, 500_000.0, adv_notional=adv) for _ in range(4)])
+    assert PARTICIPATION_EXCEEDED_FLAG in [
+        f for tc in single.trade_costs for f in tc.flags
+    ]
+    assert split.totals.linear == pytest.approx(single.totals.linear)
+
+
+def test_rt2_convex_impact_shrinks_under_splitting_documented() -> None:
+    """Was executable documentation of the convexity hole (sqrt law):
+    slicing 1M @ 1M ADV into two rows cut the impact charge to 1/sqrt(2).
+    Post-fix (A-G034-07): the model itself aggregates per (security,
+    date) before impact pricing, so splitting is charge-INVARIANT."""
+    stack = CostStackConfig(
+        linear=LinearCostConfig(one_way_bps=_pf(0.0)),
+        impact=MarketImpactConfig(coefficient_bps=_pf(10.0), exponent=_pf(0.5)),
+        zero_borrow_assumption=_ps("keeper"),
+    )
+    model = CostModel(stack)
+    one = model.run([Trade("X", D, 1e6, adv_notional=1e6)]).totals.impact
+    two = model.run(
+        [Trade("X", D, 5e5, adv_notional=1e6) for _ in range(2)]
+    ).totals.impact
+    ten = model.run(
+        [Trade("X", D, 1e5, adv_notional=1e6) for _ in range(10)]
+    ).totals.impact
+    assert two == pytest.approx(one, rel=1e-12)  # pre-fix: one / sqrt(2)
+    assert ten == pytest.approx(one, rel=1e-12)  # pre-fix: 0.316 x one
+
+
+# ---------------------------------------------------------------------------
+# RT-G034-3 (FIXED): the version-config bridge silently DROPPED configured
+# non-zero regional borrow when the base borrow was 0/None - and bannered the
+# run as an evidenced zero-borrow assumption. Fixed: base 0 + non-zero
+# overrides is carried as a charging-capable component (no tag); base None +
+# overrides is refused as contradictory; ratchet flipped.
+# ---------------------------------------------------------------------------
+
+
+def test_rt3_bridge_must_not_silently_drop_regional_borrow() -> None:
+    from lasr.costs.scenarios import stack_from_version_config
+
+    cfg = CostConfig(
+        model=Param(value="linear_one_way_bps", prov=Provenance.EXPLICIT, src="probe"),
+        one_way_bps=Param(value=5.0, prov=Provenance.EXPLICIT, src="probe"),
+        borrow_bps_pa=Param(value=0.0, prov=_A, src="probe: zero base"),
+        borrow_bps_pa_region_override={
+            "emerging": Param(value=100.0, prov=Provenance.EXPLICIT, src="probe")
+        },
+    )
+    try:
+        stack = stack_from_version_config(cfg)
+    except CostConfigError:
+        return  # refusing the contradictory section is an acceptable fix
+    assert stack.borrow is not None, (
+        "non-zero regional borrow was configured; the bridge must either "
+        "carry it or refuse, never drop it and banner zero-borrow"
+    )
+    accrual = CostModel(stack).accrue_borrow(
+        [ShortPosition("EMX", D, 1e6, accrual_days=365, region="emerging")]
+    )[0]
+    assert accrual.amount == pytest.approx(100e-4 * 1e6)
+
+
+# ---------------------------------------------------------------------------
+# RT-G034-4 (FIXED): registered presets were not deeply immutable - dict-typed
+# fields (region_overrides / region_multipliers) mutated in place, silently
+# re-rating every subsequent user of PRESETS. Fixed: mapping fields validate
+# into MappingProxyType (the G022-N3 pattern); mutation raises TypeError;
+# ratchet flipped.
+# ---------------------------------------------------------------------------
+
+
+def test_rt4_registered_preset_dict_fields_are_immutable() -> None:
+    linear = PRESETS["p3_tiers"].stack.linear
+    assert linear is not None
+    original = linear.region_overrides["latam"]
+    try:
+        with pytest.raises(TypeError):
+            linear.region_overrides["latam"] = _pf(0.01)
+    finally:
+        # restore the evidence value if the mutation went through (today)
+        if linear.region_overrides.get("latam") is not original:
+            linear.region_overrides["latam"] = original
+    assert linear.region_overrides["latam"] is original
+
+
+def test_rt4_pristine_preset_charges_the_evidence_rate() -> None:
+    """Guard for the guard: whatever earlier tests did, the registered
+    p3_tiers preset must charge LATAM exactly 50 bps (P3-28 p.63)."""
+    model = CostModel(PRESETS["p3_tiers"].stack)
+    cost = model.run([Trade("PBR", D, 1_000_000.0, region="latam")])
+    assert cost.totals.linear == pytest.approx(50e-4 * 1_000_000.0)
+    assert cost.totals.total == cost.totals.linear  # all-in per-trade bps
+
+
+# ---------------------------------------------------------------------------
+# RT-G034-5 (FIXED): non-finite charges. All INPUTS individually valid but
+# the CHARGE was never validated: 0 * inf = NaN (and +inf, and an untyped
+# OverflowError) flowed through totals and net_of silently. Fixed: zero
+# coefficient short-circuits to an honest 0; overflowing participation /
+# pow raise typed refusals; every component charge and borrow accrual is
+# finiteness-guarded before entering totals; ratchet flipped.
+# ---------------------------------------------------------------------------
+
+
+def test_rt5_charges_are_finite_or_refused_loudly() -> None:
+    stack = CostStackConfig(
+        linear=LinearCostConfig(one_way_bps=_pf(5.0)),
+        impact=MarketImpactConfig(coefficient_bps=_pf(0.0), exponent=_pf(0.5)),
+        zero_borrow_assumption=_ps("keeper"),
+    )
+    # participation = 1e155/1e-155 overflows to inf; 0 * inf = NaN
+    trade = Trade("X", D, 1e155, adv_notional=1e-155)
+    result = CostModel(stack).run([trade])  # a typed refusal here is the fix
+    assert math.isfinite(result.totals.impact) and result.totals.impact >= 0.0
+
+
+# ---------------------------------------------------------------------------
+# RT-G034-N1 pin: borrow accrues EXACTLY fee x sum(accrual_days)/365 - the
+# model has no calendar; marks with the default accrual_days=1 on business
+# days cover only ~252/365 of a held-all-year short. G029's ledger adapter
+# owns calendar coverage; this pin is its executable contract.
+# ---------------------------------------------------------------------------
+
+
+def test_n1_borrow_exact_in_covered_days_but_daily_default_undercovers() -> None:
+    model = CostModel(PRESETS["p4_base"].stack)  # 50 bp p.a., ACT/365
+    notional = 1_000_000.0
+
+    def business_days(year: int) -> list[date]:
+        day, end, out = date(year, 1, 1), date(year, 12, 31), []
+        while day <= end:
+            if day.weekday() < 5:
+                out.append(day)
+            day += timedelta(days=1)
+        return out
+
+    marks_default = [ShortPosition("S", d, notional) for d in business_days(2015)]
+    accrued = sum(a.amount for a in model.accrue_borrow(marks_default))
+    covered = sum(m.accrual_days for m in marks_default)
+    # the model is exact w.r.t. covered days...
+    assert accrued == pytest.approx(50e-4 * notional * covered / 365.0)
+    # ...but naive business-daily marking with the DEFAULT accrual_days=1
+    # covers 261 of 365 calendar days: 28.5% of the P4 borrow would
+    # silently evaporate unless the G027/G029 adapter sets accrual_days to
+    # the calendar gap between marks (A-G034-05).
+    assert covered == 261
+    assert accrued < 0.72 * (50e-4 * notional)
+
+    # correct usage reconciles to the full year exactly
+    prev = date(2014, 12, 31)
+    marks_correct = []
+    for d in business_days(2015):
+        marks_correct.append(
+            ShortPosition("S", d, notional, accrual_days=(d - prev).days)
+        )
+        prev = d
+    full = sum(a.amount for a in model.accrue_borrow(marks_correct))
+    assert sum(m.accrual_days for m in marks_correct) == 365
+    assert full == pytest.approx(50e-4 * notional)
+
+
+# ---------------------------------------------------------------------------
+# RT-G034-N2 pin (behavior upgraded): per-security borrow overrides of 0 on a
+# fee>0 stack used to accrue nothing with no banner and no flag. Now the
+# zero-fee accrual is flagged and the borrow-free share of short
+# notional-days above free_borrow_banner_threshold banners the run.
+# ---------------------------------------------------------------------------
+
+
+def test_n2_zero_fee_override_shorts_are_flagged_and_bannered() -> None:
+    model = CostModel(PRESETS["p4_base"].stack)
+    result = model.run(
+        [],
+        [
+            ShortPosition(
+                "FREE",
+                D,
+                99_000_000.0,
+                accrual_days=365,
+                borrow_fee_bps_pa_override=0.0,
+            ),
+            ShortPosition("PAID", D, 1_000_000.0, accrual_days=365),
+        ],
+    )
+    assert result.totals.borrow == pytest.approx(50e-4 * 1_000_000.0)
+    # 99% of the short book borrowed free; pre-fix this was silent:
+    assert result.zero_borrow_banner is not None
+    assert "99.0%" in result.zero_borrow_banner
+    assert result.borrow_accruals[0].amount == 0.0
+    assert result.borrow_accruals[0].flags == ("zero_fee_resolved",)
+    assert result.borrow_accruals[1].flags == ()  # paid leg stays clean
+
+
+# ---------------------------------------------------------------------------
+# RT-G034-N3 pin (behavior upgraded): the HTB "forbid" tripwire and the
+# zero-borrow banner WARNING used to exist only on run(); the protocol's
+# accrue_borrow() bypassed both. Now both public entry points enforce the
+# HTB policy and log the banner; the banner STRING lives on run()'s result.
+# ---------------------------------------------------------------------------
+
+
+def test_n3_htb_forbid_and_banner_guard_every_entrypoint(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    stack = CostStackConfig(
+        linear=LinearCostConfig(one_way_bps=_pf(5.0)),
+        borrow=BorrowFeeConfig(
+            fee_bps_pa=_pf(50.0),
+            day_count=Param[DayCount](
+                value="act_365", prov=_A, src="red-team G034 keeper"
+            ),
+        ),
+        hard_to_borrow_policy="forbid",
+    )
+    model = CostModel(stack)
+    htb_book = [ShortPosition("HTB", D, 1e6, accrual_days=30, hard_to_borrow=True)]
+    with pytest.raises(HardToBorrowError):
+        model.run([], htb_book)
+    # same book, same stack, protocol method: raises too (pre-fix: quiet)
+    with pytest.raises(HardToBorrowError):
+        model.accrue_borrow(htb_book)
+
+    # the zero-borrow banner WARNING fires on the protocol path as well
+    p2 = CostModel(PRESETS["p2_flat_20"].stack)
+    shorts = [ShortPosition("S", D, 1e6, accrual_days=30)]
+    assert p2.run([], shorts).zero_borrow_banner is not None
+    with caplog.at_level("WARNING", logger="lasr.costs.model"):
+        accruals = p2.accrue_borrow(shorts)
+    assert sum(a.amount for a in accruals) == 0.0
+    assert any("ZERO-BORROW ASSUMPTION" in r.message for r in caplog.records)
+
+
+# ---------------------------------------------------------------------------
+# RT-G034-N4 pin: the version bridge accepts a base_bps outside the declared
+# scenario grid and lets base_bps outrank a contradictory one_way_bps -
+# silently. Held behaviour documented pending a section-level guard.
+# ---------------------------------------------------------------------------
+
+
+def test_n4_bridge_accepts_off_grid_and_contradictory_rates_today() -> None:
+    from lasr.costs.scenarios import stack_from_version_config
+
+    below_grid = CostConfig(
+        model=Param(value="linear_one_way_bps", prov=Provenance.EXPLICIT, src="p"),
+        scenario_grid_bps=Param(
+            value=[5, 10, 15, 20, 25, 30], prov=Provenance.EXPLICIT, src="P1-38"
+        ),
+        base_bps=Param(value=1.0, prov=_A, src="below the declared grid floor"),
+        borrow_bps_pa=Param(value=None, prov=Provenance.EXPLICIT_ABSENCE, src="p"),
+    )
+    stack = stack_from_version_config(below_grid)
+    assert stack.linear is not None
+    assert stack.linear.one_way_bps.value == 1.0  # accepted, no guard today
+
+    contradictory = CostConfig(
+        model=Param(value="linear_one_way_bps", prov=Provenance.EXPLICIT, src="p"),
+        one_way_bps=Param(value=20.0, prov=Provenance.EXPLICIT, src="paper rate"),
+        base_bps=Param(value=5.0, prov=_A, src="quiet override"),
+        borrow_bps_pa=Param(value=None, prov=Provenance.EXPLICIT_ABSENCE, src="p"),
+    )
+    resolved = stack_from_version_config(contradictory)
+    assert resolved.linear is not None
+    assert resolved.linear.one_way_bps.value == 5.0  # base_bps wins silently
+
+
+# ---------------------------------------------------------------------------
+# ROUND 2 (docs/red_team/G034.md "Round 2"). RT-G034-6: the RT-5 fix added
+# a typed OverflowError guard to MarketImpact's pow but NOT to the
+# size-scaling modifier's math.pow - a finite (aum/reference_aum)^exponent
+# that overflows escapes as a raw untyped OverflowError from run(),
+# violating the MP §26 typed-error rule the e13a943 fix claims to close.
+# Unreachable at realistic magnitudes and every preset keeps size_scaling
+# off - non-blocking ratchet, same classification as round-1 RT-G034-5.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=OverflowError,
+    reason=(
+        "RT-G034-6 (round 2): CostModel._size_multiplier calls math.pow "
+        "without the OverflowError guard its sibling MarketImpact got in "
+        "e13a943; (aum/reference_aum)^exponent overflow surfaces as a raw "
+        "OverflowError instead of a typed CostError refusal "
+        "(docs/red_team/G034.md round 2)"
+    ),
+)
+def test_rt6_size_scaling_pow_overflow_must_be_typed() -> None:
+    from lasr.costs import CostBucket, RunContext, SizeScalingConfig
+    from lasr.costs.errors import CostError
+
+    stack = CostStackConfig(
+        linear=LinearCostConfig(one_way_bps=_pf(5.0)),
+        size_scaling=SizeScalingConfig(
+            reference_aum=_pf(1.0),
+            exponent=_pf(4.0),
+            applies_to=Param[tuple[CostBucket, ...]](
+                value=(CostBucket.LINEAR,), prov=_A, src="red-team G034 round 2"
+            ),
+        ),
+        zero_borrow_assumption=_ps("keeper"),
+    )
+    # multiplier = (1e100 / 1)^4 > 1.8e308: must be a TYPED refusal
+    with pytest.raises(CostError):
+        CostModel(stack).run([Trade("X", D, 1.0)], context=RunContext(aum=1e100))
+
+
+# ---------------------------------------------------------------------------
+# RT-G034-7: breakeven_one_way_bps validates INPUTS finite but never its
+# OUTPUT - gross/turnover ratios beyond float range return inf SILENTLY
+# (optimistic direction: "survives any cost"), and extreme gross series
+# raise an untyped OverflowError from math.fsum. Physically impossible
+# magnitudes (gross ~1e308, turnover <1e-310) - non-blocking ratchet for
+# contract consistency with the module's own typed-refusal rule.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=(AssertionError, OverflowError),
+    reason=(
+        "RT-G034-7 (round 2): breakeven returns inf for finite validated "
+        "inputs (0.01 gross over 5e-323 turnover) and math.fsum raises an "
+        "untyped OverflowError on extreme gross series - the module's own "
+        "typed-refusal contract stops at the inputs "
+        "(docs/red_team/G034.md round 2)"
+    ),
+)
+def test_rt7_breakeven_output_must_be_finite_or_refused() -> None:
+    from lasr.costs.errors import CostError
+
+    try:
+        out = breakeven_one_way_bps([0.01], [5e-323])
+    except CostError:
+        pass  # typed refusal is the fix
+    else:
+        assert math.isfinite(out), f"breakeven returned {out!r} silently"
+    try:
+        out = breakeven_one_way_bps([1e308, 1e308], [0.5, 0.5])
+    except CostError:
+        pass  # typed refusal is the fix
+    else:
+        assert math.isfinite(out), f"breakeven returned {out!r} silently"

@@ -146,6 +146,12 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   arch LT-012 "HARD ERROR" wording now unreachable; FoldSpec fold_id doc
   drift (already queued); testing_strategy path drift. Owner: next docs pass.
 
+## G031/G033 protocol note (G024 r2 verification NB-A3)
+- coverage_honest min-Z requires the candidate's factor_id to be a column of
+  the training matrix (uncovered mass measured from that column). Any variant
+  learner that selects over derived/virtual factors must either materialize
+  the column or supply its own uncovered-mass measure. Owners: G031, G033.
+
 ## G025 binding (from G022 round-2 verification)
 - zscore numerical-degeneracy corner: all-identical large values yield constant
   +/-1 scores instead of documented 0.0 (mean round-off, std = 1 ulp). Fix =

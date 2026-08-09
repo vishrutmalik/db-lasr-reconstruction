@@ -19,8 +19,9 @@ Session-independent status. Update at every session end and major milestone.
 - Evidence matrix federated over per-source row files (D-005).
 
 ## Active assignments (2026-08-09)
-- G024 REMEDIATION (PR #70; verifier PASS a6d04a8 stands; red-team RT-G024-1
-  coverage-bias BLOCKING at a94becb; remediation agent live at 3306262+)
+- G024 REMEDIATED 2026-08-09 (6595a23; coverage-honest min-Z default,
+  goldens bit-exact; PR #70 CI green) — r2 verifier + red-team re-checks live
+  (original reviewers resumed from transcripts)
 - G026 MERGED 2026-08-09 (PR #69, main f863b1d): verifier PASS + red-team
   NO_BLOCKING_FINDINGS (3 ratchets RT-G026-1/2/3 routed in integration_queue)
 - G028 IN_PROGRESS (dispatched 2026-08-09; reporting/diagnostics; agent live)

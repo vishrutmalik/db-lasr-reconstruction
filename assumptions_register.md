@@ -144,10 +144,20 @@ decision_time (05); grant-(a) enum line in targets/returns.py (06).
 
 ### A-G024-01..07 — kernel/boosting conventions (G024, PR #70)
 Defined in the PR body + module docstrings: inverted-CDF equal-count edge rule
-(01); all-missing factor = hard error (02); no coverage renormalization in Z —
-selection-bias hazard flagged for G037 (03); missing-feature h=0 extends to
-training weight update (04); fixed-eps not config-constructible (05); sorted
-weight-trace hash (06); LT-005 world-native pool (07).
+(01); all-missing factor = hard error (02); coverage handling in min-Z — see
+amended 03 below (03); missing-feature h=0 extends to training weight update
+(04); fixed-eps not config-constructible (05); sorted weight-trace hash (06);
+LT-005 world-native pool (07).
+- **A-G024-03 AMENDED (RT-G024-1 remediation, 2026-08-09):** min-Z selection
+  is coverage-honest BY DEFAULT — Z' = Z + uncovered_mass/2 (uncovered mass
+  priced as one balanced zero-information pseudo-bin), restoring P1 §1's
+  precondition Σ(W⁺+W⁻)=1; bit-identical to paper-literal Z at full coverage
+  (goldens unaffected). Paper is SILENT on partial coverage → provenance
+  ASSUMED. The paper-literal raw arm (`coverage_adjustment:
+  raw_covered_only`) remains config-expressible for A/B sensitivity, warns
+  loudly, and is documented UNSAFE under partial coverage; its defect is
+  permanently pinned (TestRawModeDefectPinned). Coverage term never
+  epsilon-smoothed (smooth_z independent, for A/B isolation).
 
 ### Toolchain conventions (G016, merged PR #54)
 - Venv outside OneDrive: UV_PROJECT_ENVIRONMENT=$HOME/.venvs/<name> per

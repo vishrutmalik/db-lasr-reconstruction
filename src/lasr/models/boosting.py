@@ -546,6 +546,32 @@ def boost(
                 "(all skipped or excluded) - refusing to fabricate a round"
             )
         h = best_fit.predict(examples.ranks[:, best_column])
+        if not np.all(np.isfinite(h)):
+            # RT-G024-2: name the CAUSE, not just the downstream NaN
+            # weight mass — under missing_policy='propagate_nan'
+            # (OQ-P1-05; config leaf preprocessing.missing_at_predict,
+            # which ALSO governs this training-time h) any missing
+            # training rank poisons the weight update.
+            n_nonfinite = int(np.count_nonzero(~np.isfinite(h)))
+            n_missing = int(
+                np.count_nonzero(~np.isfinite(examples.ranks[:, best_column]))
+            )
+            policy = getattr(best_fit, "missing_policy", None)
+            cause = (
+                " - missing_policy='propagate_nan' (OQ-P1-05, config leaf "
+                "preprocessing.missing_at_predict) propagates missing "
+                "TRAINING ranks into h and cannot train on partial "
+                "coverage; use 'h_zero' or resolve coverage upstream"
+                if policy == "propagate_nan" and n_missing > 0
+                else ""
+            )
+            raise BoostingError(
+                f"round {round_index}: selected factor "
+                f"{best_fit.factor_id!r} produced {n_nonfinite} non-finite "
+                f"h value(s) on the training panel ({n_missing} missing "
+                f"training rank(s), missing_policy={policy!r}){cause} "
+                "(RT-G024-2)"
+            )
         weights = renormalize(exp_reweight(weights, examples.labels, h))
         _assert_simplex(weights, round_index)
         hasher.update(round_index, weights)
@@ -705,8 +731,17 @@ def deserialize_fitted_model(
     )
     config_hash = payload["config_hash"]
     row_count = payload["train_row_count"]
-    if not isinstance(config_hash, str) or not isinstance(row_count, int):
-        raise BoostingError("config_hash must be str and train_row_count int")
+    # bool is a subclass of int (True would deserialize as row count 1) —
+    # reject it explicitly (verification NB-3).
+    if (
+        not isinstance(config_hash, str)
+        or isinstance(row_count, bool)
+        or (not isinstance(row_count, int))
+    ):
+        raise BoostingError(
+            "config_hash must be str and train_row_count int "
+            f"(bool is not a row count); got {config_hash!r} / {row_count!r}"
+        )
     return FittedModel(
         config_hash=config_hash,
         boost=result,

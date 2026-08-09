@@ -48,6 +48,12 @@ Session-independent status. Update at every session end and major milestone.
   from transcripts, G026 merged clean (dual gates pre-collected), G028
   dispatched. Rule reinforced: review agents must commit report skeletons
   EARLY — the two r2 agents had nothing on disk after ~30 min of work.
+  CI-email triage (241464c, G024/PR #70): test jobs failed because the
+  remediation agent's code commit landed 5 min before its fixture-update
+  commit (split-commit transient under the commit-early discipline);
+  superseded same-day by 92b3646 — full CI green at PR HEAD. Not systemic;
+  no action; G024 gates unchanged (remediation -> r2 red-team + verifier
+  re-check -> merge).
 - 2026-08-06 (checkpoint): 6-agent usage-limit kill during the full M5 review
   wave; controlled checkpoint taken (session_handoff.md). Also repaired: the
   PRIMARY checkout had drifted onto the G024 branch with the G024 worktree

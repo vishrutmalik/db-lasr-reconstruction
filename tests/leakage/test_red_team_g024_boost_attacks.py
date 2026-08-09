@@ -1,16 +1,18 @@
 """Red-team G024: adversarial attacks on the nlasr_2012 kernel, min-Z
 selection and the shared boosting loop (docs/red_team/G024.md).
 
-Keepers promoted from the executed probe battery. One finding rides as a
-strict-xfail ratchet (RT-G024-1, the A-G024-03 coverage-driven selection
-bias): when the fix lands the XPASS flips the marker and the test becomes
-a permanent regression, per the red_team_g019_*/g023 precedent. Everything
-else asserts an invariant that HELD under attack and must keep holding.
+Keepers promoted from the executed probe battery. Everything in here
+asserts an invariant that must keep holding.
 
-NOTE for the RT-G024-1 fixer: if the chosen mitigation is a full-coverage
-gate at TrainingMatrix construction (rather than a coverage-honest
-objective), rewrite the two ratchet tests to assert the gate fires —
-as written they assert correct SELECTION on partial-coverage input.
+RT-G024-1 remediation (this file's two ratchets are now TEETH): the
+shipped default objective is coverage-honest (``Z + uncovered_mass/2``,
+see ``lasr.models.selection``) — the former strict-xfail ratchets in
+``TestCoverageBiasRatchet`` flipped to permanent regressions asserting
+correct SELECTION on partial-coverage input under the config-built
+default. The original defect is pinned FOREVER against the explicit
+``raw_covered_only`` A/B arm in ``TestRawModeDefectPinned`` (the attack
+remains a permanent test; the arm is documented UNSAFE under partial
+coverage, A-G024-03).
 """
 
 from __future__ import annotations
@@ -94,46 +96,60 @@ class TestCoverageBiasRatchet:
     """RT-G024-1 (A-G024-03 quantified): raw min-Z scores only the covered
     weight mass, so Z(factor) <= covered_mass/2 REGARDLESS of content.
 
-    Measured at audit time (probe battery 1, 50 seeds, shipped config):
-    mean Z(pure noise @ 50% coverage) = 0.2490 < mean Z(real weak signal
-    @ 100% coverage) = 0.4965 -> noise selected 50/50 seeds and 30/30
-    boosting rounds; OOS corr(H, label) 0.0021 vs 0.0715 for the
-    signal-only model. Even a 1% coverage deficit flipped selection in
-    21/25 seeds. The shipped integration smoke matrix itself carries
-    70%-vs-100% coverage columns and selects the low-coverage factors
-    30/30 while the coverage-honest normalizer ranks them nearly useless.
+    Measured at audit time (probe battery 1, 50 seeds, then-shipped raw
+    config): mean Z(pure noise @ 50% coverage) = 0.2490 < mean Z(real
+    weak signal @ 100% coverage) = 0.4965 -> noise selected 50/50 seeds
+    and 30/30 boosting rounds; OOS corr(H, label) 0.0021 vs 0.0715 for
+    the signal-only model. Even a 1% coverage deficit flipped selection
+    in 21/25 seeds.
+
+    RATCHETS FLIPPED (remediation): the config-built DEFAULT objective is
+    now coverage-honest, and these two former strict-xfails are permanent
+    teeth — the SIGNAL must win on partial-coverage input. The raw-mode
+    defect stays pinned in :class:`TestRawModeDefectPinned`.
     """
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "RT-G024-1 / A-G024-03: no coverage renormalization in min-Z — "
-            "a pure-noise factor at the G022 min_coverage=0.5 floor "
-            "mechanically beats every realistic full-coverage signal "
-            "(Z <= 0.25 vs Z ~ 0.49). Flip this marker when the fix lands."
-        ),
-    )
     def test_half_coverage_pure_noise_must_not_beat_real_signal(self) -> None:
-        """A selector fit for purpose must pick SIGNAL in the majority of
-        30 rounds; the shipped config currently picks NOISE 30/30."""
+        """The raw objective picked NOISE 30/30 with implausibly
+        discriminative scores (Z ~ 0.25) and SIGNAL never selected. Fixed
+        teeth (the honest post-fix dynamics: SIGNAL wins while it carries
+        information; once absorbed, Z -> 0.5 and the two then-worthless
+        factors alternate at parity — legitimate AdaBoost equilibrium):
+
+        - round 1 (uniform weights, the clean comparison) picks SIGNAL;
+        - NOISE never OUT-selects SIGNAL over the 30 rounds;
+        - NOISE is only ever selected as near-worthless (score > 0.45),
+          never as a fabricated-alpha 'discriminative' pick like raw
+          mode's 0.25.
+        """
         _, kernel, objective = shipped_components()
         matrix = signal_vs_noise_panel(7, signal_strength=0.10, noise_coverage=0.5)
         result = boost(matrix, kernel, objective, boost_cfg(30))
         n_signal = sum(1 for f in result.selected_factor_ids if f == "SIGNAL")
-        assert n_signal > 15, (
+        assert result.selected_factor_ids[0] == "SIGNAL", (
+            f"round 1 went to pure noise at 50% coverage, score "
+            f"{result.selection_scores[0]:.4f} (RT-G024-1 regressed)"
+        )
+        assert n_signal >= 30 - n_signal, (
             f"pure noise at 50% coverage out-selected a real signal "
-            f"{30 - n_signal}/30 rounds (RT-G024-1)"
+            f"{30 - n_signal}/30 rounds (RT-G024-1 regressed)"
+        )
+        noise_scores = [
+            score
+            for factor, score in zip(
+                result.selected_factor_ids, result.selection_scores, strict=True
+            )
+            if factor == "NOISE"
+        ]
+        assert all(score > 0.45 for score in noise_scores), (
+            f"noise selected as 'discriminative' (min score "
+            f"{min(noise_scores):.4f}) - the coverage discount is back"
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "RT-G024-1 severity pin: even a 2% coverage deficit flips "
-            "selection for realistic signal levels (Z_signal ~ 0.4965 > "
-            "0.98/2 = 0.49)."
-        ),
-    )
     def test_two_percent_coverage_deficit_must_not_flip_selection(self) -> None:
+        """RT-G024-1 severity pin, now teeth: a 2% coverage deficit must
+        not hand round 1 to pure noise (raw Z_noise <= 0.49 beat
+        Z_signal ~ 0.4965 before the fix)."""
         _, kernel, objective = shipped_components()
         matrix = signal_vs_noise_panel(101, signal_strength=0.10, noise_coverage=0.98)
         result = boost(matrix, kernel, objective, boost_cfg(1))
@@ -141,8 +157,8 @@ class TestCoverageBiasRatchet:
 
     def test_teeth_equal_coverage_noise_loses(self) -> None:
         """Probe validity: at EQUAL (full) coverage the shipped selector
-        prefers the signal — the ratchet failures above are driven by the
-        coverage deficit alone, not by the panel construction."""
+        prefers the signal — the historical ratchet failures were driven
+        by the coverage deficit alone, not by the panel construction."""
         _, kernel, objective = shipped_components()
         matrix = signal_vs_noise_panel(11, signal_strength=0.10, noise_coverage=1.0)
         result = boost(matrix, kernel, objective, boost_cfg(1))
@@ -166,6 +182,41 @@ class TestCoverageBiasRatchet:
         assert masses.covered_mass() == pytest.approx(4.0 / 6.0, abs=1e-15)
         z = z_statistic(masses.w_pos, masses.w_neg)
         assert z <= 4.0 / 6.0 / 2.0 + 1e-12  # Z bounded by covered/2, not 1/2
+
+
+class TestRawModeDefectPinned:
+    """RT-G024-1, the attack kept as a PERMANENT test against the
+    explicit ``raw_covered_only`` A/B arm (A-G024-03: UNSAFE under
+    partial coverage — this class documents WHY, executably).
+
+    If either test here ever fails, the raw arm's semantics changed
+    silently — that is a finding, not a fix: update A-G024-03 and the
+    A/B documentation before touching these pins.
+    """
+
+    def test_raw_arm_still_selects_half_coverage_noise(self) -> None:
+        """The original 2a/2c attack verbatim, against raw mode: pure
+        noise at 50% coverage out-selects a genuine full-coverage signal
+        in EVERY round (Z <= 0.25 vs Z ~ 0.49)."""
+        _, kernel, _ = shipped_components()
+        raw = MinZObjective(coverage_adjustment="raw_covered_only")
+        matrix = signal_vs_noise_panel(7, signal_strength=0.10, noise_coverage=0.5)
+        result = boost(matrix, kernel, raw, boost_cfg(30))
+        assert all(f == "NOISE" for f in result.selected_factor_ids), (
+            "raw_covered_only no longer coverage-biased? A-G024-03 and the "
+            "A/B docs must be updated in the same change"
+        )
+
+    def test_default_and_raw_arm_disagree_on_the_attack_panel(self) -> None:
+        """The A/B pair diverges on the attack panel — the knob is real,
+        never a silent alias (CI-040 discipline for coverage_adjustment)."""
+        _, kernel, default_objective = shipped_components()
+        raw = MinZObjective(coverage_adjustment="raw_covered_only")
+        matrix = signal_vs_noise_panel(7, signal_strength=0.10, noise_coverage=0.5)
+        honest_pick = boost(matrix, kernel, default_objective, boost_cfg(1))
+        raw_pick = boost(matrix, kernel, raw, boost_cfg(1))
+        assert honest_pick.selected_factor_ids == ("SIGNAL",)
+        assert raw_pick.selected_factor_ids == ("NOISE",)
 
 
 @dataclass(frozen=True)
@@ -226,12 +277,13 @@ class TestUnderflowTeeth:
 
 
 class TestMissingPolicyInTraining:
-    """RT-G024-2 (non-blocking, diagnostics): under the declared
-    ``propagate_nan`` alternative, ANY missing training value poisons the
-    weight update (h=NaN -> w=NaN). The invariant that must keep holding:
-    the loop NEVER trains silently through NaN weights. (Today the error
-    message blames 'weight mass ... got nan' without naming the missing
-    rank or the policy — see the report.)"""
+    """RT-G024-2 (remediated): under the declared ``propagate_nan``
+    alternative, ANY missing training value makes the selected factor's
+    h NaN. The invariant that must keep holding: the loop NEVER trains
+    silently through it. (The loop now refuses BEFORE the weight update,
+    naming the factor, the missing-rank count and the policy — message
+    content pinned in tests/unit/test_models_boosting.py
+    ``TestPropagateNanTrainingDiagnostics``.)"""
 
     def test_propagate_nan_never_trains_silently_through_missing(self) -> None:
         matrix = TrainingMatrix(

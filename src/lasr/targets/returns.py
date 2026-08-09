@@ -37,6 +37,7 @@ class SkipReason(StrEnum):
     TRAINING_LAG_EXCLUDED = "training_lag_excluded"  # P3-23 lasr_hc lag
     CALENDAR_EXHAUSTED = "calendar_exhausted"  # window runs off the calendar
     OVERLAP_PURGED = "overlap_purged"  # CI-015 purged overlap_mode
+    EMPTY_UNIVERSE = "empty_universe"  # RT-G023-2: no members at the grid point
     MISSING_GROUP = "missing_group"  # CI-017 comparison group unresolved
     MISSING_START_PRICE = "missing_start_price"
     MISSING_END_PRICE = "missing_end_price"

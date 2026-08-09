@@ -142,8 +142,11 @@ rejects any config whose HP-selection window intersects its reported OOS
 window.
 **Scope:** experiment tracking / validation protocol (G026, G028, G038).
 **Basis:** E-P4-14, P3-32, E-P2-28; MP §23 research-validity metrics.
-**Tested by:** G026, G038 (mirrors the coverage map below; field added by
-G042 per G014 verification non-blocking finding 1).
+**Tested by:** G026, G028, G038 (mirrors the coverage map below and
+testing_strategy.md's; field added by G042 per G014 verification
+non-blocking finding 1; G028 added by G026 per G042 verification
+non-blocking finding 1 — aligned with CI-009's own Scope and
+testing_strategy.md's coverage map).
 **Prevents:** false out-of-sample claims; multiple-testing contamination of
 the test period.
 
@@ -795,7 +798,7 @@ reproduce, or laundering a paper discrepancy into a fake precision claim.
 | G025 ensemble | CI-007, CI-011, CI-022, CI-043 |
 | G026 backtester | CI-001, CI-003, CI-006, CI-009, CI-012, CI-014, CI-015, CI-052 |
 | G027 portfolio/accounting | CI-019, CI-045..050 |
-| G028 metrics | CI-030, CI-046, CI-051..054 |
+| G028 metrics | CI-009, CI-030, CI-046, CI-051..054 |
 | G029 vertical slice | CI-042, CI-045, CI-055 (end-to-end re-assertion) |
 | G030 N-LASR2 | CI-008, CI-017, CI-020, CI-025, CI-026, CI-029, CI-030 |
 | G031 LASR 2014 | CI-031, CI-034, CI-036, CI-038, CI-041, CI-054 |

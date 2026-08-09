@@ -1,12 +1,15 @@
 """Red-team G023: adversarial attacks on the target/label engine
 (docs/red_team/G023.md).
 
-Keepers promoted from the executed probe battery. Two findings ride as
-strict-xfail ratchets (RT-G023-1 window/metadata dishonesty for the
-``close_to_open`` basis; RT-G023-2 silent empty-universe drop): when the
-fix lands the XPASS flips the marker and the test becomes a permanent
-regression, per the red_team_g019_* precedent. Everything else asserts an
-invariant that held under attack and must keep holding.
+Keepers promoted from the executed probe battery. RT-G023-1
+(window/metadata dishonesty for the ``close_to_open`` basis) still rides
+as a strict-xfail ratchet: when the fix lands the XPASS flips the marker
+and the test becomes a permanent regression, per the red_team_g019_*
+precedent. RT-G023-2 (silent empty-universe drop) was fixed under the
+G026 grant — empty-universe grid points now enter the skip ledger with a
+typed ``EMPTY_UNIVERSE`` reason — and its ratchet is flipped to a
+permanent regression below. Everything else asserts an invariant that
+held under attack and must keep holding.
 """
 
 from __future__ import annotations
@@ -180,17 +183,13 @@ def test_rt1_close_to_open_metadata_must_admit_real_time_overlap() -> None:
 
 
 # ---------------------------------------------------------------------------
-# RT-G023-2 ratchet: an in-window grid point whose universe resolves empty
-# emits nothing AND ledgers nothing (violates the no-silent-drop contract).
+# RT-G023-2 ratchet — FLIPPED (fixed under the G026 grant): an in-window
+# grid point whose universe resolves empty must enter the skip ledger with
+# a typed EMPTY_UNIVERSE reason; candidates == emitted + skipped at
+# grid-point granularity. Permanent regression from here on.
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    reason=(
-        "RT-G023-2: empty-universe decision dates vanish without a skip "
-        "event; candidates != emitted + skipped (docs/red_team/G023.md)"
-    )
-)
 def test_rt2_empty_universe_decision_is_ledgered() -> None:
     prices = []
     for i, s in enumerate(IDS, start=1):
@@ -214,9 +213,14 @@ def test_rt2_empty_universe_decision_is_ledgered() -> None:
     )
     assert JUN30 in out.grid
     assert JUN30 not in {r.row.as_of.date() for r in out.records}
-    assert any(s.as_of_day == JUN30 for s in out.skipped), (
-        "empty-universe grid point dropped with no skip event"
-    )
+    assert [s.reason for s in out.skipped if s.as_of_day == JUN30] == [
+        SkipReason.EMPTY_UNIVERSE
+    ], "empty-universe grid point dropped with no typed skip event"
+    # candidates == emitted + skipped at grid-point granularity: every
+    # in-window decision day is accounted for, none vanishes.
+    in_window = {d for d in out.grid if date(2020, 5, 1) <= d <= date(2020, 7, 31)}
+    accounted = set(out.emitted_grid) | {s.as_of_day for s in out.skipped}
+    assert in_window <= accounted
 
 
 # ---------------------------------------------------------------------------

@@ -419,6 +419,12 @@ def _build_grid_point(
 ) -> list[TargetRecord]:
     as_of = point.timing.decision_time
     members = sorted(set(universe(as_of)))
+    if not members:
+        # RT-G023-2: an in-window grid point whose universe resolves empty
+        # is a ledgered skip, never a silent drop — every candidate grid
+        # point appears in emitted_grid or in the skip ledger.
+        skips.append(SkipEvent(point.decision_day, None, SkipReason.EMPTY_UNIVERSE))
+        return []
     raw: dict[str, float] = {}
     outcomes: dict[str, ForwardReturn] = {}
     group_ids: dict[str, str] = {}

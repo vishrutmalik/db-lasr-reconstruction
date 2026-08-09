@@ -8,7 +8,7 @@ Pinned conventions:
 - **Spearman** = Pearson correlation of the midranks (CI-051).
 - **Sample standard deviation** uses ddof=1 (documented; register
   candidate A-G028-04).
-- **Newey–West**: long-run variance of the sample mean with Bartlett
+- **Newey-West**: long-run variance of the sample mean with Bartlett
   weights ``w_l = 1 - l/(L+1)`` and autocovariances normalized by ``n``;
   ``se = sqrt(S / n)`` with ``S = g0 + 2 Σ w_l g_l``. CI-052 uses
   ``L = horizon_steps - 1`` for overlapping families; the point estimate
@@ -92,9 +92,7 @@ def pearson(x: Sequence[float], y: Sequence[float]) -> float:
     if len(x) != len(y):
         raise MetricInputError(f"length mismatch: {len(x)} vs {len(y)}")
     if len(x) < 2:
-        raise MetricInputError(
-            f"correlation needs >= 2 pairs, got {len(x)}"
-        )
+        raise MetricInputError(f"correlation needs >= 2 pairs, got {len(x)}")
     _ensure_finite(x, what="x")
     _ensure_finite(y, what="y")
     mx, my = mean(x), mean(y)
@@ -116,7 +114,7 @@ def spearman(x: Sequence[float], y: Sequence[float]) -> float:
 
 
 def newey_west_se(values: Sequence[float], *, lags: int) -> float:
-    """Newey–West standard error of the sample mean (CI-052).
+    """Newey-West standard error of the sample mean (CI-052).
 
     ``lags = 0`` degrades to the plain iid standard error
     ``std/sqrt(n)`` up to the ``1/n`` vs ``1/(n-1)`` normalization
@@ -136,9 +134,7 @@ def newey_west_se(values: Sequence[float], *, lags: int) -> float:
     s = gamma0
     for lag in range(1, effective + 1):
         weight = 1.0 - lag / (effective + 1.0)
-        gamma = (
-            fsum(centered[t] * centered[t - lag] for t in range(lag, n)) / n
-        )
+        gamma = fsum(centered[t] * centered[t - lag] for t in range(lag, n)) / n
         s += 2.0 * weight * gamma
     return math.sqrt(s / n)
 

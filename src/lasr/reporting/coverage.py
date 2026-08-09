@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, Sequence
-from datetime import date, datetime
+from datetime import date
 
 from lasr.reporting.errors import MetricInputError
 from lasr.reporting.types import ReportModel
@@ -98,15 +98,12 @@ def oos_coverage(
             f"{declared_oos.end.isoformat()}] contains no grid day — the "
             "claim is not measurable on this grid"
         )
-    covered = tuple(
-        d for d in claimed if any(w.contains(d) for w in test_windows)
-    )
+    covered = tuple(d for d in claimed if any(w.contains(d) for w in test_windows))
     uncovered = tuple(d for d in claimed if d not in set(covered))
     outside = tuple(
         d
         for d in days
-        if not declared_oos.contains(d)
-        and any(w.contains(d) for w in test_windows)
+        if not declared_oos.contains(d) and any(w.contains(d) for w in test_windows)
     )
     containment = all(
         declared_oos.contains(w.start) and declared_oos.contains(w.end)
@@ -180,9 +177,9 @@ def coverage_accounting(
     """
     predicted_by_date: dict[date, set[str]] = {}
     for p in predictions:
-        predicted_by_date.setdefault(
-            p.timing.decision_time.date(), set()
-        ).add(p.security_id)
+        predicted_by_date.setdefault(p.timing.decision_time.date(), set()).add(
+            p.security_id
+        )
     unscored_by_date: dict[date, set[str]] = {}
     for u in unscored:
         unscored_by_date.setdefault(u.as_of.date(), set()).add(u.security_id)
@@ -192,9 +189,7 @@ def coverage_accounting(
         if s.security_id is None:
             point_skips[s.as_of_day] = s.reason.value
         else:
-            security_skips.setdefault(s.as_of_day, {})[s.security_id] = (
-                s.reason.value
-            )
+            security_skips.setdefault(s.as_of_day, {})[s.security_id] = s.reason.value
 
     rows: list[DateAccounting] = []
     total_unaccounted = 0
@@ -211,9 +206,7 @@ def coverage_accounting(
             skipped_by_reason.setdefault(day_skips[sec], []).append(sec)
         if remaining and day in point_skips:
             # a whole-grid-point skip explains every remaining member
-            skipped_by_reason.setdefault(point_skips[day], []).extend(
-                remaining
-            )
+            skipped_by_reason.setdefault(point_skips[day], []).extend(remaining)
             remaining = []
         total_unaccounted += len(remaining)
         rows.append(

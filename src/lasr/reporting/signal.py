@@ -9,7 +9,7 @@ Pinned conventions (each pinned by a hand-computed unit fixture):
   vol, IR). Positive IC = the signal's long side outperforms.
 - **CI-052**: the panel already excludes incomplete target windows
   (typed exclusions, :mod:`lasr.reporting.panel`); the IC-mean standard
-  error is Newey–West with ``horizon_steps - 1`` lags for overlapping
+  error is Newey-West with ``horizon_steps - 1`` lags for overlapping
   families — the point estimate is unchanged. A cross-section too small
   or degenerate for a correlation is a typed
   :class:`SkippedCrossSection`, never a silent NaN.
@@ -18,11 +18,11 @@ Pinned conventions (each pinned by a hand-computed unit fixture):
   equal-count bins, the pinned (value, security_id) tie rule); the
   monotonicity statistics are (a) the Spearman correlation of quantile
   index vs mean quantile return and (b) the fraction of adjacent pairs
-  correctly ordered. Spread = top-quantile mean return − bottom-quantile
+  correctly ordered. Spread = top-quantile mean return - bottom-quantile
   mean return, equal-weighted within the quantile.
 - **Score autocorrelation / signal turnover (CI-054)**: score
   autocorrelation = cross-sectional Spearman of consecutive-period
-  scores over the common universe; signal turnover = ``1 − ρ_t`` (one
+  scores over the common universe; signal turnover = ``1 - rho_t`` (one
   documented formula shared by all versions; register candidate
   A-G028-03 — the papers state the autocorrelation comparison, P3-25,
   but pin no turnover formula).
@@ -50,9 +50,9 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
+from itertools import pairwise
 from math import fsum
 from typing import Literal
 
@@ -239,7 +239,7 @@ def ic_series(panel: ScoringPanel, *, method: ICMethod) -> ICSeries:
 
 
 def ic_summary(series: ICSeries, *, horizon_steps: int) -> ICSummary:
-    """CI-051 mean/vol/IR + CI-052 Newey–West SE (lags = horizon-1)."""
+    """CI-051 mean/vol/IR + CI-052 Newey-West SE (lags = horizon-1)."""
     if horizon_steps < 1:
         raise MetricInputError(f"horizon_steps must be >= 1, got {horizon_steps}")
     n = len(series.values)
@@ -298,9 +298,7 @@ def quantile_metrics(panel: ScoringPanel, *, n_quantiles: int) -> QuantileMetric
         for sec in sorted(bins):
             sums[bins[sec]] += outcomes[sec]
             counts[bins[sec]] += 1
-        per_date_means.append(
-            [sums[q] / counts[q] for q in range(n_quantiles)]
-        )
+        per_date_means.append([sums[q] / counts[q] for q in range(n_quantiles)])
     if not per_date_means:
         raise MetricInputError(
             "no cross-section was large enough for quantile metrics "
@@ -308,20 +306,15 @@ def quantile_metrics(panel: ScoringPanel, *, n_quantiles: int) -> QuantileMetric
         )
     n_periods = len(per_date_means)
     q_means = [
-        fsum(row[q] for row in per_date_means) / n_periods
-        for q in range(n_quantiles)
+        fsum(row[q] for row in per_date_means) / n_periods for q in range(n_quantiles)
     ]
-    adjacent = [
-        q_means[q + 1] > q_means[q] for q in range(n_quantiles - 1)
-    ]
+    adjacent = [q_means[q + 1] > q_means[q] for q in range(n_quantiles - 1)]
     return QuantileMetrics(
         n_quantiles=n_quantiles,
         n_periods=n_periods,
         quantile_mean_returns=tuple(q_means),
         spread=q_means[-1] - q_means[0],
-        monotonicity_spearman=spearman(
-            [float(q) for q in range(n_quantiles)], q_means
-        ),
+        monotonicity_spearman=spearman([float(q) for q in range(n_quantiles)], q_means),
         adjacent_ordered_fraction=sum(adjacent) / len(adjacent),
         skipped=tuple(skipped),
     )
@@ -333,7 +326,7 @@ def score_autocorrelation(panel: ScoringPanel) -> SignalAutocorrelation:
     pair_dates: list[datetime] = []
     autos: list[float] = []
     skipped: list[SkippedCrossSection] = []
-    for prev, curr in zip(panel.dates, panel.dates[1:], strict=False):
+    for prev, curr in pairwise(panel.dates):
         prev_scores = {o.security_id: o.score for o in panel.cross_section(prev)}
         curr_scores = {o.security_id: o.score for o in panel.cross_section(curr)}
         common = sorted(set(prev_scores) & set(curr_scores))
@@ -395,10 +388,7 @@ def prediction_decay(panel: ScoringPanel, *, max_lag: int) -> PredictionDecay:
         for i in range(len(panel.dates) - lag):
             score_date = panel.dates[i]
             outcome_date = panel.dates[i + lag]
-            scores = {
-                o.security_id: o.score
-                for o in panel.cross_section(score_date)
-            }
+            scores = {o.security_id: o.score for o in panel.cross_section(score_date)}
             outcomes = {
                 o.security_id: o.realized_return
                 for o in panel.cross_section(outcome_date)
@@ -474,20 +464,19 @@ def factor_selection_stability(
         raise MetricInputError(
             f"factor-selection stability needs >= 2 fits, got {len(keys)}"
         )
-    pairwise: list[float] = []
-    for a, b in zip(keys, keys[1:], strict=False):
+    jaccards: list[float] = []
+    for a, b in pairwise(keys):
         sa, sb = set(selections_by_fit[a]), set(selections_by_fit[b])
         union = sa | sb
         if not union:
             raise MetricInputError(
-                f"fits {a!r}/{b!r} both selected zero factors — Jaccard "
-                "undefined"
+                f"fits {a!r}/{b!r} both selected zero factors — Jaccard undefined"
             )
-        pairwise.append(len(sa & sb) / len(union))
+        jaccards.append(len(sa & sb) / len(union))
     return FactorSelectionStability(
         n_fits=len(keys),
-        mean_jaccard=mean(pairwise),
-        pairwise_jaccard=tuple(pairwise),
+        mean_jaccard=mean(jaccards),
+        pairwise_jaccard=tuple(jaccards),
     )
 
 
@@ -517,9 +506,7 @@ def feature_family_exposure(
     shares: dict[str, float] = {}
     for feature in sorted(selection_weights):
         family = family_by_feature[feature]
-        shares[family] = shares.get(family, 0.0) + abs(
-            selection_weights[feature]
-        )
+        shares[family] = shares.get(family, 0.0) + abs(selection_weights[feature])
     return FeatureFamilyExposure(
         family_share={f: shares[f] / total for f in sorted(shares)}
     )
@@ -547,13 +534,9 @@ def submodel_contribution(
         magnitude[name] = mean([abs(v) for v in series])
     total = fsum(magnitude.values())
     if total == 0.0:
-        raise MetricInputError(
-            "all submodel contributions are zero — shares undefined"
-        )
+        raise MetricInputError("all submodel contributions are zero — shares undefined")
     return SubmodelContribution(
-        contribution_share={
-            name: magnitude[name] / total for name in sorted(magnitude)
-        }
+        contribution_share={name: magnitude[name] / total for name in sorted(magnitude)}
     )
 
 

@@ -22,7 +22,7 @@ documented hazards live exactly at this boundary:
   error, G026 red-team N4).
 
 Mixed-horizon prediction pools are refused outright (RT-G026-2's poison
-shape): per-date IC and the CI-052 Newey–West lag choice are only
+shape): per-date IC and the CI-052 Newey-West lag choice are only
 well-defined for a single target family.
 
 The realized outcome per observation is the record's ``target_raw`` —
@@ -100,7 +100,7 @@ class ScoringPanel:
     ``dates`` ascending; each date maps to observations sorted by
     security id, exactly one per (security, as_of). ``horizon_steps`` is
     the panel's single target-family horizon (mixed pools are refused at
-    construction) — CI-052's Newey–West lag count is
+    construction) — CI-052's Newey-West lag count is
     ``horizon_steps - 1``.
     """
 
@@ -142,7 +142,9 @@ def build_scoring_panel(
     ``target_end`` exceeds it are excluded with a typed reason (CI-052).
     See the module docstring for the duplicate policies.
     """
-    horizons = sorted({p.record.overlap.horizon_steps for p in prediction_set.predictions})
+    horizons = sorted(
+        {p.record.overlap.horizon_steps for p in prediction_set.predictions}
+    )
     if len(horizons) > 1:
         raise PanelConstructionError(
             f"mixed target horizons in one prediction pool: {horizons} — "
@@ -238,9 +240,7 @@ def build_scoring_panel(
             if e.reason is PanelExclusionReason.INCOMPLETE_TARGET_WINDOW
         ),
         sum(
-            1
-            for e in excluded
-            if e.reason is PanelExclusionReason.DUPLICATE_SUPERSEDED
+            1 for e in excluded if e.reason is PanelExclusionReason.DUPLICATE_SUPERSEDED
         ),
         duplicate_policy,
     )

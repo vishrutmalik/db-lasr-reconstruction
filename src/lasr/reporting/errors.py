@@ -38,6 +38,6 @@ class PanelConstructionError(ReportingError):
     ``refuse`` policy (overlapping fold test windows, G026 red-team N12
     — a naive pooled IC would double-count), for duplicates within one
     fold (an upstream data error), and for mixed-horizon prediction
-    pools (RT-G026-2's poison shape: per-date IC and Newey–West lag
+    pools (RT-G026-2's poison shape: per-date IC and Newey-West lag
     choice are only well-defined for a single target family).
     """

@@ -13,22 +13,20 @@ active:
     latest_commit: a94becb (red-team report; keepers 358db29 incl. 2 strict-xfail coverage-bias ratchets)
     runtime_verifier: PASS COLLECTED 2026-08-07 (agent ac210e9ac88d3fb70) — report a6d04a8; 0 blocking, 4 NB; its R-1 deferral SUPERSEDED by red-team escalation to blocking
     runtime_red_team: BLOCKING VERDICT COLLECTED 2026-08-07 (agent a4ec6daaac4eed90d) — RT-G024-1 coverage-driven min-Z selection bias, quantified (noise@50% beats real signal 50/50 seeds; PR's own smoke matrix selection-inverted)
-    runtime_implementer: REPLACEMENT remediation agent LAUNCHED 2026-08-07 (agent ad7f53a7e2aaa0b23, live) — original implementer identity was never recorded pre-checkpoint, so transcript resume unavailable; same goal/branch/worktree/paths per binding rule. Charter: coverage-honest selection objective (config-expressible, coverage-honest default, raw mode preserved for A/B), flip TestCoverageBiasRatchet, keep goldens/LT-005 exact, + RT-G024-2/NB-1/NB-3 nits
+    runtime_implementer: remediation agent ad7f53a7e2aaa0b23 — killed by usage limit 2026-08-07 (pushed 3306262; 4 mid-edit files preserved in worktree), RESUMED FROM TRANSCRIPT 2026-08-09 (live). Charter: coverage-honest selection objective (config-expressible, coverage-honest default, raw mode preserved for A/B), flip TestCoverageBiasRatchet, keep goldens/LT-005 exact, + RUF046 lint + RT-G024-2/NB-1/NB-3 nits
     next_action: collect remediation; then round-2 red-team (resume a4ec6daaac4eed90d) + narrow verifier re-check (resume ac210e9ac88d3fb70); then merge PR #70 and dispatch G025
     owned_paths: ["src/lasr/models/boosting.py", "src/lasr/models/selection.py", "src/lasr/models/nlasr/**", "tests/unit/test_models*.py", "LT-005 grant"]
-  G026:
+  G028:
     agent_role: implementer
-    objective: Walk-forward engine (folds, purge/embargo execution, Clock, runner)
-    github_issue: 26
-    pr: 69
-    branch: agent/implementer/G026-walkforward
-    worktree: .worktrees/G026-implementer
-    status: IN_VERIFICATION (PR #69)
-    latest_commit: ebe9a93 (IMPLEMENTED; RT-G023-2 ratchet flipped; grants b/c applied)
-    runtime_verifier: PASS COLLECTED 2026-08-07 (agent a7c141cedfb0ee972) — report b0513d9; 0 blocking, 5 NB (A-G026-01/02 ruled defensible-correct; 15/15 refusal probes held; grants no-overreach)
-    runtime_red_team: RESUMED FROM TRANSCRIPT 2026-08-07 (agent ad8685235cc0be8db, live) — fresh start, no prior output
-    next_action: collect red-team verdict; on PASS merge PR #69; with G027 merged that unblocks G028 dispatch
-    owned_paths: ["src/lasr/validation/**", "tests/unit/test_validation*.py", "3 grants (targets/engine.py fix, skill one-liner, CI-009 two-line)"]
+    objective: Reporting & diagnostics (signal + portfolio + research-validity metrics)
+    github_issue: 28
+    pr: (pending — agent opens it)
+    branch: agent/implementer/G028-reporting
+    worktree: .worktrees/G028-implementer
+    status: IN_PROGRESS (dispatched 2026-08-09 on G026+G027 merges)
+    runtime_implementer: LAUNCHED 2026-08-09 (agent a2d260083016470f9, live) — charter: §23 metric catalog, CI-009/030/046/051..054, overlap dedup + vanished-name coverage honesty + A-003 banner bindings; lasr.costs import FORBIDDEN (G034 unmerged); testing_strategy.md one-liner grant
+    next_action: collect implementation; then verifier + red-team (quantitatively sensitive)
+    owned_paths: ["src/lasr/reporting/**", "tests/unit/test_reporting*.py", "grant: CI-009 coverage one-liner in docs/methodology/testing_strategy.md"]
   G034:
     agent_role: implementer
     objective: Cost & borrow model (MP SS25)
@@ -39,12 +37,22 @@ active:
     status: REMEDIATED -> IN_RE-VERIFICATION round 2 (PR #67 CI all green at HEAD)
     latest_commit: 7ab0798 (remediation complete: RT-1..5 fixed + ratchets flipped, N1/N2/N3 dispositioned; 1745 passed local)
     runtime_implementer: REMEDIATION COLLECTED 2026-08-07 (agent af95bca8c35fd6af8) — commits c1c1a40/d2ddec7/acb494e/965c883/e13a943/828a7ef/7ab0798; register candidates A-G034-07/08 + CI-048 wording routed to orchestrator
-    runtime_red_team_r2: LAUNCHED 2026-08-07 (agent a225d0fd214d65296, live) — replacement (round-1 identity unrecorded); keeper-edit integrity is priority check
-    runtime_verifier_r2: LAUNCHED 2026-08-07 (agent a813bff67ca5299fa, live) — narrow remediation-diff re-check (f47400e..7ab0798), RT-1 convention audit vs E-P4-25/CI-046
-    next_action: collect both round-2 verdicts; on dual PASS merge PR #67
+    runtime_red_team_r2: agent a225d0fd214d65296 — killed by usage limit 2026-08-07 after "RT-1 holds" (nothing committed), RESUMED FROM TRANSCRIPT 2026-08-09 (live) at RT-2 split-invariance; keeper-edit integrity is priority check
+    runtime_verifier_r2: PASS COLLECTED 2026-08-09 (agent a813bff67ca5299fa) — addendum c463c34; 0 blocking, 4 NB (NB-1 stale PR body — refresh before merge; NB-4 zero-notional/ADV refusal convention -> G029 adapter note)
+    next_action: collect round-2 red-team verdict; on PASS refresh PR #67 body (NB-1) and merge
     owned_paths: ["src/lasr/costs/**", "tests/unit/test_costs*.py"]
 
 history:
+  - goal_id: G026
+    agent_role: implementer
+    branch: agent/implementer/G026-walkforward (deleted after verified merge)
+    final_commit: ebe9a93 (engine) + b0513d9 (verify PASS) + c330c45/cf37e35 (red-team keepers/report NO_BLOCKING_FINDINGS)
+    pr: 69 (MERGED 2026-08-09, main f863b1d)
+    verification: PASS + red-team NO_BLOCKING_FINDINGS (docs/verification+red_team/G026.md;
+      3 strict-xfail ratchets RT-G026-1/2/3 — close_to_open H=1 backcast overlap,
+      mixed-family embargo bypass, sub-horizon embargo accepted; 8 keeper
+      invariants in tests/leakage/test_red_team_g026_walkforward_attacks.py)
+    worktree: removed
   - goal_id: G027
     agent_role: implementer
     branch: agent/implementer/G027-portfolio (deleted after verified merge)

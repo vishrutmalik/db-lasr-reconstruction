@@ -2,10 +2,8 @@
 
 Session-independent status. Update at every session end and major milestone.
 
-- **Last orchestrator update:** 2026-08-07 (post-compaction resume: 4 of 6
-  interrupted agents RESUMED from transcripts — G024 V+RT, G027 RT, G034
-  remediation; G026 V+RT queued behind the 4-lane cap; see
-  coordination/agent_assignments.yaml runtime lines)
+- **Last orchestrator update:** 2026-08-09 (second usage-limit kill recovered;
+  G026 merged; G028 dispatched; see agent_assignments.yaml runtime lines)
 - **Current milestone:** M5 — model phase (M0-M4 complete: data layer through
   targets fully merged; G019/G020/G022 red-team remediation cycles complete)
 - **Remote:** git@github.com:vishrutmalik/db-lasr-reconstruction.git (PRIVATE)
@@ -20,31 +18,36 @@ Session-independent status. Update at every session end and major milestone.
   - G012 workbook schema — PR #45, PASS round 2 (r1 FAIL on TM code count, remediated)
 - Evidence matrix federated over per-source row files (D-005).
 
-## Active assignments (checkpoint 2026-08-06: all interrupted at usage limit)
-- G024 IN_VERIFICATION (PR #70; V+RT interrupted mid-work) — resume from transcripts
-- G026 IN_VERIFICATION (PR #69; V+RT interrupted) — resume from transcripts
+## Active assignments (2026-08-09)
+- G024 REMEDIATION (PR #70; verifier PASS a6d04a8 stands; red-team RT-G024-1
+  coverage-bias BLOCKING at a94becb; remediation agent live at 3306262+)
+- G026 MERGED 2026-08-09 (PR #69, main f863b1d): verifier PASS + red-team
+  NO_BLOCKING_FINDINGS (3 ratchets RT-G026-1/2/3 routed in integration_queue)
+- G028 IN_PROGRESS (dispatched 2026-08-09; reporting/diagnostics; agent live)
+- G034 IN_RE-VERIFICATION round 2 (r2 verifier PASS c463c34 collected;
+  r2 red-team live; PR #67 body refresh queued for merge time)
 - G027 MERGED 2026-08-07 (PR #68, main c1cf2ad): verifier PASS + red-team
   NO_BLOCKING_FINDINGS (4 ratchets, RT-G027-8 seam -> G029 adapter)
-- G034 REMEDIATED 2026-08-07 (7ab0798; all 5 ratchets flipped; PR #67 CI
-  green) — round-2 red-team + narrow verifier re-checks live
-- G024 FAILED_VERIFICATION (RT-G024-1 coverage-bias BLOCKING) — remediation
-  agent live (coverage-honest min-Z objective)
-- CI-email triage 2026-08-07: 4 failed runs, all the single lint job on
-  freshly pushed review/remediation commits (expected side effect of the
-  commit-early crash-safety discipline); G027/G034 superseded and green at
-  HEAD/merge; G024 RUF046 assigned to the live remediation agent. Not
-  systemic; no new goals.
 - Runtime truth + next actions: coordination/agent_assignments.yaml `active:`;
   resumption rules: coordination/session_handoff.md
-- Merged total: 30 goals. Red-team scorecard: G019/G020 4-blocking each,
-  G022 1, G034 1 (+4 ratchets) — every finding remediated or in remediation;
-  every attack is a permanent test.
+- Merged total: 31 goals. Red-team scorecard: G019/G020 4-blocking each,
+  G022 1, G034 1 (+4 ratchets, remediated, r2 in review), G024 1 (RT-G024-1,
+  in remediation) — every finding remediated or in remediation; every attack
+  is a permanent test.
 
 ## Blockers
 - (none active). `gh` CLI at `~/.local/bin/gh` (NOT on default PATH), authenticated,
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-08-07/09: SECOND usage-limit kill wave (~5pm Dubai reset 08-07) took
+  the G024 remediation agent (work pushed at 3306262 + 4 mid-edit files
+  preserved), the G034 r2 red-team (RT-1-holds conclusion in transcript only),
+  and the G034 r2 verifier (nothing committed); the orchestrator's pending
+  G026 merge was also cut. Recovered 2026-08-09: all three agents resumed
+  from transcripts, G026 merged clean (dual gates pre-collected), G028
+  dispatched. Rule reinforced: review agents must commit report skeletons
+  EARLY — the two r2 agents had nothing on disk after ~30 min of work.
 - 2026-08-06 (checkpoint): 6-agent usage-limit kill during the full M5 review
   wave; controlled checkpoint taken (session_handoff.md). Also repaired: the
   PRIMARY checkout had drifted onto the G024 branch with the G024 worktree

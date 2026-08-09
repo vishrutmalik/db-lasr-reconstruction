@@ -76,6 +76,24 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   LT-016 leak shape at the contract level). Owner: next goal touching the CT
   suite (G018-descendant contract work or G029 integration hardening).
 
+## Ratcheted defects from G026 red-team (strict-xfails on main since PR #69)
+- RT-G026-1: close_to_open H=1 backcast folds retain rows sharing overnight/
+  weekend segments with test outcomes (embargo skipped at horizon_steps==1;
+  purge keyed on decision instants). Joins RT-G023-1 — MUST fix/refuse before
+  any close_to_open config is exercised. Owners: G031/G033 configs, validation
+  owner.
+- RT-G026-2: mixed 1M+3M records accepted in one fold; 1M rows bypass embargo
+  inside 3M test windows. Fix/refuse before mixed-family pools. Owner:
+  validation owner / G029 integration guard.
+- RT-G026-3: embargo_horizons=0.5 accepted, under-excludes on backcast folds
+  (CI-015b "at least one full horizon"). Refusal or floor. Owner: validation
+  owner / G029 config guard.
+- All three falsify folds.py docstring exactness claim (lines 29-31) — doc fix
+  rides with whichever goal fixes them.
+- G034 r2 verifier NB-4: zero-notional rows with group-inconsistent ADV are
+  refused (typed, arguably over-strict) — G029 adapter contract should state
+  the convention (add to M-1..M-6/RT-G027-8 adapter work).
+
 ## Ratcheted defects from G023 red-team (strict-xfails on main)
 - RT-G023-1: close_to_open real-time overlap not in metadata — MUST fix before
   any close_to_open config reaches CV purging (owners: G031/G033 configs,

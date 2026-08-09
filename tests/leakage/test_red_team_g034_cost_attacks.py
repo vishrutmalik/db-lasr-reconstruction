@@ -392,3 +392,83 @@ def test_n4_bridge_accepts_off_grid_and_contradictory_rates_today() -> None:
     resolved = stack_from_version_config(contradictory)
     assert resolved.linear is not None
     assert resolved.linear.one_way_bps.value == 5.0  # base_bps wins silently
+
+
+# ---------------------------------------------------------------------------
+# ROUND 2 (docs/red_team/G034.md "Round 2"). RT-G034-6: the RT-5 fix added
+# a typed OverflowError guard to MarketImpact's pow but NOT to the
+# size-scaling modifier's math.pow - a finite (aum/reference_aum)^exponent
+# that overflows escapes as a raw untyped OverflowError from run(),
+# violating the MP §26 typed-error rule the e13a943 fix claims to close.
+# Unreachable at realistic magnitudes and every preset keeps size_scaling
+# off - non-blocking ratchet, same classification as round-1 RT-G034-5.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=OverflowError,
+    reason=(
+        "RT-G034-6 (round 2): CostModel._size_multiplier calls math.pow "
+        "without the OverflowError guard its sibling MarketImpact got in "
+        "e13a943; (aum/reference_aum)^exponent overflow surfaces as a raw "
+        "OverflowError instead of a typed CostError refusal "
+        "(docs/red_team/G034.md round 2)"
+    ),
+)
+def test_rt6_size_scaling_pow_overflow_must_be_typed() -> None:
+    from lasr.costs import CostBucket, RunContext, SizeScalingConfig
+    from lasr.costs.errors import CostError
+
+    stack = CostStackConfig(
+        linear=LinearCostConfig(one_way_bps=_pf(5.0)),
+        size_scaling=SizeScalingConfig(
+            reference_aum=_pf(1.0),
+            exponent=_pf(4.0),
+            applies_to=Param[tuple[CostBucket, ...]](
+                value=(CostBucket.LINEAR,), prov=_A, src="red-team G034 round 2"
+            ),
+        ),
+        zero_borrow_assumption=_ps("keeper"),
+    )
+    # multiplier = (1e100 / 1)^4 > 1.8e308: must be a TYPED refusal
+    with pytest.raises(CostError):
+        CostModel(stack).run([Trade("X", D, 1.0)], context=RunContext(aum=1e100))
+
+
+# ---------------------------------------------------------------------------
+# RT-G034-7: breakeven_one_way_bps validates INPUTS finite but never its
+# OUTPUT - gross/turnover ratios beyond float range return inf SILENTLY
+# (optimistic direction: "survives any cost"), and extreme gross series
+# raise an untyped OverflowError from math.fsum. Physically impossible
+# magnitudes (gross ~1e308, turnover <1e-310) - non-blocking ratchet for
+# contract consistency with the module's own typed-refusal rule.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=(AssertionError, OverflowError),
+    reason=(
+        "RT-G034-7 (round 2): breakeven returns inf for finite validated "
+        "inputs (0.01 gross over 5e-323 turnover) and math.fsum raises an "
+        "untyped OverflowError on extreme gross series - the module's own "
+        "typed-refusal contract stops at the inputs "
+        "(docs/red_team/G034.md round 2)"
+    ),
+)
+def test_rt7_breakeven_output_must_be_finite_or_refused() -> None:
+    from lasr.costs.errors import CostError
+
+    try:
+        out = breakeven_one_way_bps([0.01], [5e-323])
+    except CostError:
+        pass  # typed refusal is the fix
+    else:
+        assert math.isfinite(out), f"breakeven returned {out!r} silently"
+    try:
+        out = breakeven_one_way_bps([1e308, 1e308], [0.5, 0.5])
+    except CostError:
+        pass  # typed refusal is the fix
+    else:
+        assert math.isfinite(out), f"breakeven returned {out!r} silently"

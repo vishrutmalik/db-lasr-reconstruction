@@ -127,6 +127,28 @@ class TestMicroFixtureEndToEnd:
         )
         assert result.selection_scores[1] == pytest.approx(0.48650, abs=1e-5)
 
+    def test_golden_chain_bit_identical_under_both_coverage_arms(
+        self, run: tuple[BoostResult, WeightCollector]
+    ) -> None:
+        """RT-G024-1 remediation guard: the §7 panel is FULL coverage, so
+        the coverage_honest DEFAULT (this fixture) and the paper-literal
+        raw_covered_only arm must produce byte-identical artifacts — the
+        goldens pin the paper numbers under BOTH objectives."""
+        result, _ = run
+        raw_result = boost(
+            micro_matrix(),
+            PiecewiseConstantBinKernel(n_bins=2),
+            MinZObjective(
+                smooth_z=False,
+                allow_repeats=True,
+                coverage_adjustment="raw_covered_only",
+            ),
+            boost_cfg(2),
+        )
+        assert raw_result.selection_scores == result.selection_scores  # bitwise
+        assert raw_result.selected_factor_ids == result.selected_factor_ids
+        assert raw_result.weight_trace_hash == result.weight_trace_hash
+
     def test_repeat_selection_allowed(
         self, run: tuple[BoostResult, WeightCollector]
     ) -> None:

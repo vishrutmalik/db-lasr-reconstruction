@@ -157,6 +157,17 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   +/-1 scores instead of documented 0.0 (mean round-off, std = 1 ulp). Fix =
   degeneracy detection + tolerance cap when G025 consumes zscore machinery.
 
+## G029 interface notes from G035 (PR #72 handoff)
+- Feed DRIFTED pre-trade weights to Level-3 (CI-046 turnover base).
+- Surface Level3Result.risk_model_manifest verbatim in reports (A-004
+  substitute banner discipline; RiskModelManifest(substitute=True)).
+- The ledger-side period_charges adapter MUST use the G034 per-side rate base
+  (A-G035-10 pins it on the G035 side) — same seam as RT-G027-8.
+- SecurityAttributes.adv_notional must be the SAME 20-day ADV fact as
+  Trade.adv_notional (one producer, two consumers).
+- Shared OptimizerConfig in config/sections.py exists but is NOT wired to
+  level3_config — G029 wiring decision.
+
 ## G029 adapter contract (from G027 verification + red-team)
 - G027 CostModel hook <-> G034 interface mismatches M-1..M-6 enumerated in
   docs/verification/G027.md — the G029 vertical slice owns the adapter; no

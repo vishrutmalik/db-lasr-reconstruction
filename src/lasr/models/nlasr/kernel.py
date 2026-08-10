@@ -22,10 +22,13 @@ alternative ``propagate_nan`` keeps the score missing so consumers can
 handle coverage explicitly (CI-021 requires an implemented alternative).
 NOTE (RT-G024-2): the policy also binds INSIDE the training loop — the
 selected factor's ``h`` on its own training column feeds the weight
-update, so under ``propagate_nan`` a model cannot train on partial
-coverage at all: any missing training rank makes ``h`` NaN and the
-boosting loop refuses loudly, naming the factor, the missing-rank count
-and this policy. Only ``h_zero`` trains through partial coverage.
+update, so under ``propagate_nan`` a model cannot train through a
+SELECTED factor's partial coverage: any missing rank on the selected
+factor's training column makes ``h`` NaN and the boosting loop refuses
+loudly, naming the factor, the missing-rank count and this policy
+(candidates that are never selected do not trigger the refusal — G024
+verification precision note). Only ``h_zero`` trains through partial
+coverage.
 
 Determinism (CI-042/CI-043): bin edges derive from the sorted covered
 values; masses are computed with sort-before-sum reductions; the fit is a

@@ -149,8 +149,19 @@ def zscore(values: Mapping[str, float | None]) -> dict[str, float]:
     """Cross-sectional z-score of ONE date's values (CI-022 locality).
 
     Mean and population std (ddof=0) come from the given cross-section
-    only. Degenerate cross-section (std = 0): every covered score is 0.0
+    only. Degenerate cross-section: every covered score is 0.0
     (documented deterministic choice). Missing values excluded (CI-021).
+
+    Degeneracy detection (G025 fix of the G022 round-2 queued defect;
+    A-G025-05): an all-identical cross-section of LARGE values can leave
+    ``std`` at a few ulps instead of exactly 0.0 (the computed mean
+    rounds off), which used to emit constant ±1 scores. Any spread at or
+    below the round-off floor ``max|x| * n * eps`` is numerically
+    indistinguishable from a constant cross-section, so it is treated as
+    degenerate (tolerance cap): float64 carries ~2.2e-16 relative
+    precision, and a real cross-sectional dispersion sits many orders of
+    magnitude above ``n * eps`` relative. Exact zeros (including the
+    all-zero cross-section, ``max|x| = 0``) still hit the ``<=`` branch.
     """
     covered = _covered(values)
     if not covered:
@@ -158,7 +169,8 @@ def zscore(values: Mapping[str, float | None]) -> dict[str, float]:
     data = np.array([value for _, value in covered], dtype=np.float64)
     mean = float(np.mean(data))
     std = float(np.std(data))  # ddof=0: population std, documented
-    if std == 0.0:
+    tolerance = float(np.max(np.abs(data))) * data.size * np.finfo(np.float64).eps
+    if std <= tolerance:
         return {security_id: 0.0 for security_id, _ in covered}
     return {security_id: (value - mean) / std for security_id, value in covered}
 

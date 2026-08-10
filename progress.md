@@ -23,8 +23,7 @@ Session-independent status. Update at every session end and major milestone.
   (coverage-honest min-Z default, goldens bit-exact); r2 dual gates —
   verifier PASS 6c09c53 (config touch ratified) + red-team NO_BLOCKING
   3bde555 (keeper integrity confirmed; O-R2 -> G037)
-- G025 IN_PROGRESS (dispatched 2026-08-09 on G024 merge; temporal ensembles;
-  agent live)
+- G025 IN_VERIFICATION (PR #73 at 40efcf9; verifier + red-team live)
 - G026 MERGED 2026-08-09 (PR #69, main f863b1d): verifier PASS + red-team
   NO_BLOCKING_FINDINGS (3 ratchets RT-G026-1/2/3 routed in integration_queue)
 - G028 MERGED 2026-08-10 (PR #71, main 15ab5f8): verifier PASS + red-team

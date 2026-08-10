@@ -178,6 +178,20 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   per-call; ICSeries carries no provenance binding); bootstrap seed ledgered
   but not structurally pinned.
 
+## G029/G030 interface notes from G025 (PR #73 handoff)
+- G029/G026 drive train_ensemble(spec, TrainingHistory, fit_as_of) or the
+  ExpertSpec bridge; IC weights need caller-supplied realized
+  ComponentICRecords (CI-007 filtering is internal); zscore_universe=
+  'training' requires training_universe.
+- G030/G033 MUST deliver PeriodHistory.backcast_metrics[backcast_object]
+  covering the full lookback (typed refusal otherwise); may pass explicit
+  kernel=/objective= (both or neither).
+- Config-owner item: 4 G025 sensitivity knobs are constructor-level; YAML
+  leaf promotion deliberately deferred (no out-of-lane config edit). Owner:
+  next config-touching goal (G029 wiring or config micro-pass).
+- first_year_weighting/blend_weights config leaves are accepted but only
+  their implemented-behavior values are legal (documented in PR #73 body).
+
 ## G029 wiring items from G028 verification (docs/verification/G028.md, PASS)
 - factor_selection_stability is NOW-SATISFIABLE (G024's selected_factor_ids
   merged after G028 froze) — wire the producer at G029.

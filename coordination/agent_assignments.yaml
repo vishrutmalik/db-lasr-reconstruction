@@ -10,19 +10,19 @@ active:
     branch: agent/implementer/G025-ensembles
     worktree: .worktrees/G025-ensembles
     status: IN_PROGRESS (dispatched 2026-08-09 on G024 merge)
-    runtime_implementer: LAUNCHED 2026-08-09 (agent a5fbdf23f8c1caf7c, live) — charter: version-spec ensemble rules, CI-007/011/022/043, epsilon+rounds inheritance, zscore-degeneracy fix (grant), LT-005 G025-marker flip + NB-2 reconcile, R-2 propagate_nan pin, coverage_adjustment A/B reachability, O-R3 interpretation note
+    runtime_implementer: agent a5fbdf23f8c1caf7c — killed by usage limit 2026-08-09 during setup (zero work; branch unpushed), RESUMED FROM TRANSCRIPT 2026-08-10 (live). Charter: version-spec ensemble rules, CI-007/011/022/043, epsilon+rounds inheritance, zscore-degeneracy fix (grant), LT-005 G025-marker flip + NB-2 reconcile, R-2 propagate_nan pin, coverage_adjustment A/B reachability, O-R3 interpretation note
     next_action: collect implementation; then verifier + red-team (quantitatively sensitive)
     owned_paths: ["src/lasr/models/ensembles/**", "tests/unit/test_models_ensembles*.py", "grants: LT-005 marker flip, kernel docstring one-liner, zscore degeneracy fix at definition site"]
   G028:
     agent_role: implementer
     objective: Reporting & diagnostics (signal + portfolio + research-validity metrics)
     github_issue: 28
-    pr: (pending — agent opens it)
+    pr: 71
     branch: agent/implementer/G028-reporting
     worktree: .worktrees/G028-implementer
-    status: IN_PROGRESS (dispatched 2026-08-09 on G026+G027 merges)
-    runtime_implementer: LAUNCHED 2026-08-09 (agent a2d260083016470f9, live) — charter: §23 metric catalog, CI-009/030/046/051..054, overlap dedup + vanished-name coverage honesty + A-003 banner bindings; lasr.costs import FORBIDDEN (G034 unmerged); testing_strategy.md one-liner grant
-    next_action: collect implementation; then verifier + red-team (quantitatively sensitive)
+    status: IMPLEMENTED pending handoff (PR #71 open, CI all green at bd1351f)
+    runtime_implementer: agent a2d260083016470f9 — killed by usage limit 2026-08-09 AT the PR-creation step (PR #71 exists; branch pushed bd1351f; worktree clean), RESUMED 2026-08-10 for handoff confirmation only (verify PR body, confirm gates, deliver summary)
+    next_action: on handoff confirmation launch verifier + red-team (quantitatively sensitive)
     owned_paths: ["src/lasr/reporting/**", "tests/unit/test_reporting*.py", "grant: CI-009 coverage one-liner in docs/methodology/testing_strategy.md"]
   G035:
     agent_role: implementer
@@ -32,7 +32,7 @@ active:
     branch: agent/implementer/G035-level3
     worktree: .worktrees/G035-implementer
     status: IN_PROGRESS (dispatched 2026-08-09 on G034 merge)
-    runtime_implementer: LAUNCHED 2026-08-09 (agent a09efc686fc10f491, live) — charter: §24 Level-3 constraint set, risk-model interface + shrinkage substitute, CI-047, effect separation, cost integration on merged G034 conventions; grants: scipy line in pyproject + new-modules-only in portfolio/
+    runtime_implementer: agent a09efc686fc10f491 — killed by usage limit 2026-08-09 at the effect-separation module (pushed cfa3610; untracked level3_compare.py preserved), RESUMED FROM TRANSCRIPT 2026-08-10 (live). Charter: §24 Level-3 constraint set, risk-model interface + shrinkage substitute, CI-047, effect separation, cost integration on merged G034 conventions; grants: scipy line in pyproject + new-modules-only in portfolio/
     next_action: collect implementation; then verifier + red-team (quantitatively sensitive)
     owned_paths: ["src/lasr/risk/**", "src/lasr/portfolio/level3*.py", "tests/unit/test_risk*.py", "tests/unit/test_portfolio_level3*.py", "grant: scipy dependency line in pyproject.toml"]
 

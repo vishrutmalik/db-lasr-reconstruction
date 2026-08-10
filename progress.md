@@ -46,6 +46,14 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-08-09/10: THIRD usage-limit kill wave (~4:40pm Dubai reset) took all
+  three implementers: G028 at its FINAL step (PR #71 already open, branch
+  pushed, worktree clean — implementation complete, handoff pending), G035
+  mid effect-separation module (cfa3610 pushed; one untracked file
+  preserved), G025 during setup (zero work, branch unpushed). Recovered
+  2026-08-10: all three resumed from transcripts; PR #71 CI verified green.
+  The commit-early discipline held — total loss across the wave was one
+  untracked draft file and one unpushed empty branch.
 - 2026-08-07/09: SECOND usage-limit kill wave (~5pm Dubai reset 08-07) took
   the G024 remediation agent (work pushed at 3306262 + 4 mid-edit files
   preserved), the G034 r2 red-team (RT-1-holds conclusion in transcript only),

@@ -44,9 +44,9 @@ from datetime import datetime
 from typing import Literal
 
 import numpy as np
+import numpy.typing as npt
 
 from lasr.config.ensemble import EnsembleConfig
-from lasr.features.transforms import zscore
 from lasr.models.ensembles.selectors import EnsembleError
 
 __all__ = [
@@ -66,6 +66,25 @@ logger = logging.getLogger(__name__)
 WEIGHT_ATOL = 1e-12
 
 
+def _cross_sectional_stats(data: npt.NDArray[np.float64]) -> tuple[float, float] | None:
+    """Mean/population-std with the A-G025-05 degeneracy rule.
+
+    Layering (system_design.md §4: ``lasr.models`` imports types only, so
+    :func:`lasr.features.transforms.zscore` cannot be imported here) —
+    this is the SAME documented rule as the definition site, kept in
+    lock-step: ddof=0, and any spread at or below the round-off floor
+    ``max|x| * n * eps`` is a constant cross-section (returns None). The
+    equivalence with the features-layer implementation is pinned by
+    ``tests/unit/test_models_ensembles_combine.py``.
+    """
+    mean = float(np.mean(data))
+    std = float(np.std(data))  # ddof=0, matching transforms.zscore
+    tolerance = float(np.max(np.abs(data))) * data.size * np.finfo(np.float64).eps
+    if std <= tolerance:
+        return None
+    return mean, std
+
+
 def zscore_with_universe(
     scores: Mapping[str, float],
     *,
@@ -74,36 +93,37 @@ def zscore_with_universe(
     """Per-date cross-sectional z-score with the OQ-P1-17 universe knob.
 
     ``stat_universe=None`` (the A-G011-15 default reading): mean/std over
-    the scored cross-section itself — exactly
-    :func:`lasr.features.transforms.zscore` (CI-022 locality + the
-    degeneracy rule live THERE, at the definition site). A non-None
+    the scored cross-section itself — value-identical to
+    :func:`lasr.features.transforms.zscore` (CI-022 locality; lock-step
+    pinned by test, see :func:`_cross_sectional_stats`). A non-None
     ``stat_universe`` computes mean/std over the covered members of that
     universe only (the ``training`` arm), then standardizes EVERY covered
-    score with those stats; the degeneracy rule matches the definition
-    site's (cross-referenced test).
+    score with those stats. Degenerate stats score 0.0 everywhere
+    (documented deterministic choice, A-G025-05).
     """
-    if stat_universe is None:
-        return zscore(scores)
     covered = {
         sid: float(value)
         for sid, value in scores.items()
         if value is not None and math.isfinite(value)
     }
-    members = sorted(set(stat_universe) & set(covered))
-    if not members:
-        raise EnsembleError(
-            "zscore_with_universe: no covered scores inside the stat "
-            "universe (OQ-P1-17 'training' arm needs the training "
-            "universe's scores present)"
-        )
-    data = np.array([covered[sid] for sid in members], dtype=np.float64)
-    mean = float(np.mean(data))
-    std = float(np.std(data))  # ddof=0, matching transforms.zscore
-    # Degeneracy rule mirrors transforms.zscore (A-G025-05 pinned there):
-    # spread below the round-off floor is a constant cross-section.
-    tolerance = float(np.max(np.abs(data))) * data.size * np.finfo(np.float64).eps
-    if std <= tolerance:
+    if not covered:
+        return {}
+    if stat_universe is None:
+        members = sorted(covered)
+    else:
+        members = sorted(set(stat_universe) & set(covered))
+        if not members:
+            raise EnsembleError(
+                "zscore_with_universe: no covered scores inside the stat "
+                "universe (OQ-P1-17 'training' arm needs the training "
+                "universe's scores present)"
+            )
+    stats = _cross_sectional_stats(
+        np.array([covered[sid] for sid in members], dtype=np.float64)
+    )
+    if stats is None:
         return dict.fromkeys(sorted(covered), 0.0)
+    mean, std = stats
     return {sid: (value - mean) / std for sid, value in sorted(covered.items())}
 
 
@@ -405,5 +425,5 @@ def combine_component_scores(
         for sid in sorted(covered_everywhere)
     }
     if composite_normalization == "zscore":
-        return zscore(combined)
+        return zscore_with_universe(combined)
     return combined

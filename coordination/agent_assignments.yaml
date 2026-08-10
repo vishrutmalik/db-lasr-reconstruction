@@ -23,9 +23,9 @@ active:
     status: IN_VERIFICATION pending reviewer slots (PR #72; IMPLEMENTED at b83d990; CI green except one pending leg at collection time)
     latest_commit: b83d990 (level3_risk/config/errors/optimizer/compare; +112 tests; A-G035-01..10; CI-047 pinned incl. P4 beta-neutral corr -0.042)
     runtime_implementer: HANDOFF COLLECTED 2026-08-10 (agent a09efc686fc10f491) — DEVIATION ACCEPTED by orchestrator: no src/lasr/risk/** package; system_design.md §3/§4 assigns the risk interface to portfolio/, and the shared import-rules test has no lasr.risk row — everything in portfolio/level3_*.py, risk tests in tests/unit/test_risk_model.py (inside grant). scipy grant unused (already a dependency). Limitations: equality-mode wash refusal (documented), uniform group limits, OptimizerConfig wiring deferred to G029
-    runtime_verifier: LAUNCHED 2026-08-10 (agent af1039ecfdc4372d6, live) — fresh-context; CI-047 re-run, optimizer post-solve/infeasibility probes, shrinkage math + PSD, substitute-labeling bypass attempts, effect-separation additivity, A-G035-10 cost pin
-    runtime_red_team: QUEUED (lane cap) — quantitatively sensitive; optimizer/risk-substitute/effect-separation attacks; launch on next freed slot
-    next_action: launch V+RT as slots free; on dual PASS merge PR #72
+    runtime_verifier: PASS COLLECTED 2026-08-10 (agent af1039ecfdc4372d6) — report 0a1e903; 0 blocking, 2 NB (NB-1 manifest.substitute cross-check gap — relayed to red-team for independent confirmation/ratchet; NB-2 additivity-tolerance docstring). PROCESS INCIDENT self-repaired: verifier --amend briefly folded red-team skeleton ef5cfbc; history restored verbatim + force-with-lease; red-team warned
+    runtime_red_team: LAUNCHED 2026-08-10 (agent aa6afc31d2f0257b8, live) — optimizer/risk-substitute/effect-separation attacks; NB-1 relayed for independent weighing
+    next_action: collect red-team verdict; on PASS merge PR #72
     owned_paths: ["src/lasr/portfolio/level3*.py", "tests/unit/test_risk*.py", "tests/unit/test_portfolio_level3*.py"]
 
 history:

@@ -47,6 +47,13 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-08-10 (2): G035 verifier --amend briefly folded the parallel
+  red-team's pushed skeleton into its own commit, force-pushed, DETECTED
+  IMMEDIATELY and self-repaired (skeleton restored verbatim, own report
+  re-applied as a separate commit, force-with-lease). No content lost;
+  red-team warned to pull-rebase. Rule adopted: on shared review branches,
+  NEVER --amend or force-push after another agent has pushed — plain
+  additive commits only.
 - 2026-08-09/10: THIRD usage-limit kill wave (~4:40pm Dubai reset) took all
   three implementers: G028 at its FINAL step (PR #71 already open, branch
   pushed, worktree clean — implementation complete, handoff pending), G035

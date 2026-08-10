@@ -17,6 +17,12 @@ from lasr.config.ensemble import (
     TrailingWindowComponent,
 )
 from lasr.config.provenance import Param, Provenance
+from lasr.data.schemas.ensemble import (
+    HedgeBackcastSelectorSpec,
+    PreviousPeriodSelectorSpec,
+    SeasonalSameMonthSelectorSpec,
+    TrailingWindowSelectorSpec,
+)
 from lasr.models.ensembles.selectors import (
     EnsembleError,
     HedgeBackcastSelector,
@@ -27,6 +33,7 @@ from lasr.models.ensembles.selectors import (
     TrainingPeriod,
     build_selector,
     component_expert_name,
+    selector_from_sample_spec,
 )
 
 pytestmark = pytest.mark.unit
@@ -486,3 +493,72 @@ class TestBuildSelector:
         assert selector.lookback_periods == 144
         assert selector.backcast_object == "combined_base"
         assert component_expert_name(component) == "hedge_backcast"
+
+
+class TestSelectorFromSampleSpec:
+    """The canonical-schema bridge (MP §21 ExpertSpec.sample_selector,
+    N-7 vocabulary) builds the SAME selectors the config path builds."""
+
+    def test_trailing_window_spec(self) -> None:
+        selector = selector_from_sample_spec(TrailingWindowSelectorSpec(periods=12))
+        assert selector == TrailingWindowSelector(periods=12)
+
+    def test_previous_period_spec(self) -> None:
+        selector = selector_from_sample_spec(PreviousPeriodSelectorSpec(periods=1))
+        assert selector == PreviousPeriodSelector(periods=1)
+
+    def test_seasonal_spec_uses_the_a_g011_60_anchor_default(self) -> None:
+        """The schema carries no anchor field (OQ-P4-14 is config-layer):
+        the bridge pins calibration_month."""
+        selector = selector_from_sample_spec(
+            SeasonalSameMonthSelectorSpec(
+                years=12, lag_years=0, min_history="use_all_drop_if_none"
+            )
+        )
+        assert selector == SeasonalSameMonthSelector(
+            years=12, lag_years=0, anchor="calibration_month"
+        )
+
+    def test_seasonal_spec_unknown_policy_still_refused(self) -> None:
+        with pytest.raises(EnsembleError, match="OQ-P1-16"):
+            selector_from_sample_spec(
+                SeasonalSameMonthSelectorSpec(
+                    years=12, lag_years=0, min_history="impute_zero"
+                )
+            )
+
+    def test_hedge_spec(self) -> None:
+        selector = selector_from_sample_spec(
+            HedgeBackcastSelectorSpec(
+                selection_metric="backcast_ic_threshold",
+                threshold=0.075,
+                lookback_periods=144,
+                grain="month",
+                backcast_object="combined_base",
+            )
+        )
+        assert selector == HedgeBackcastSelector(
+            selection_metric="backcast_ic_threshold",
+            lookback_periods=144,
+            backcast_object="combined_base",
+            grain="month",
+            threshold=0.075,
+        )
+
+    def test_bridge_and_config_paths_agree(self) -> None:
+        """One selection, two construction paths, identical answer."""
+        history = monthly_history((1995, 1), (2001, 12))
+        fit = month_end(2001, 6)
+        via_schema = selector_from_sample_spec(
+            SeasonalSameMonthSelectorSpec(
+                years=3, lag_years=0, min_history="use_all_drop_if_none"
+            )
+        )
+        via_config = build_selector(
+            SeasonalSameMonthComponent(
+                years=_param(3),
+                lag_years=_param(0),
+                min_history=_param("use_all_drop_if_none"),
+            )
+        )
+        assert via_schema.select(fit, history) == via_config.select(fit, history)

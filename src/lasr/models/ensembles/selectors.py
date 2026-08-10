@@ -50,6 +50,13 @@ from lasr.config.ensemble import (
     TrailingWindowComponent,
 )
 from lasr.core.errors import LasrError
+from lasr.data.schemas.ensemble import (
+    HedgeBackcastSelectorSpec,
+    PreviousPeriodSelectorSpec,
+    SampleSelectorSpec,
+    SeasonalSameMonthSelectorSpec,
+    TrailingWindowSelectorSpec,
+)
 
 __all__ = [
     "EnsembleError",
@@ -62,6 +69,7 @@ __all__ = [
     "TrainingPeriod",
     "build_selector",
     "component_expert_name",
+    "selector_from_sample_spec",
 ]
 
 logger = logging.getLogger(__name__)
@@ -436,6 +444,41 @@ def build_selector(component: ComponentConfig) -> SampleSelector:
         )
     raise EnsembleError(  # pragma: no cover - union is closed today
         f"unknown ensemble component type {type(component).__name__!r}"
+    )
+
+
+def selector_from_sample_spec(spec: SampleSelectorSpec) -> SampleSelector:
+    """Canonical-schema bridge: build a selector from an MP §21
+    ``ExpertSpec.sample_selector`` record (``lasr.data.schemas.ensemble``,
+    the N-7 canonical vocabulary G026/G029 hold rosters in).
+
+    The schema layer carries plain values (provenance tags live in the
+    config layer's ``ComponentConfig``, CI-044); fields map one-to-one.
+    The schema seasonal spec carries no ``anchor`` field — the OQ-P4-14
+    knob is config-layer only, so this bridge uses the A-G011-60 default
+    ``calibration_month``; the schema ``min_history`` policy id is
+    validated by the selector exactly as the config path's is.
+    """
+    if isinstance(spec, TrailingWindowSelectorSpec):
+        return TrailingWindowSelector(periods=spec.periods)
+    if isinstance(spec, PreviousPeriodSelectorSpec):
+        return PreviousPeriodSelector(periods=spec.periods)
+    if isinstance(spec, SeasonalSameMonthSelectorSpec):
+        return SeasonalSameMonthSelector(
+            years=spec.years,
+            lag_years=spec.lag_years,
+            min_history=spec.min_history,
+        )
+    if isinstance(spec, HedgeBackcastSelectorSpec):
+        return HedgeBackcastSelector(
+            selection_metric=spec.selection_metric,
+            lookback_periods=spec.lookback_periods,
+            backcast_object=spec.backcast_object,
+            grain=spec.grain,
+            threshold=spec.threshold,
+        )
+    raise EnsembleError(  # pragma: no cover - union is closed today
+        f"unknown sample-selector spec type {type(spec).__name__!r}"
     )
 
 

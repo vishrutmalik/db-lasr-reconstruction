@@ -42,6 +42,7 @@ from lasr.models.ensembles.selectors import (
     TrainingPeriod,
     build_selector,
     component_expert_name,
+    selector_from_sample_spec,
 )
 
 __all__ = [
@@ -71,6 +72,7 @@ __all__ = [
     "score_ensemble",
     "score_experts",
     "seasonal_rank_ic_weights",
+    "selector_from_sample_spec",
     "train_ensemble",
     "zscore_with_universe",
 ]

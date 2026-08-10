@@ -157,6 +157,27 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   +/-1 scores instead of documented 0.0 (mean round-off, std = 1 ulp). Fix =
   degeneracy detection + tolerance cap when G025 consumes zscore machinery.
 
+## Ratcheted defects from G028 red-team (strict-xfails on main since PR #71)
+- RT-G028-1 (SHARPEST): negative ledger charges (RT-G027-5 shape) flow into
+  cost_borrow_drag/portfolio_summary as fabricated alpha (-235%/yr drag,
+  Sharpe 48) with no flag. MUST flip before any external/G034 cost feed is
+  wired (G029 gate).
+- RT-G028-2a/2b: panel identity keyed on labels not windows — as_of +1s
+  bypasses duplicate refuse; equal horizon_steps/different windows smuggle
+  past mixed-horizon refusal. One fix: key on (security, target_start,
+  target_end). Owner: G029 or reporting micro-pass.
+- RT-G028-3: ic_summary horizon_steps caller-supplied, untied to panel (NW
+  lag=0 -> 1.51x t-stat inflation). RT-G028-4: tail_quantile k+1th at exact
+  integer alpha*n boundaries (less conservative). RT-G028-5: A-003 banner
+  strippable via model_copy/model_construct; render_text guard is bare
+  assert. RT-G028-6a/6b: coverage honesty one-directional (dates absent from
+  universe_by_date unaudited; out-of-universe predictions silently
+  intersected away — survivorship shape).
+- G029 seam notes: oos_coverage must be fed the PLANNED grid (emitted_grid
+  reports 1.0 post-drop); one panel per family per run (refuse-policy is
+  per-call; ICSeries carries no provenance binding); bootstrap seed ledgered
+  but not structurally pinned.
+
 ## G029 wiring items from G028 verification (docs/verification/G028.md, PASS)
 - factor_selection_stability is NOW-SATISFIABLE (G024's selected_factor_ids
   merged after G028 froze) — wire the producer at G029.

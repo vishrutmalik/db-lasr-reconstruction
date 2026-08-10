@@ -20,9 +20,12 @@ active:
     pr: 71
     branch: agent/implementer/G028-reporting
     worktree: .worktrees/G028-implementer
-    status: IMPLEMENTED pending handoff (PR #71 open, CI all green at bd1351f)
-    runtime_implementer: agent a2d260083016470f9 — killed by usage limit 2026-08-09 AT the PR-creation step (PR #71 exists; branch pushed bd1351f; worktree clean), RESUMED 2026-08-10 for handoff confirmation only (verify PR body, confirm gates, deliver summary)
-    next_action: on handoff confirmation launch verifier + red-team (quantitatively sensitive)
+    status: IN_VERIFICATION (PR #71, CI green at bd1351f)
+    latest_commit: bd1351f (IMPLEMENTED; 126 reporting tests; A-G028-01..10; NOT_AVAILABLE stubs typed; no lasr.costs import)
+    runtime_implementer: HANDOFF COLLECTED 2026-08-10 (agent a2d260083016470f9) — gates re-confirmed 1893/21/8; grant landed in docs/architecture/testing_strategy.md (charter said docs/methodology/ — verifier to confirm actual path; likely charter path error)
+    runtime_verifier: LAUNCHED 2026-08-10 (agent a634dc57fab35be7b, live) — fresh-context; CI-009/030/046/051..054 pins, math spot-checks, dedup/coverage/banner obligations, NOT_AVAILABLE honesty + now-satisfiable ruling
+    runtime_red_team: LAUNCHED 2026-08-10 (agent a27cba3dad50a3758, live) — metric-laundering attacks (RT-G027-5 negative drag, RT-G026 overlap, vanished-name), CI-052 boundary, statistical gaming, banner evasion, coverage honesty
+    next_action: collect both verdicts; on dual PASS merge PR #71 (G029 then waits only on G025)
     owned_paths: ["src/lasr/reporting/**", "tests/unit/test_reporting*.py", "grant: CI-009 coverage one-liner in docs/methodology/testing_strategy.md"]
   G035:
     agent_role: implementer

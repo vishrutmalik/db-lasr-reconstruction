@@ -23,7 +23,7 @@ active:
     status: IN_VERIFICATION (PR #71, CI green at bd1351f)
     latest_commit: bd1351f (IMPLEMENTED; 126 reporting tests; A-G028-01..10; NOT_AVAILABLE stubs typed; no lasr.costs import)
     runtime_implementer: HANDOFF COLLECTED 2026-08-10 (agent a2d260083016470f9) — gates re-confirmed 1893/21/8; grant landed in docs/architecture/testing_strategy.md (charter said docs/methodology/ — verifier to confirm actual path; likely charter path error)
-    runtime_verifier: LAUNCHED 2026-08-10 (agent a634dc57fab35be7b, live) — fresh-context; CI-009/030/046/051..054 pins, math spot-checks, dedup/coverage/banner obligations, NOT_AVAILABLE honesty + now-satisfiable ruling
+    runtime_verifier: PASS COLLECTED 2026-08-10 (agent a634dc57fab35be7b) — report 9c6c59a; 0 blocking, 9 NB (charter-path discrepancy = charter error, real doc is docs/architecture/testing_strategy.md; factor_selection_stability now-satisfiable -> G029 wiring; LT-004 suspected_leak flag home -> G029/G037; NB-3 empty-panel horizon default; NB-4 skip-reason labeling)
     runtime_red_team: LAUNCHED 2026-08-10 (agent a27cba3dad50a3758, live) — metric-laundering attacks (RT-G027-5 negative drag, RT-G026 overlap, vanished-name), CI-052 boundary, statistical gaming, banner evasion, coverage honesty
     next_action: collect both verdicts; on dual PASS merge PR #71 (G029 then waits only on G025)
     owned_paths: ["src/lasr/reporting/**", "tests/unit/test_reporting*.py", "grant: CI-009 coverage one-liner in docs/methodology/testing_strategy.md"]
@@ -37,8 +37,8 @@ active:
     status: IN_VERIFICATION pending reviewer slots (PR #72; IMPLEMENTED at b83d990; CI green except one pending leg at collection time)
     latest_commit: b83d990 (level3_risk/config/errors/optimizer/compare; +112 tests; A-G035-01..10; CI-047 pinned incl. P4 beta-neutral corr -0.042)
     runtime_implementer: HANDOFF COLLECTED 2026-08-10 (agent a09efc686fc10f491) — DEVIATION ACCEPTED by orchestrator: no src/lasr/risk/** package; system_design.md §3/§4 assigns the risk interface to portfolio/, and the shared import-rules test has no lasr.risk row — everything in portfolio/level3_*.py, risk tests in tests/unit/test_risk_model.py (inside grant). scipy grant unused (already a dependency). Limitations: equality-mode wash refusal (documented), uniform group limits, OptimizerConfig wiring deferred to G029
-    runtime_verifier: QUEUED (lane cap; launch on next freed slot) — fresh-context full verification
-    runtime_red_team: QUEUED (lane cap) — quantitatively sensitive; optimizer/risk-substitute/effect-separation attacks
+    runtime_verifier: LAUNCHED 2026-08-10 (agent af1039ecfdc4372d6, live) — fresh-context; CI-047 re-run, optimizer post-solve/infeasibility probes, shrinkage math + PSD, substitute-labeling bypass attempts, effect-separation additivity, A-G035-10 cost pin
+    runtime_red_team: QUEUED (lane cap) — quantitatively sensitive; optimizer/risk-substitute/effect-separation attacks; launch on next freed slot
     next_action: launch V+RT as slots free; on dual PASS merge PR #72
     owned_paths: ["src/lasr/portfolio/level3*.py", "tests/unit/test_risk*.py", "tests/unit/test_portfolio_level3*.py"]
 

@@ -157,6 +157,13 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   +/-1 scores instead of documented 0.0 (mean round-off, std = 1 ulp). Fix =
   degeneracy detection + tolerance cap when G025 consumes zscore machinery.
 
+## G029 wiring items from G028 verification (docs/verification/G028.md, PASS)
+- factor_selection_stability is NOW-SATISFIABLE (G024's selected_factor_ids
+  merged after G028 froze) — wire the producer at G029.
+- LT-004 suspected_leak flag needs a home — G029/G037 decision.
+- NB-3: empty prediction panel silently defaults horizon_steps=1 — reconcile
+  at G029 integration (typed refusal or documented default).
+
 ## G029 interface notes from G035 (PR #72 handoff)
 - Feed DRIFTED pre-trade weights to Level-3 (CI-046 turnover base).
 - Surface Level3Result.risk_model_manifest verbatim in reports (A-004

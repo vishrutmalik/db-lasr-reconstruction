@@ -16,22 +16,16 @@ active:
     runtime_red_team: agent afc9e3349b6147cd2 — Fable-5 model-limit killed 2026-08-10 before output, RESUMED FROM TRANSCRIPT same day (live); skeleton-first ordered
     next_action: collect both verdicts; on dual PASS merge PR #73 -> G029 becomes dependency-ready
     owned_paths: ["src/lasr/models/ensembles/**", "tests/unit/test_models_ensembles*.py", "grants: LT-005 marker flip, kernel docstring one-liner, zscore degeneracy fix at definition site"]
-  G035:
-    agent_role: implementer
-    objective: Level-3 constrained portfolio + generic risk model (A-004 substitute)
-    github_issue: 34
-    pr: (pending — agent opens it)
-    branch: agent/implementer/G035-level3
-    worktree: .worktrees/G035-implementer
-    status: IN_VERIFICATION pending reviewer slots (PR #72; IMPLEMENTED at b83d990; CI green except one pending leg at collection time)
-    latest_commit: b83d990 (level3_risk/config/errors/optimizer/compare; +112 tests; A-G035-01..10; CI-047 pinned incl. P4 beta-neutral corr -0.042)
-    runtime_implementer: HANDOFF COLLECTED 2026-08-10 (agent a09efc686fc10f491) — DEVIATION ACCEPTED by orchestrator: no src/lasr/risk/** package; system_design.md §3/§4 assigns the risk interface to portfolio/, and the shared import-rules test has no lasr.risk row — everything in portfolio/level3_*.py, risk tests in tests/unit/test_risk_model.py (inside grant). scipy grant unused (already a dependency). Limitations: equality-mode wash refusal (documented), uniform group limits, OptimizerConfig wiring deferred to G029
-    runtime_verifier: PASS COLLECTED 2026-08-10 (agent af1039ecfdc4372d6) — report 0a1e903; 0 blocking, 2 NB (NB-1 manifest.substitute cross-check gap — relayed to red-team for independent confirmation/ratchet; NB-2 additivity-tolerance docstring). PROCESS INCIDENT self-repaired: verifier --amend briefly folded red-team skeleton ef5cfbc; history restored verbatim + force-with-lease; red-team warned
-    runtime_red_team: agent aa6afc31d2f0257b8 — Fable-5 model-limit killed 2026-08-10 (only skeleton ef5cfbc committed; attack progress in transcript), RESUMED FROM TRANSCRIPT same day (live); ordered to commit findings-so-far FIRST; NB-1 relayed for independent weighing
-    next_action: collect red-team verdict; on PASS merge PR #72
-    owned_paths: ["src/lasr/portfolio/level3*.py", "tests/unit/test_risk*.py", "tests/unit/test_portfolio_level3*.py"]
-
 history:
+  - goal_id: G035
+    agent_role: implementer
+    branch: agent/implementer/G035-level3 (deleted after verified merge)
+    final_commit: b83d990 (level3 slice) + a41a7c6/0a1e903 (verify PASS, 0 blocking 2 NB) + ef5cfbc/6ad5b2e (red-team NO_BLOCKING_FINDINGS; 4 strict-xfail ratchets RT-G035-1..4 + 11 held pins)
+    pr: 72 (MERGED 2026-08-12, main 999686f)
+    verification: PASS + red-team NO_BLOCKING_FINDINGS (docs/verification+red_team/G035.md;
+      RT-G035-3 rank/PD guard is a GATE ITEM before any L3 experiment run;
+      accepted deviation: risk interface in portfolio/ per system_design.md)
+    worktree: removed
   - goal_id: G028
     agent_role: implementer
     branch: agent/implementer/G028-reporting (deleted after verified merge)

@@ -46,7 +46,7 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G032 | LASR-HC configuration (3-month target, overlap handling) | implementer | G031 | BLOCKED | [#31](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/31) | |
 | G033 | N-LASR 2020 configuration (weekly, 4 samples, monotonic) | implementer | G010, G029 | BLOCKED | [#32](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/32) | |
 | G034 | Transaction-cost & borrow model | implementer | G027 | MERGED | [#33](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/33) | [#67](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/67) |
-| G035 | Level-3 constrained portfolio + generic risk model | implementer | G034 | IN_VERIFICATION | [#34](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/34) | [#72](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/72) |
+| G035 | Level-3 constrained portfolio + generic risk model | implementer | G034 | MERGED | [#34](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/34) | [#72](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/72) |
 | G036 | Modern challenger models (same folds/costs) | implementer | G029, G033 | BLOCKED | [#35](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/35) | |
 | G037 | Red-team leakage & survivorship audit | red-team | G029 | BLOCKED | [#36](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/36) | |
 | G038 | Full synthetic experiment + reproducibility check | verifier | G029–G037 | BLOCKED | [#37](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/37) | |

@@ -199,6 +199,26 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
 - NB-3: empty prediction panel silently defaults horizon_steps=1 — reconcile
   at G029 integration (typed refusal or documented default).
 
+## Ratcheted defects from G035 red-team (strict-xfails on main since PR #72)
+- RT-G035-3 (GATE ITEM, loudest): rank-deficient/zero-variance shrinkage
+  covariance (LEGAL config: delta=0 on constant names, or T<=N history)
+  defeats target_volatility via the null space while REPORTING the cap
+  satisfied. MUST fix the rank/PD guard before any L3 experiment run uses
+  such a covariance (G029/G038 gate; owner: next portfolio/level3-touching
+  goal).
+- RT-G035-1: forced-close ADV breaches blessed inside an ABSOLUTE 1e-6
+  weight tolerance (cap scales 1/NAV, tolerance does not; nav 1e12 blesses
+  90x-ADV exits) and absent from post-solve verification.
+- RT-G035-2 (= verifier NB-1, sharpened): A-004 manifest forgery via hostile
+  RiskModel (is_substitute=True, manifest.substitute=False, None intensity
+  also skips the intensity cross-check). N-1 rider: config model_construct
+  smuggles substitute=False (costs block IS protected; A-004 field is not).
+  Owner: G037 audit / next level3 touch.
+- RT-G035-4: decompose_effects never reconciles L1/L2 gross vs L3 gross —
+  leverage mismatch inflates optimization_effect 8.5x (credits leverage as
+  construction skill). N-2/N-3 notes in the report (manifest-stamped
+  no-consumer risk block; infeasibility overclaim at 1e3+ alpha scale).
+
 ## G029 interface notes from G035 (PR #72 handoff)
 - Feed DRIFTED pre-trade weights to Level-3 (CI-046 turnover base).
 - Surface Level3Result.risk_model_manifest verbatim in reports (A-004

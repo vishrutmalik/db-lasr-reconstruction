@@ -28,8 +28,8 @@ Session-independent status. Update at every session end and major milestone.
 - G025 MERGED 2026-08-12 (PR #73, main ccd2f04): verifier PASS + red-team
   NO_BLOCKING (6 ratchets RT-G025-1..6 owner-routed; grant edits ruled
   honest by both gates)
-- G029 IN_PROGRESS (dispatched 2026-08-12; vertical slice + integration
-  charter; agent live)
+- G029 IN_VERIFICATION (PR #74 at 0c89a08; 10 ratchets flipped;
+  byte-identical double runs; determinism+e2e CI live; V+RT launched)
 - G026 MERGED 2026-08-09 (PR #69, main f863b1d): verifier PASS + red-team
   NO_BLOCKING_FINDINGS (3 ratchets RT-G026-1/2/3 routed in integration_queue)
 - G028 MERGED 2026-08-10 (PR #71, main 15ab5f8): verifier PASS + red-team

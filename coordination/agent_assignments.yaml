@@ -9,9 +9,13 @@ active:
     pr: (pending — agent opens it)
     branch: agent/implementer/G029-vertical-slice
     worktree: .worktrees/G029-implementer
-    status: IN_PROGRESS (dispatched 2026-08-12 on G025 merge; all G019-G028 + G034/G035 deps merged)
-    runtime_implementer: LAUNCHED 2026-08-12 (agent a7902b3ba2caf7e2f, live) — charter: CLI + pipeline assembly; G027<->G034 adapter (M-1..M-6, RT-G027-8/-5, NB-4); gate-item grants 4a-e (RT-G028-1/-2 reporting, RT-G025-1/2/5+NB-4 combine, RT-G035-3 PD guard or L3 exclusion, RT-G026-2/3 + zero-test-row validation, config wiring/knob promotion); CT-16; N8; determinism+e2e CI activation; CI-042/045/055; byte-identical double runs
-    next_action: collect implementation; then verifier + red-team (quantitatively sensitive, integration-critical)
+    pr_number: 74
+    status: IN_VERIFICATION (PR #74, all 7 active CI jobs green at 0c89a08)
+    latest_commit: 0c89a08 (IMPLEMENTED; 2566/23/18; 10 ratchets flipped; byte-identical double runs across 48 artifacts; determinism+e2e CI jobs live at ~30s each; RT-G035-3 dual-resolved — guard fixed AND L3 leg excluded to G038)
+    runtime_implementer: HANDOFF COLLECTED 2026-08-12 (agent a7902b3ba2caf7e2f) — A-G029-01..08 + 5 found-not-fixed out-of-lane items in PR body; sharpest: build_corporate_actions merger-successor exchange bug fails canonical build on most synthetic seeds (2/3/5/7/11/13/42/123 fail; 99/1729/2024 clean) — canonical-owner fix REQUIRED before arbitrary-seed runs (G038 gate)
+    runtime_verifier: LAUNCHED 2026-08-12 (agent a67cacaa426964d0b, live) — headline: independent double-run byte-identity + verify-run; 10-flip integrity incl. RT-G028-1 premise restructure + RT-G035-3 dual resolution; adapter M-1..M-6 audit; ci.yml audit
+    runtime_red_team: LAUNCHED 2026-08-12 (agent afefab70f54f34a6c, live) — reproducibility-theater attacks (artifact tampering vs verify-run, hash16 collisions, cache poisoning, hidden nondeterminism), composition leaks, L3 smuggling, ratchet-flip integrity
+    next_action: collect both verdicts; on dual PASS merge PR #74 -> variant wave G030/G031/G033 ∥ G036-prep unblocks
     owned_paths: ["src/lasr/cli.py", "src/lasr/pipeline/**", "tests/e2e/**", "tests/unit/test_pipeline*.py", "tests/unit/test_cli*.py", "CT-16 in tests/contract", "grants 4a-e per charter (reporting/combine/level3_risk/validation/config gate fixes + ratchet flips)", "grant: narrow ci.yml activation of determinism+e2e-smoke jobs"]
 history:
   - goal_id: G025

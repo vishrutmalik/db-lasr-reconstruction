@@ -265,5 +265,21 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   orchestrator methodology pass (after G034 round-2 verdicts confirm the
   convention).
 
+## G038 gate + canonical-owner items from G029 (PR #74 handoff)
+- build_corporate_actions resolves merger successors on the DELISTED
+  security's exchange — most small synthetic-world seeds fail the canonical
+  build (typed failure; probed 2/3/5/7/11/13/42/123 fail, 99/1729/2024
+  clean). Owner: next canonical/data-layer-touching goal; REQUIRED before
+  arbitrary-seed synthetic runs (G038). G029's smoke config pins a clean
+  seed deliberately.
+- L3 experiment leg excluded from the slice via typed refusal naming G038
+  (RT-G035-3 guard fixed; RT-G035-4 gross-reconciliation still open) —
+  G038 owns wiring the L3 leg + richer per-security short-book + nightly
+  determinism.
+- 4 further found-not-fixed items enumerated in the PR #74 body — route on
+  G029 merge per verifier confirmation.
+- RT-G025-3 (backcast stamps) remains OPEN for G030/G033 (hedge rosters
+  need stamped backcasts).
+
 ## Conflicts requiring resolution
 - (none)

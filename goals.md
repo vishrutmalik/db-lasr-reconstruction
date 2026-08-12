@@ -40,7 +40,7 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G026 | Walk-forward backtester (purge/embargo, event-time) | implementer | G023, G014 | MERGED | [#26](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/26) | [#69](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/69) |
 | G027 | Level-1/2 portfolio construction + accounting | implementer | G026 | MERGED | [#27](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/27) | [#68](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/68) |
 | G028 | Reporting & diagnostics (signal + portfolio metrics) | implementer | G026, G027 | MERGED | [#28](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/28) | [#71](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/71) |
-| G029 | End-to-end synthetic vertical slice (CLI, reproducible) | implementer | G019–G028 | IN_PROGRESS | [#29](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/29) | |
+| G029 | End-to-end synthetic vertical slice (CLI, reproducible) | implementer | G019–G028 | IN_VERIFICATION | [#29](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/29) | [#74](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/74) |
 | G030 | N-LASR2 neutralization + hedge learner | implementer | G008, G029 | BLOCKED | [#40](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/40) | |
 | G031 | LASR 2014 linearized weak learner | implementer | G009, G029 | BLOCKED | [#30](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/30) | |
 | G032 | LASR-HC configuration (3-month target, overlap handling) | implementer | G031 | BLOCKED | [#31](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/31) | |

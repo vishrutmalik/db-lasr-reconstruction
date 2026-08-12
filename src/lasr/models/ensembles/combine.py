@@ -397,22 +397,33 @@ def ensemble_weights(
                 "hedge_weight_rule (E-P2-21), never from IC weighting"
             )
         ic_window = "expanding" if cfg.ic_window is None else cfg.ic_window.value
-        if ic_window != "expanding":
+        trailing_k: int | None = None
+        if ic_window == "trailing_k":
+            if cfg.trailing_k is None:
+                raise EnsembleError(
+                    "ic_window='trailing_k' requires an EXPLICIT "
+                    "ensemble.trailing_k leaf (A-G025-07; leaf promoted at "
+                    "G029 — never a hidden default)"
+                )
+            trailing_k = int(cfg.trailing_k.value)
+        elif cfg.trailing_k is not None:
             raise EnsembleError(
-                "ic_window='trailing_k' is not constructible from config - "
-                "the schema carries no k leaf (A-G025-07); call "
-                "seasonal_rank_ic_weights directly with an explicit k"
+                "ensemble.trailing_k is only meaningful under "
+                "ic_window='trailing_k' (A-G025-07)"
             )
         floor = (
             0.0 if cfg.negative_ic_floor is None else float(cfg.negative_ic_floor.value)
         )
+        min_obs = 1 if cfg.min_observations is None else int(cfg.min_observations.value)
         base = seasonal_rank_ic_weights(
             ic_records,
             as_of=as_of,
             calendar_key=calendar_key,
             components=names,
-            ic_window="expanding",
+            ic_window="expanding" if trailing_k is None else "trailing_k",
+            trailing_k=trailing_k,
             negative_ic_floor=floor,
+            min_observations=min_obs,
         )
     else:  # pragma: no cover - config Literal is closed today
         raise EnsembleError(f"unknown ensemble weighting {weighting!r}")

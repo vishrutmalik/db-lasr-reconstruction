@@ -196,7 +196,19 @@ class BoostingConfig(ConfigModel):
 
 
 class OptimizerConfig(ConfigModel):
-    """Secondary optimized-portfolio variant (P1-36; OQ-P1-12)."""
+    """Secondary optimized-portfolio variant (P1-36; OQ-P1-12).
+
+    NOT wired to :mod:`lasr.portfolio.level3_config` (G029 decision, per
+    the G035 handoff note): this section is EVIDENCE metadata — the
+    papers' constraint dicts ({market_neutral, leverage, target_vol,
+    beta_neutral}, P1-36) do not carry the parameters a runnable
+    ``Level3Config`` requires (shrinkage intensity, annualization
+    periods, solver tolerances, day-count fraction), and inventing them
+    in a bridge would be a hidden default (CI-044). The Level-3
+    experiment legs (G038, on the merged G035 surface) construct
+    ``Level3Config`` explicitly, citing this section's tagged values for
+    the constraints they DO pin.
+    """
 
     constraints: Param[dict[str, Scalar]]  # P1-36 / E-P2-24 / P3-26
     risk_model: Param[str]  # A-004 (substitute; undisclosed)
@@ -204,10 +216,19 @@ class OptimizerConfig(ConfigModel):
 
 
 class PortfolioConfig(ConfigModel):
-    """Signal-to-portfolio mapping and constraints (CR-014)."""
+    """Signal-to-portfolio mapping and constraints (CR-014).
+
+    ``gross_exposure``/``max_weight`` added at G029 (G027 verifier N-4:
+    the P1 "2x" and per-name caps previously entered only as explicit
+    ``from_config`` keywords — CI-044 wants them config-visible).
+    Optional: absent leaves mean the RUN must supply them explicitly
+    (never a hidden default).
+    """
 
     signal_mapping: Param[str]  # P1-35; E-P4-23
     fractiles: Param[dict[str, int]] | None = None  # P1-35
+    gross_exposure: Param[float] | None = None  # P1-36 "2x" (N-4)
+    max_weight: Param[float] | None = None  # per-name cap (N-4)
     fractile_weighting: Param[Literal["equal", "cap_weighted"]] | None = (
         None  # OQ-P1-13; A-G011-17
     )

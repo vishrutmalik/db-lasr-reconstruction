@@ -54,6 +54,19 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-08-12 (2): GitHub Actions minutes alert (user email): 1,800/2,000
+  free minutes used, resets Sep 1; overage blocked unless the user raises
+  the budget. Root causes: (1) every orchestrator coordination push to main
+  ran full CI (~15 charged min each); (2) macos-latest bills at the 10x
+  multiplier (~2/3 of every run). Fix on main (orchestrator control plane,
+  same pattern as D-016): paths-ignore for coordination/**, docs/**, *.md
+  on both triggers; macOS test moved to a push-only job (PRs keep 2 Linux
+  legs; every merge to main still gets macOS coverage). Estimated PR-run
+  cost drops ~15 -> ~5 charged min; coordination pushes now free. Budget /
+  payment decision remains the user's. Contingency if minutes exhaust
+  before Sep 1: agents' local gates + verifier reproduction still enforce
+  quality; orchestrator pauses merges or accepts documented reduced CI
+  assurance per user instruction.
 - 2026-08-10 (3): FOURTH kill wave — Fable 5 MODEL limit (distinct from the
   session usage limit) took all three live reviewers: G025 verifier (at
   start, nothing committed), G025 red-team (no output), G035 red-team (only

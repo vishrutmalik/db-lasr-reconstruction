@@ -12,8 +12,21 @@ name: ci
 
 on:
   pull_request:
+    # Docs/coordination-only PR pushes need no CI (Actions-minutes budget,
+    # 2026-08-12 usage alert; incident log in progress.md).
+    paths-ignore:
+      - "coordination/**"
+      - "docs/**"
+      - "*.md"
   push:
     branches: [main]
+    # Orchestrator coordination commits (markdown/YAML state only) burn a
+    # full run each (~15 charged min at the macOS 10x multiplier) — skip.
+    # A push touching ANY non-ignored path still runs everything.
+    paths-ignore:
+      - "coordination/**"
+      - "docs/**"
+      - "*.md"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -64,8 +77,6 @@ jobs:
             python: "3.11"
           - os: ubuntu-latest
             python: "3.12"
-          - os: macos-latest
-            python: "3.12"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -77,6 +88,23 @@ jobs:
           enable-cache: true
       - run: uv sync --locked
       # Includes the provider contract suite CT-01..15 once G018 lands.
+      - run: uv run pytest -m "unit or integration"
+
+  # macOS bills at GitHub's 10x minutes multiplier (~2/3 of every run's cost),
+  # so it validates merges to main only; PRs run the two Linux legs above.
+  # (Actions-minutes budget, 2026-08-12 usage alert.)
+  test-macos:
+    if: github.event_name == 'push'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv publishes no floating major tag from v8 — pin the exact tag.
+      - uses: astral-sh/setup-uv@v8.3.2
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
       - run: uv run pytest -m "unit or integration"
 
   # ── Disabled placeholders: workflow wiring only, no fake tests ─────────────

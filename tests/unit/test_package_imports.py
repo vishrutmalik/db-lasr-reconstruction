@@ -44,6 +44,7 @@ EXPECTED_PACKAGES: tuple[str, ...] = (
     "lasr.costs",
     "lasr.backtesting",
     "lasr.reporting",
+    "lasr.pipeline",  # G029 run assembly (§3 map addition; docs pass queued)
     "lasr.cli",
 )
 

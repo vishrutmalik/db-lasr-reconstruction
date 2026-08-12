@@ -11,7 +11,7 @@ scenario grids are NOT overrides.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, time
 from pathlib import Path
 from typing import Literal
 
@@ -24,7 +24,9 @@ __all__ = [
     "DateRange",
     "ExperimentConfig",
     "Override",
+    "PipelineRunSettings",
     "ProviderConfig",
+    "WalkForwardSettings",
 ]
 
 
@@ -74,8 +76,54 @@ class Override(ConfigModel):
         return prov
 
 
+class WalkForwardSettings(ConfigModel):
+    """Fold-machinery parameters of one run (G029; structural values —
+    no evidence tags per config_system.md §2 "purely structural fields").
+
+    ``train_steps`` is the warm-up before the first fit (expanding) or
+    the rolling window length; ``test_steps`` the per-fold test window.
+    """
+
+    scheme: Literal["expanding", "rolling"] = "expanding"
+    train_steps: int = Field(ge=1)
+    test_steps: int = Field(ge=1, default=1)
+
+
+class PipelineRunSettings(ConfigModel):
+    """G029 vertical-slice run settings (structural, experiment-scoped).
+
+    Required for ``lasr run``; every value is EXPLICIT in the experiment
+    YAML (no hidden defaults for run-shaping choices): session times pin
+    the decision/execution instants (D-009), ``initial_nav`` seeds the
+    ledger, and ``leak_flag_ic_threshold`` arms the LT-004 acceptance
+    gate (a per-feature mean |IC| above it marks ``suspected_leak`` and
+    the run can never be marked passed while unresolved).
+    """
+
+    walkforward: WalkForwardSettings
+    session_open_utc: time
+    session_close_utc: time
+    initial_nav: float = Field(gt=0)
+    leak_flag_ic_threshold: float = Field(gt=0)
+    tail_alpha: float = Field(gt=0, lt=1, default=0.05)
+    #: Which portfolio.fractiles region key drives the book (e.g. "us");
+    #: optional only when the version declares exactly one key.
+    fractile_key: str | None = None
+
+    @model_validator(mode="after")
+    def _session_ordered(self) -> PipelineRunSettings:
+        if not self.session_open_utc < self.session_close_utc:
+            raise ValueError(
+                f"session open {self.session_open_utc} must precede close "
+                f"{self.session_close_utc}"
+            )
+        return self
+
+
 class ExperimentConfig(ConfigModel):
-    """One run definition (# arch: config_system.md §5, field-for-field)."""
+    """One run definition (# arch: config_system.md §5, field-for-field;
+    ``pipeline`` added at G029 — required for CLI runs, optional for
+    config-only consumers)."""
 
     experiment_id: str = Field(min_length=1)
     version_spec: str = Field(min_length=1)  # e.g. "configs/models/nlasr_2012.yaml"
@@ -87,6 +135,7 @@ class ExperimentConfig(ConfigModel):
     seed: int
     artifacts_root: Path
     overrides: tuple[Override, ...] = ()
+    pipeline: PipelineRunSettings | None = None  # G029: required to RUN
 
     @property
     def faithful(self) -> bool:

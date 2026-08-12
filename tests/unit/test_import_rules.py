@@ -72,10 +72,12 @@ RULES: dict[str, frozenset[str]] = {
     "lasr.costs": _L0_2,
     "lasr.backtesting": _L0_9,  # Level 10
     "lasr.reporting": _L0_10,  # Level 11 (read-only artifact interfaces)
-    # Level 12 (G029): run assembly imports everything below it; only the
-    # CLI (and tests) import the pipeline.
-    "lasr.pipeline": _L0_10 | {"lasr.reporting"},
-    "lasr.cli": _L0_10 | {"lasr.reporting", "lasr.pipeline"},  # Level 12
+    # Level 12 (G029): run assembly imports everything below it (the
+    # generator included — the pipeline drives synthetic worlds directly);
+    # only the CLI (and tests) import the pipeline.
+    "lasr.pipeline": _L0_10 | {"lasr.reporting", "lasr.data.synthetic"},
+    "lasr.cli": _L0_10
+    | {"lasr.reporting", "lasr.pipeline", "lasr.data.synthetic"},  # Level 12
 }
 
 #: Namespace-only packages: importable by anyone because their own rule row

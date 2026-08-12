@@ -178,6 +178,18 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   per-call; ICSeries carries no provenance binding); bootstrap seed ledgered
   but not structurally pinned.
 
+## Owner-routed NBs from G025 verification (docs/verification/G025.md, PASS)
+- NB-1: transforms.zscore ulp-level insertion-order dependence + the
+  combine.py lock-step "value-identical" claim overstated. NB-6 (=RT-G025-6
+  ratchet): degeneracy cap scales linearly with n. Owner: features/G022
+  successor.
+- NB-2 (=RT-G025-4 ratchet): hedge lookback silently shrinks below
+  lookback_periods. Owner: G030/G033.
+- NB-3 (=RT-G025-5 ratchet): zero-weight components still gate composite
+  coverage; NB-4: direct combine call with empty component map returns a
+  silent empty composite. Owner: G029 wiring.
+- NB-5/NB-7 cosmetic (prose off-by-one; PR-body baseline count).
+
 ## G029/G030 interface notes from G025 (PR #73 handoff)
 - G029/G026 drive train_ensemble(spec, TrainingHistory, fit_as_of) or the
   ExpertSpec bridge; IC weights need caller-supplied realized

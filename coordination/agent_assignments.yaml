@@ -12,9 +12,9 @@ active:
     status: IN_VERIFICATION (PR #73, CI green at 40efcf9)
     latest_commit: 40efcf9 (IMPLEMENTED; selectors/experts/combine/scoring +157 tests; grants a/b/c exercised; A-G025-01..08; LT-005 flipped + NB-2 scoped in leakage_tests.md; 4 sensitivity knobs flagged for config-owner YAML promotion)
     runtime_implementer: HANDOFF COLLECTED 2026-08-10 (agent a5fbdf23f8c1caf7c) — full report in transcript; interface notes for G029/G030 recorded in integration queue
-    runtime_verifier: agent a05075bf5819a1e94 — Fable-5 model-limit killed 2026-08-10 at start (nothing committed), RESUMED FROM TRANSCRIPT same day (live); skeleton-first ordered
-    runtime_red_team: agent afc9e3349b6147cd2 — Fable-5 model-limit killed 2026-08-10 before output, RESUMED FROM TRANSCRIPT same day (live); skeleton-first ordered
-    next_action: collect both verdicts; on dual PASS merge PR #73 -> G029 becomes dependency-ready
+    runtime_verifier: PASS COLLECTED 2026-08-12 (agent a05075bf5819a1e94) — report bc861bc; 0 blocking, 7 NB (NB-1 zscore ulp order-dependence -> features owner; NB-2=RT-G025-4 hedge-lookback shrink -> G030/G033; NB-3=RT-G025-5 zero-weight coverage gating + NB-4 silent empty composite -> G029; NB-6=RT-G025-6 cap linear-n -> features owner; NB-5/7 cosmetic); LT-005 doc edit ruled HONEST SCOPING
+    runtime_red_team: agent afc9e3349b6147cd2, live — keepers already pushed (108bc37: 20 passed / 6 strict-xfail; RT-G025-4/5/6 converge with verifier NB-2/3/6); final verdict pending
+    next_action: collect red-team verdict; on PASS merge PR #73 -> G029 becomes dependency-ready
     owned_paths: ["src/lasr/models/ensembles/**", "tests/unit/test_models_ensembles*.py", "grants: LT-005 marker flip, kernel docstring one-liner, zscore degeneracy fix at definition site"]
 history:
   - goal_id: G035

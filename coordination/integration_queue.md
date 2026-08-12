@@ -265,6 +265,19 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
   orchestrator methodology pass (after G034 round-2 verdicts confirm the
   convention).
 
+## Ratcheted defects from G029 red-team (strict-xfails, PR #74)
+- RT-G029-1 (SHARPEST): the run manifest (holds `passed`, the A-003 banner,
+  suspected_leaks) sits OUTSIDE the hash tree — an edited manifest verifies
+  clean and survives idempotent rerun (banner strip). verify_run must hash/
+  re-derive the manifest. RT-G029-2: verify_run never binds a run dir to its
+  config identity (misfiled run dir blessed as another config's result).
+  RT-G029-3: duplicate YAML keys silently last-wins. N-2: verify_run
+  re-asserts arithmetic but not the negative-charge sign guard. Owner:
+  G038 reproducibility hardening (or a CLI micro-pass before it).
+- N-1: rank guard passes near-singular-but-PD covariance (cond ~1e8) —
+  vacuous-vol residual, unreachable in G029 (L3 refused); G038 with the L3
+  leg wiring.
+
 ## G038 gate + canonical-owner items from G029 (PR #74 handoff)
 - build_corporate_actions resolves merger successors on the DELISTED
   security's exchange — most small synthetic-world seeds fail the canonical

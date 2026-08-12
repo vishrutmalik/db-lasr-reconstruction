@@ -31,6 +31,9 @@ pipeline:
   initial_nav: 1000000.0
   leak_flag_ic_threshold: 0.30   # LT-004 gate (sidecar convention)
   tail_alpha: 0.05
+  # monthly bars embed a month's return in the split-date close jump;
+  # the daily-bar default band (5%) would flag honest splits.
+  quality_split_jump_rel_tol: 0.35
   fractile_key: us
 overrides:
   # The historical P1 feature list (70 names) is not reconstructible from

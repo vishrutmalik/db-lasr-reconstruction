@@ -36,6 +36,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 import numpy as np
+from scipy.stats import rankdata  # type: ignore[import-untyped]
 
 from lasr.config.version_spec import VersionSpec
 from lasr.models.ensembles.combine import ComponentICRecord, ensemble_weights
@@ -64,9 +65,9 @@ _MIN_IC_NAMES = 3
 
 def _rank_ic(scores: Sequence[float], outcomes: Sequence[float]) -> float | None:
     """Spearman rank IC (CI-051 convention: signal ranks vs forward-return
-    ranks); None when either side is degenerate."""
-    score_ranks = np.argsort(np.argsort(np.asarray(scores))).astype(np.float64)
-    outcome_ranks = np.argsort(np.argsort(np.asarray(outcomes))).astype(np.float64)
+    ranks, average ranks on ties); None when either side is degenerate."""
+    score_ranks = rankdata(np.asarray(scores), method="average")
+    outcome_ranks = rankdata(np.asarray(outcomes), method="average")
     if float(np.std(score_ranks)) == 0.0 or float(np.std(outcome_ranks)) == 0.0:
         return None
     return float(np.corrcoef(score_ranks, outcome_ranks)[0, 1])

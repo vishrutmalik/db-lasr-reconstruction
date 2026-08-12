@@ -457,6 +457,21 @@ def _evaluate_acceptance(
     return rows
 
 
+def acceptance_verdict(
+    acceptance_rows: Sequence[Mapping[str, Any]], suspected_leaks: Sequence[str]
+) -> bool:
+    """The run's pass verdict: every evaluated band within tolerance AND
+    zero unresolved leak flags (LT-004: the acceptance gate refuses to
+    mark a run passed while a suspected_leak stands — leakage_tests.md).
+    """
+    evaluated = [r for r in acceptance_rows if r["status"] == "evaluated"]
+    if not evaluated:
+        return False  # nothing measured = nothing passed, never a default
+    if suspected_leaks:
+        return False
+    return all(bool(r["within_band"]) for r in evaluated)
+
+
 # ── the runner ───────────────────────────────────────────────────────────────
 
 
@@ -669,10 +684,7 @@ def run_experiment(
         "ls_sharpe": summary.sharpe,
     }
     acceptance_rows = _evaluate_acceptance(spec, measured)
-    evaluated = [r for r in acceptance_rows if r["status"] == "evaluated"]
-    passed = bool(evaluated) and all(r["within_band"] for r in evaluated)
-    if suspected:
-        passed = False  # LT-004 gate: unresolved leak flags block "passed"
+    passed = acceptance_verdict(acceptance_rows, suspected)
 
     # ── persistence (deterministic; hashes recorded in the manifest) ─────
     artifact_hashes = _persist(

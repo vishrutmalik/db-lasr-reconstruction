@@ -106,6 +106,11 @@ class PipelineRunSettings(ConfigModel):
     initial_nav: float = Field(gt=0)
     leak_flag_ic_threshold: float = Field(gt=0)
     tail_alpha: float = Field(gt=0, lt=1, default=0.05)
+    #: G021 split-vs-price-jump reconciliation tolerance. The battery
+    #: default (0.05) is a DAILY-bar convention; a monthly-bar world
+    #: embeds a month's return in the jump, so the run must state its
+    #: own band explicitly (no hidden default at the run level).
+    quality_split_jump_rel_tol: float = Field(gt=0, lt=1)
     #: Which portfolio.fractiles region key drives the book (e.g. "us");
     #: optional only when the version declares exactly one key.
     fractile_key: str | None = None

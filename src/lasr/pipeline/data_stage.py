@@ -45,7 +45,7 @@ from lasr.data.providers.synthetic_provider import (
     PROVIDER_VERSION,
     SyntheticProvider,
 )
-from lasr.data.quality import QualityReport, run_quality_battery
+from lasr.data.quality import QualityCheckConfig, QualityReport, run_quality_battery
 from lasr.data.schemas.base import Row
 from lasr.data.schemas.raw_registry import get_raw_schema
 from lasr.data.schemas.universe import MembershipBasis
@@ -425,7 +425,18 @@ def build_data_stage(
         ),
     )
 
-    quality = run_quality_battery(canonical, raw_store=raw_store)
+    if experiment.pipeline is None:
+        raise PipelineConfigError(
+            "experiment has no `pipeline:` section (data stage needs the "
+            "quality tolerance band)"
+        )
+    quality = run_quality_battery(
+        canonical,
+        QualityCheckConfig(
+            split_discontinuity_rel_tol=(experiment.pipeline.quality_split_jump_rel_tol)
+        ),
+        raw_store=raw_store,
+    )
     if not quality.clean:
         raise PipelineError(
             "G021 quality battery FAILED on the canonical layers: "

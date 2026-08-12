@@ -46,6 +46,13 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-08-10 (3): FOURTH kill wave — Fable 5 MODEL limit (distinct from the
+  session usage limit) took all three live reviewers: G025 verifier (at
+  start, nothing committed), G025 red-team (no output), G035 red-team (only
+  skeleton ef5cfbc committed; attack conclusions in transcript). All three
+  resumed from transcripts same day on the same model policy per the
+  standing no-silent-model-switch directive; each ordered to commit
+  findings-so-far/skeleton FIRST before new work.
 - 2026-08-10 (2): G035 verifier --amend briefly folded the parallel
   red-team's pushed skeleton into its own commit, force-pushed, DETECTED
   IMMEDIATELY and self-repaired (skeleton restored verbatim, own report

@@ -139,7 +139,29 @@ that FAILS here (IC << embedded, non-monotone quantiles) has a plumbing
 defect (mis-oriented ranks per OQ-P1-02, label misalignment).
 **Pass/fail:** measured model mean IC ∈ [0.07, 0.13]; quantile monotonicity
 statistic (CI-053) = 1.0 (all adjacent pairs ordered) on quintiles over the
-full sample; factor selected in ≥ 50% of all boosting rounds.
+full sample; factor selected in ≥ 50% of all boosting rounds. Both the band
+and the selection criterion bind on the scenario AS CONSTRUCTED — one
+embedded factor, so the candidate pool is {FMONO}. Expert agreement (G025
+operationalization): trailing-12m and seasonal-12y expert mean ICs each in
+the same band; previous-1m expert mean IC positive (structurally the
+noisiest expert — it trains on ONE month of a ρ = 0.10 world; measured
+0.048/0.054 across the two battery seeds); ensemble mean IC in-band, within
+0.01 of the best component, and within 0.03 of the component mean (G025
+flip measurements: components 0.0479–0.0969, ensemble 0.0843/0.0931 across
+seeds 20260723/914, 130 scored months each).
+**Distractor scope note (G024 verification NB-2, scenario-owner ruling at
+G025):** the "selected in most rounds" phrasing holds ONLY for the
+world-native single-factor pool. With seeded uniform-noise distractor
+candidates added, min-Z with repeats allowed reaches its documented
+post-absorption equilibrium (G024 r2 red-team O-R3): once the monotone
+signal is absorbed, every candidate's Z drifts to ≈ 0.5 and later rounds
+scatter across the pool — FMONO then takes only ~27–28% of rounds and the
+measured model mean IC can fall marginally below the band's low edge
+(0.0673 / ~0.070 on two independent measurement seeds, G024 verification
+§7). That is a property of the selection rule under a distractor-augmented
+pool, not leakage and not a plumbing defect; the ≥ 50% criterion and the
+band therefore MUST NOT be applied to distractor-augmented variants of this
+scenario.
 **Exercises:** CI-013, CI-016, CI-020, CI-035, CI-051, CI-053.
 **Basis:** MP §17 ("stable monotonic efficacy").
 

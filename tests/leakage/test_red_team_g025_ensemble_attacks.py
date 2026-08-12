@@ -161,16 +161,10 @@ class TestBoundarySemantics:
 
 
 class TestICRecordForgery:
-    @pytest.mark.xfail(
-        reason=(
-            "RT-G025-1: contradictory duplicate ComponentICRecords (same "
-            "component/period_id/calendar_key, different IC) are silently "
-            "averaged — 4 forged copies of a 0.90 IC drag B's weight from "
-            "0.50 to ~0.88; want a refusal on duplicate record keys "
-            "(docs/red_team/G025.md)"
-        )
-    )
     def test_contradictory_duplicate_records_must_be_refused(self) -> None:
+        # RT-G025-1 FIXED at G029: duplicate (component, period_id,
+        # calendar_key) record keys are refused (pre-fix: 4 forged copies
+        # of a 0.90 IC dragged B's weight from 0.50 to ~0.88).
         forged = [
             rec("A", "2005-02", 0.10),
             rec("B", "2005-02", 0.10),
@@ -184,16 +178,11 @@ class TestICRecordForgery:
                 forged, as_of=AS_OF, calendar_key="02", components=["A", "B"]
             )
 
-    @pytest.mark.xfail(
-        reason=(
-            "RT-G025-2: calendar_key is caller-asserted and never "
-            "cross-checked against the record's own dates — a July-realized "
-            "outcome forged with key '02' enters the February bucket "
-            "undetected; want records to carry label_date and derive the key "
-            "(docs/red_team/G025.md)"
-        )
-    )
     def test_calendar_key_contradicting_record_dates_must_be_refused(self) -> None:
+        # RT-G025-2 FIXED at G029: records may carry label_date (validated
+        # at construction); unstamped records in one bucket must realize at
+        # ONE calendar offset from the key month — the July-realized forgery
+        # in the February bucket is refused.
         # A June-decision outcome (realized 2005-07-31) forged as February.
         forged = rec(
             "B",
@@ -480,18 +469,10 @@ class TestScoreCensoring:
         assert bias == pytest.approx(1.5)  # mean(3..9) - mean(0..9)
         assert any("3" in r.message and "excluded" in r.message for r in caplog.records)
 
-    @pytest.mark.xfail(
-        reason=(
-            "RT-G025-5: a component floored to weight 0.0 contributes "
-            "NOTHING to the composite yet still gates coverage — names "
-            "missing only from the inert component are censored out "
-            "(A-G025-08 says 'any weighted component'; a zero-weight "
-            "component is not meaningfully weighted); want exclusion "
-            "restricted to weight > 0 components or a structural exclusion "
-            "ledger in the return contract (docs/red_team/G025.md)"
-        )
-    )
     def test_zero_weight_component_must_not_gate_coverage(self) -> None:
+        # RT-G025-5 FIXED at G029: only components with weight > 0 gate
+        # composite coverage; a floored-to-zero component is inert and no
+        # longer censors names missing only from it.
         a_scores = {"s1": 1.0, "s2": 2.0, "s3": 3.0, "s4": 0.0}
         b_scores = {"s1": 9.0, "s2": 9.0, "s3": 9.0}  # s4 withheld
         combined = combine_component_scores(

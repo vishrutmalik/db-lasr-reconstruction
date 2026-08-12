@@ -24,11 +24,15 @@ ledgered :class:`FoldExclusion`, never a silent drop):
   this is DB's own P1/P3 training-set boundary.
 - **embargo** (CI-015b, second clause): a training row whose return
   segment intersects the embargo zone ``(B, B + e·H_row]`` is
-  ``embargoed``, where ``e = embargo_horizons`` (>= 1 full horizon by
-  default) and ``H_row`` is the row's own realized target-window duration.
-  At ``e = 1`` purge+embargo together exclude exactly every training
-  window sharing a return segment with any test outcome. The embargo is
-  inert for non-overlapping families (``horizon_steps == 1``), mirroring
+  ``embargoed``, where ``e = embargo_horizons`` (>= 1 full horizon for
+  overlapping families — enforced, RT-G026-3) and ``H_row`` is the row's
+  own realized target-window duration. At ``e = 1``, for a UNIFORM
+  same-horizon pool on a symmetric close-to-close basis, purge+embargo
+  together exclude every training window sharing a return segment with
+  any test outcome (the ``close_to_open`` basis extends windows one
+  session past the grid point and is NOT covered — RT-G026-1 open;
+  ratcheted in tests/leakage). The embargo is inert for non-overlapping
+  families (``horizon_steps == 1``), mirroring
   ``OverlapMetadata.embargo_steps == 0`` (CI-015b "defaults ON for
   overlapping families"). It binds only when a fold's train range extends
   past its test range (backcast-style splits); walk-forward folds place
@@ -36,6 +40,13 @@ ledgered :class:`FoldExclusion`, never a silent drop):
   already governs. A symmetric PRE-test embargo is deliberately absent:
   it would forbid the papers' own training sets (P1/P3 train on windows
   ending at the fit date).
+
+Pool uniformity (RT-G026-2): one selection = one target family. Records
+with differing ``overlap.horizon_steps`` in a single selection are
+REFUSED — a short-horizon row would bypass the embargo (its
+``horizon_steps == 1`` gate) while sitting inside a longer test outcome
+window. Sub-horizon embargoes (``0 < e < 1``) on overlapping families
+are likewise refused (CI-015b "at least one full horizon" — RT-G026-3).
 
 LT-012 refusal: an overlapping-label family (``horizon_steps > 1``) with
 ``purge='off'`` is REFUSED with :class:`UnpurgedOverlapError` — at fold
@@ -211,6 +222,12 @@ def generate_folds(
     time when combined with ``purge='off'``.
     """
     ensure_purge_admissible(purge, horizon_steps)
+    if horizon_steps > 1 and 0.0 < embargo_horizons < 1.0:
+        raise FoldConfigError(
+            f"embargo_horizons={embargo_horizons} is below one full horizon "
+            f"for an overlapping family (horizon_steps={horizon_steps}) — "
+            "CI-015(b) requires at least one full horizon (RT-G026-3)"
+        )
     if train_steps < 1 or test_steps < 1:
         raise FoldConfigError(
             f"train_steps and test_steps must be >= 1, got "
@@ -344,12 +361,28 @@ def select_training_records(
     out-of-range, then unrealized-at-fit, then purge, then embargo — a row
     receives exactly one reason.
     """
+    horizons = sorted({r.overlap.horizon_steps for r in records})
+    if len(horizons) > 1:
+        raise FoldConfigError(
+            f"fold {fold.fold_id!r}: mixed target horizons in one training "
+            f"pool (horizon_steps {horizons}) — a shorter-horizon row "
+            "bypasses the embargo while sitting inside a longer test "
+            "outcome window; one selection = one target family "
+            "(RT-G026-2; CI-015)"
+        )
     overlapping = any(r.overlap.horizon_steps > 1 for r in records)
     if fold.purge == "off" and overlapping:
         raise UnpurgedOverlapError(
             f"fold {fold.fold_id!r}: purge='off' applied to overlapping-"
             "family records (horizon_steps > 1 in overlap metadata) — "
             "refused per LT-012 (CI-010/CI-015)"
+        )
+    if overlapping and 0.0 < fold.embargo_horizons < 1.0:
+        raise FoldConfigError(
+            f"fold {fold.fold_id!r}: embargo_horizons="
+            f"{fold.embargo_horizons} is below one full horizon for an "
+            "overlapping family — CI-015(b) requires an embargo of at "
+            "least one full horizon (RT-G026-3); use e >= 1"
         )
     for record in records:
         if record.overlap.overlap_mode != fold.overlap_mode:

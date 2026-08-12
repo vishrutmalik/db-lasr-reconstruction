@@ -63,6 +63,8 @@ __all__ = [
     "FitContext",
     "FitFunction",
     "FittedModel",
+    "FoldSkip",
+    "FoldSkipReason",
     "Prediction",
     "PredictionSet",
     "UniverseSource",
@@ -131,6 +133,22 @@ class UnscoredEvent:
     reason: UnscoredReason
 
 
+class FoldSkipReason(StrEnum):
+    """Why a fold produced no predictions at all (G026 verifier NB:
+    zero-test-row folds must be a typed ledger entry, never silent)."""
+
+    ZERO_TEST_ROWS = "zero_test_rows"  # no record's decision day in test
+
+
+@dataclass(frozen=True)
+class FoldSkip:
+    """One ledgered fold-level non-production (the fold WAS fitted; its
+    fit record exists — this entry records that scoring found nothing)."""
+
+    fold_id: str
+    reason: FoldSkipReason
+
+
 @dataclass(frozen=True)
 class Prediction:
     """One scored test-period example.
@@ -150,12 +168,17 @@ class Prediction:
 
 @dataclass(frozen=True)
 class PredictionSet:
-    """Typed walk-forward output consumed by G027/G028."""
+    """Typed walk-forward output consumed by G027/G028.
+
+    ``fold_skips`` ledgers folds that fitted but scored NOTHING (zero
+    test rows) — the G026 verifier's silent-fold gap, closed at G029.
+    """
 
     config_hash: str
     predictions: tuple[Prediction, ...]
     fits: tuple[FitRecord, ...]
     unscored: tuple[UnscoredEvent, ...]
+    fold_skips: tuple[FoldSkip, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -289,6 +312,7 @@ def run_walk_forward(
     predictions: list[Prediction] = []
     fits: list[FitRecord] = []
     unscored: list[UnscoredEvent] = []
+    fold_skips: list[FoldSkip] = []
     for fold, rng in zip(plan.folds, children, strict=True):
         fit_time = clock.model_fit_time(fold.test.start, window)
         selection = select_training_records(
@@ -340,6 +364,17 @@ def run_walk_forward(
         for record in records:
             if fold.test.contains(record.timing.decision_time.date()):
                 test_by_asof.setdefault(record.row.as_of, []).append(record)
+        if not test_by_asof:
+            # G026 verifier NB (G029 binding): a fold whose test range
+            # holds zero records is a TYPED ledger entry, never silent.
+            fold_skips.append(
+                FoldSkip(fold_id=fold.fold_id, reason=FoldSkipReason.ZERO_TEST_ROWS)
+            )
+            logger.warning(
+                "fold %s: zero test-period records — fold skipped and "
+                "ledgered (FoldSkipReason.ZERO_TEST_ROWS)",
+                fold.fold_id,
+            )
         for as_of in sorted(test_by_asof):
             day_records = sorted(test_by_asof[as_of], key=lambda r: r.row.security_id)
             ids = tuple(r.row.security_id for r in day_records)
@@ -396,4 +431,5 @@ def run_walk_forward(
         predictions=tuple(predictions),
         fits=tuple(fits),
         unscored=tuple(unscored),
+        fold_skips=tuple(fold_skips),
     )

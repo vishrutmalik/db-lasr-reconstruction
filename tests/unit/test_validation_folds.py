@@ -641,9 +641,12 @@ class TestEmbargoBoundary:
             e for e in selection.excluded if e.reason is ExclusionReason.EMBARGOED
         ]
 
-    def test_half_horizon_embargo_scales_the_zone(self, panel_4w: BuildOutput) -> None:
-        """embargo_horizons=0.5 → zone (03-06, 03-20 close]: 03-13 embargoed,
-        03-20 (target_start == zone end) retained."""
+    def test_half_horizon_embargo_is_refused(self, panel_4w: BuildOutput) -> None:
+        """RT-G026-3 (fixed at G029): 0 < e < 1 on an overlapping family is
+        a typed refusal — CI-015(b) requires at least one full horizon.
+        (Pre-fix this test pinned the scaled sub-horizon zone: 03-13
+        embargoed, 03-20 retained — an under-exclusion on backcast folds.)
+        """
         fold = FoldSpec(
             fold_id="fold_4w_e05",
             train=FOLD_4W.train,
@@ -652,22 +655,13 @@ class TestEmbargoBoundary:
             embargo_horizons=0.5,
             overlap_mode="pooled_as_paper",
         )
-        selection = select_training_records(
-            panel_4w.records,
-            fold,
-            fit_as_of=_close(date(2021, 6, 30)),
-            session=SESSION,
-        )
-        embargoed_days = sorted(
-            {
-                e.as_of.date()
-                for e in selection.excluded
-                if e.reason is ExclusionReason.EMBARGOED
-            }
-        )
-        assert embargoed_days == [date(2020, 3, 13)]
-        retained_days = sorted({r.row.as_of.date() for r in selection.retained})
-        assert retained_days[0] == date(2020, 3, 20)
+        with pytest.raises(FoldConfigError, match="full horizon"):
+            select_training_records(
+                panel_4w.records,
+                fold,
+                fit_as_of=_close(date(2021, 6, 30)),
+                session=SESSION,
+            )
 
 
 class TestEmbargoInertForNonOverlapping:

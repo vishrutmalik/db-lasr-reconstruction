@@ -40,11 +40,11 @@ are expanded by the orchestrator when a goal becomes dependency-ready.
 | G026 | Walk-forward backtester (purge/embargo, event-time) | implementer | G023, G014 | MERGED | [#26](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/26) | [#69](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/69) |
 | G027 | Level-1/2 portfolio construction + accounting | implementer | G026 | MERGED | [#27](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/27) | [#68](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/68) |
 | G028 | Reporting & diagnostics (signal + portfolio metrics) | implementer | G026, G027 | MERGED | [#28](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/28) | [#71](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/71) |
-| G029 | End-to-end synthetic vertical slice (CLI, reproducible) | implementer | G019–G028 | IN_VERIFICATION | [#29](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/29) | [#74](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/74) |
-| G030 | N-LASR2 neutralization + hedge learner | implementer | G008, G029 | BLOCKED | [#40](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/40) | |
-| G031 | LASR 2014 linearized weak learner | implementer | G009, G029 | BLOCKED | [#30](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/30) | |
+| G029 | End-to-end synthetic vertical slice (CLI, reproducible) | implementer | G019–G028 | MERGED | [#29](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/29) | [#74](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/74) |
+| G030 | N-LASR2 neutralization + hedge learner | implementer | G008, G029 | IN_PROGRESS | [#40](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/40) | |
+| G031 | LASR 2014 linearized weak learner | implementer | G009, G029 | IN_PROGRESS | [#30](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/30) | |
 | G032 | LASR-HC configuration (3-month target, overlap handling) | implementer | G031 | BLOCKED | [#31](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/31) | |
-| G033 | N-LASR 2020 configuration (weekly, 4 samples, monotonic) | implementer | G010, G029 | BLOCKED | [#32](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/32) | |
+| G033 | N-LASR 2020 configuration (weekly, 4 samples, monotonic) | implementer | G010, G029 | IN_PROGRESS | [#32](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/32) | |
 | G034 | Transaction-cost & borrow model | implementer | G027 | MERGED | [#33](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/33) | [#67](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/67) |
 | G035 | Level-3 constrained portfolio + generic risk model | implementer | G034 | MERGED | [#34](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/34) | [#72](https://github.com/vishrutmalik/db-lasr-reconstruction/pull/72) |
 | G036 | Modern challenger models (same folds/costs) | implementer | G029, G033 | BLOCKED | [#35](https://github.com/vishrutmalik/db-lasr-reconstruction/issues/35) | |

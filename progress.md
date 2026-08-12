@@ -5,9 +5,10 @@ Session-independent status. Update at every session end and major milestone.
 - **Last orchestrator update:** 2026-08-12 (M5 model phase COMPLETE — all of
   G024/G025/G026/G027/G028/G034/G035 merged with dual gates; G029
   integration slice dispatched)
-- **Current milestone:** M6 — integration (M0-M5 complete). G029 vertical
-  slice IN_PROGRESS; then variants G030-G033 ∥ G036, audit G037, repro G038,
-  final G040 (gated on E-1 user decision).
+- **Current milestone:** M7 — variants (M0-M6 complete; G029 merged
+  2026-08-12 with dual gates). G030 ∥ G031 ∥ G033 IN_PROGRESS; G032 after
+  G031; G036 after G033; then G037 audit, G038 repro, G040 final (E-1
+  user decision pending).
 - **Remote:** git@github.com:vishrutmalik/db-lasr-reconstruction.git (PRIVATE)
 
 ## Completed & merged
@@ -28,8 +29,11 @@ Session-independent status. Update at every session end and major milestone.
 - G025 MERGED 2026-08-12 (PR #73, main ccd2f04): verifier PASS + red-team
   NO_BLOCKING (6 ratchets RT-G025-1..6 owner-routed; grant edits ruled
   honest by both gates)
-- G029 IN_VERIFICATION (PR #74 at 0c89a08; 10 ratchets flipped;
-  byte-identical double runs; determinism+e2e CI live; V+RT launched)
+- G029 MERGED 2026-08-12 (PR #74, main b32ecd3): verifier PASS + red-team
+  NO_BLOCKING (10/10 upstream flips genuine; RT-G029-1..3 tooling ratchets
+  -> G038; byte-identity independently reproduced 48/48)
+- G030/G031/G033 IN_PROGRESS (variant wave dispatched 2026-08-13; 3
+  parallel lanes, disjoint scopes)
 - G026 MERGED 2026-08-09 (PR #69, main f863b1d): verifier PASS + red-team
   NO_BLOCKING_FINDINGS (3 ratchets RT-G026-1/2/3 routed in integration_queue)
 - G028 MERGED 2026-08-10 (PR #71, main 15ab5f8): verifier PASS + red-team
@@ -45,7 +49,7 @@ Session-independent status. Update at every session end and major milestone.
   NO_BLOCKING_FINDINGS (4 ratchets, RT-G027-8 seam -> G029 adapter)
 - Runtime truth + next actions: coordination/agent_assignments.yaml `active:`;
   resumption rules: coordination/session_handoff.md
-- Merged total: 36 goals. Red-team scorecard: G019/G020 4-blocking each,
+- Merged total: 37 goals. Red-team scorecard: G019/G020 4-blocking each,
   G022 1, G034 1 (+4 ratchets), G024 1 — ALL remediated, r2-cleared, and
   merged; every attack is a permanent test.
 

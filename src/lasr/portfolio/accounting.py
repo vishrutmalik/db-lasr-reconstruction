@@ -32,8 +32,9 @@ Conventions (all pinned here and carried on every
   convention), post-trade short notional, and the caller-supplied
   day-count fraction; it deducts the returned ``(cost, borrow)`` exactly:
   ``net_pnl = gross_pnl - cost - borrow``, cost charged to cash at the
-  rebalance, borrow at period end. No rate, calendar, or provider
-  assumption lives here.
+  rebalance, borrow at period end. Charges must be finite and >= 0 —
+  a negative charge is a typed refusal (RT-G027-5), never booked. No
+  rate, calendar, or provider assumption lives here.
 - **Cash yields zero.** Delisting proceeds sit in cash for the remainder
   of the run (matches the G023 window convention).
 - **Terminal events** (CI-049/CI-050; A-G023-08): a mark step's
@@ -91,7 +92,14 @@ logger = logging.getLogger(__name__)
 #: Engine-internal bound on the CI-045 reconciliation residual (return
 #: units). The two paths are mathematically identical; anything above
 #: float noise means the ledger cannot be trusted and the run must stop.
-RECONCILIATION_TOLERANCE = 1e-9
+#: Set to CI-045's written 1e-10 (RT-G027-3 / verifier N-1 reconciliation,
+#: resolved at G029): observed residuals are ~1e-16 at every evidenced
+#: scale (red-team worst 3.8e-19 under a 10k-name/NAV-1e12 attack, 2.6e-16
+#: over 200 random panels), so the criterion value costs nothing real;
+#: residuals scale with period-return magnitude, so books at gross >= ~1e7
+#: (physically absurd leverage) may now refuse — the honest direction
+#: (refuse rather than bless) for inputs that extreme.
+RECONCILIATION_TOLERANCE = 1e-10
 
 
 class CostModel(Protocol):
@@ -101,7 +109,8 @@ class CostModel(Protocol):
     structurally (PEP 544) — the import-rule table keeps ``lasr.costs``
     and ``lasr.portfolio`` decoupled, so the signature uses primitives
     only and returns a plain ``(cost, borrow)`` tuple in currency units
-    (same units as NAV/P&L; either component may be 0.0).
+    (same units as NAV/P&L; either component may be 0.0, neither may be
+    negative — the engine refuses negative charges, RT-G027-5).
     """
 
     def period_charges(
@@ -411,6 +420,16 @@ def run_accounting(
             raise NonFiniteInputError(
                 f"cost model returned non-finite charges (cost={cost!r}, "
                 f"borrow={borrow!r}) at {period.rebalance_date}"
+            )
+        if cost < 0.0 or borrow < 0.0:
+            # RT-G027-5: a negative charge ADDS cash — the single easiest
+            # NAV-fabrication channel through this module. Charges are
+            # costs; rebates are not in scope (G034 validates rates >= 0).
+            raise AccountingError(
+                f"cost model returned negative charges (cost={cost!r}, "
+                f"borrow={borrow!r}) at {period.rebalance_date} — charges "
+                "must be >= 0 (RT-G027-5; a sign-buggy cost model must "
+                "never fabricate return)"
             )
         cash -= cost
 

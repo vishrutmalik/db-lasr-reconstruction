@@ -144,6 +144,14 @@ class ComponentICRecord:
     ``calendar_key`` is the seasonal bucket (P1-25 "per-calendar-month":
     e.g. ``"06"`` for June); ``target_end`` is when the outcome's return
     window completed — the CI-007 filter key.
+
+    ``label_date`` (RT-G025-2, optional for backward compatibility) is
+    the DECISION instant of the period the IC measures. When present and
+    the calendar key is a month key (``"01"``..``"12"``), the key is
+    cross-checked against ``label_date.month`` at construction and
+    ``label_date < target_end`` is enforced — a record cannot claim a
+    seasonal bucket its own dates contradict. Producers (G026/G029
+    walk-forward) should always supply it.
     """
 
     component: str
@@ -151,6 +159,7 @@ class ComponentICRecord:
     calendar_key: str
     ic: float
     target_end: datetime
+    label_date: datetime | None = None
 
     def __post_init__(self) -> None:
         if not self.component or not self.period_id or not self.calendar_key:
@@ -162,6 +171,32 @@ class ComponentICRecord:
                 f"non-finite IC {self.ic} for {self.component!r} "
                 f"period {self.period_id!r}"
             )
+        if self.label_date is not None:
+            if self.label_date >= self.target_end:
+                raise EnsembleError(
+                    f"record {self.component!r}/{self.period_id!r}: "
+                    f"label_date {self.label_date.isoformat()} is not "
+                    f"before target_end {self.target_end.isoformat()} — an "
+                    "outcome window realizes strictly after its decision"
+                )
+            derived = _month_key(self.calendar_key)
+            if derived is not None and derived != self.label_date.month:
+                raise EnsembleError(
+                    f"record {self.component!r}/{self.period_id!r}: "
+                    f"calendar_key {self.calendar_key!r} contradicts "
+                    f"label_date month {self.label_date.month:02d} "
+                    "(RT-G025-2: the seasonal bucket is derived from the "
+                    "record's own dates, never caller-asserted)"
+                )
+
+
+def _month_key(calendar_key: str) -> int | None:
+    """Parse a zero-padded month key (``"01"``..``"12"``); None otherwise."""
+    if len(calendar_key) == 2 and calendar_key.isdigit():
+        month = int(calendar_key)
+        if 1 <= month <= 12:
+            return month
+    return None
 
 
 def seasonal_rank_ic_weights(
@@ -213,17 +248,51 @@ def seasonal_rank_ic_weights(
             f"min_observations must be positive, got {min_observations}"
         )
     known = set(names)
+    seen_keys: set[tuple[str, str, str]] = set()
     for record in records:
         if record.component not in known:
             raise EnsembleError(
                 f"IC record for unknown component {record.component!r} "
                 f"(weighting over {names})"
             )
+        record_key = (record.component, record.period_id, record.calendar_key)
+        if record_key in seen_keys:
+            # RT-G025-1: the substrate refuses duplicate period ids in
+            # PeriodHistory — same discipline here; a duplicate key is a
+            # forgery or a producer bug, and averaging it would let one
+            # outcome vote twice.
+            raise EnsembleError(
+                f"duplicate ComponentICRecord key {record_key!r} — one "
+                "realized outcome enters the weighting exactly once "
+                "(RT-G025-1)"
+            )
+        seen_keys.add(record_key)
     usable: dict[str, list[ComponentICRecord]] = {name: [] for name in names}
     for record in sorted(records, key=lambda r: (r.target_end, r.period_id)):
         # CI-007: strictly-before-as_of realized outcomes only.
         if record.target_end < as_of and record.calendar_key == calendar_key:
             usable[record.component].append(record)
+    # RT-G025-2 (unstamped-record arm; stamped records are validated at
+    # construction): every usable record in one month bucket must sit at
+    # ONE calendar offset from the key month — a July-realized outcome
+    # forged into the February bucket contradicts the bucket's own dates.
+    bucket_month = _month_key(calendar_key)
+    if bucket_month is not None:
+        unstamped = [
+            record
+            for name in names
+            for record in usable[name]
+            if record.label_date is None
+        ]
+        offsets = {(r.target_end.month - bucket_month) % 12 for r in unstamped}
+        if len(offsets) > 1:
+            raise EnsembleError(
+                f"calendar_key {calendar_key!r}: usable records realize at "
+                f"inconsistent calendar offsets {sorted(offsets)} from the "
+                "bucket month — at least one record's dates contradict its "
+                "claimed calendar_key (RT-G025-2; supply label_date on "
+                "records for per-record validation)"
+            )
     if any(len(usable[name]) < min_observations for name in names):
         lacking = [n for n in names if len(usable[n]) < min_observations]
         logger.info(
@@ -328,22 +397,33 @@ def ensemble_weights(
                 "hedge_weight_rule (E-P2-21), never from IC weighting"
             )
         ic_window = "expanding" if cfg.ic_window is None else cfg.ic_window.value
-        if ic_window != "expanding":
+        trailing_k: int | None = None
+        if ic_window == "trailing_k":
+            if cfg.trailing_k is None:
+                raise EnsembleError(
+                    "ic_window='trailing_k' requires an EXPLICIT "
+                    "ensemble.trailing_k leaf (A-G025-07; leaf promoted at "
+                    "G029 — never a hidden default)"
+                )
+            trailing_k = int(cfg.trailing_k.value)
+        elif cfg.trailing_k is not None:
             raise EnsembleError(
-                "ic_window='trailing_k' is not constructible from config - "
-                "the schema carries no k leaf (A-G025-07); call "
-                "seasonal_rank_ic_weights directly with an explicit k"
+                "ensemble.trailing_k is only meaningful under "
+                "ic_window='trailing_k' (A-G025-07)"
             )
         floor = (
             0.0 if cfg.negative_ic_floor is None else float(cfg.negative_ic_floor.value)
         )
+        min_obs = 1 if cfg.min_observations is None else int(cfg.min_observations.value)
         base = seasonal_rank_ic_weights(
             ic_records,
             as_of=as_of,
             calendar_key=calendar_key,
             components=names,
-            ic_window="expanding",
+            ic_window="expanding" if trailing_k is None else "trailing_k",
+            trailing_k=trailing_k,
             negative_ic_floor=floor,
+            min_observations=min_obs,
         )
     else:  # pragma: no cover - config Literal is closed today
         raise EnsembleError(f"unknown ensemble weighting {weighting!r}")
@@ -370,10 +450,14 @@ def combine_component_scores(
     Per component (sorted name order, CI-043): optionally z-score the
     cross-section (P1-23 / CI-022; ``stat_universe`` per OQ-P1-17), then
     form the weighted sum per security. Securities missing from any
-    weighted component are excluded, never imputed (A-G025-08).
-    ``composite_normalization='zscore'`` applies the A-G011-62 hook to
-    the combined map; ``'none'`` returns the raw weighted average
-    (E-P4-12 reading).
+    component with ``weight > 0`` are excluded, never imputed
+    (A-G025-08); a component floored to weight 0.0 contributes nothing
+    and therefore does NOT gate coverage (RT-G025-5 — an inert component
+    must not censor names). A weighted component whose covered score map
+    is EMPTY is a typed refusal (G025 verifier NB-4 — a silent empty
+    composite hides a dead expert). ``composite_normalization='zscore'``
+    applies the A-G011-62 hook to the combined map; ``'none'`` returns
+    the raw weighted average (E-P4-12 reading).
     """
     if set(component_scores) != set(weights):
         raise EnsembleError(
@@ -403,25 +487,38 @@ def combine_component_scores(
                 for sid, value in raw.items()
                 if value is not None and math.isfinite(value)
             }
+    # RT-G025-5: only components that actually contribute (weight > 0)
+    # gate composite coverage; zero-weight components are inert.
+    weighted_names = [name for name in sorted(normalized) if weights[name] > 0.0]
+    if not weighted_names:  # pragma: no cover - weights sum to 1 above
+        raise EnsembleError("no component carries positive weight")
+    empty_weighted = [name for name in weighted_names if not normalized[name]]
+    if empty_weighted:
+        raise EnsembleError(
+            f"weighted component(s) {empty_weighted} supplied ZERO covered "
+            "scores — a silent empty composite hides a dead expert "
+            "(G025 verifier NB-4; typed refusal at the combine boundary)"
+        )
     covered_everywhere: set[str] | None = None
-    for name in sorted(normalized):
+    for name in weighted_names:
         keys = set(normalized[name])
         covered_everywhere = (
             keys if covered_everywhere is None else covered_everywhere & keys
         )
-    assert covered_everywhere is not None  # non-empty component set
-    excluded = set().union(*(set(m) for m in normalized.values())) - covered_everywhere
+    assert covered_everywhere is not None  # weighted_names is non-empty
+    excluded = (
+        set().union(*(set(normalized[n]) for n in weighted_names)) - covered_everywhere
+    )
     if excluded:
         logger.info(
-            "combine: %d security(ies) missing from at least one component "
-            "excluded from the composite (A-G025-08, never imputed): %s",
+            "combine: %d security(ies) missing from at least one weighted "
+            "component excluded from the composite (A-G025-08, never "
+            "imputed): %s",
             len(excluded),
             sorted(excluded)[:10],
         )
     combined = {
-        sid: math.fsum(
-            weights[name] * normalized[name][sid] for name in sorted(normalized)
-        )
+        sid: math.fsum(weights[name] * normalized[name][sid] for name in weighted_names)
         for sid in sorted(covered_everywhere)
     }
     if composite_normalization == "zscore":

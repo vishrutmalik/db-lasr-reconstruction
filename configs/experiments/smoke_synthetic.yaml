@@ -1,0 +1,67 @@
+# G029 vertical-slice smoke experiment: nlasr_2012 machinery on a small
+# synthetic world. Every override is tagged (config_system.md §5) and the
+# run manifest records faithful: false — this is a MECHANICAL end-to-end
+# exercise on synthetic data (A-003 banner on every artifact), never a
+# reproduction claim.
+experiment_id: smoke_synthetic_nlasr2012
+version_spec: configs/models/nlasr_2012.yaml
+provider:
+  name: synthetic_generator
+  scenario: baseline
+  params:
+    n_securities: 30
+    n_years: 6          # world periods: 2005-01 .. 2010-12 (monthly)
+universe_instance: SYNIDX01
+dates:
+  # start ~18 months into the world so the 12-1 momentum lookback is
+  # covered at every decision date (the feature panel refuses gaps).
+  start: 2006-06-01
+  end: 2010-12-31
+cost_scenario: base
+portfolio_level: 1
+seed: 1729
+artifacts_root: artifacts/smoke_synthetic
+pipeline:
+  walkforward:
+    scheme: expanding
+    train_steps: 14        # warm-up: >= 13 realized months before fit 1
+    test_steps: 1
+  session_open_utc: "14:30"
+  session_close_utc: "21:00"
+  initial_nav: 1000000.0
+  leak_flag_ic_threshold: 0.30   # LT-004 gate (sidecar convention)
+  tail_alpha: 0.05
+  # monthly bars embed a month's return in the split-date close jump;
+  # the daily-bar default band (5%) would flag honest splits.
+  quality_split_jump_rel_tol: 0.35
+  fractile_key: us
+overrides:
+  # The historical P1 feature list (70 names) is not reconstructible from
+  # synthetic bars; the run uses the G029 price-feature list (CR-016
+  # machinery: lists are registry data, selectable without code edits).
+  - path: features.list_id
+    value: g029_price_features_v1
+    prov: ASSUMED
+    src: "G029 vertical slice"
+    rationale: >-
+      synthetic worlds carry no P1 feature inputs; the price-feature list
+      exercises the same registry/PIT/rank machinery end to end
+  # The synthetic world quotes three currencies (ARD home, BOR, CNT) and
+  # no USD; local-currency returns are the evidenced alternative arm
+  # (P3 Q8 / OQ-P4-11 vocabulary — CI-019 explicit basis, never silent).
+  - path: target.currency_basis
+    value: local
+    prov: ASSUMED
+    src: "G029 vertical slice; synthetic world currencies"
+    rationale: >-
+      the synthetic world has no USD leg; per-security local-currency
+      returns are dimensionless and cross-sectionally comparable
+  # P1-36 declares 2x leverage for the optimized variant; the decile L/S
+  # book is $1 long / $1 short of NAV — gross 2.0 (G027 N-4 leaf).
+  - path: portfolio.gross_exposure
+    value: 2.0
+    prov: ASSUMED
+    src: "P1-36 (2x leverage); L/S decile book convention"
+    rationale: >-
+      the fractile book trades one dollar long and one short per NAV
+      dollar; the version YAML carries no gross_exposure leaf yet

@@ -16,7 +16,7 @@ import logging
 import math
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -741,4 +741,131 @@ def test_ct15_d011_grading_from_the_declared_capabilities(
         else:
             assert (
                 grade_dataset(FieldFamily.MARKET_DAILY, market) is PitGrade.RETRO_WINDOW
+            )
+
+
+# ── CT-16: interval-table PIT policing (G029; integration_queue RT-9) ────────
+#
+# The LT-016 leak shape at the CONTRACT level: a provider serving interval
+# tables (universe membership; security-master listing intervals) must not
+# expose CLOSURES knowable only later — every row carrying a closure fact
+# must be stamped no earlier than the closure event itself, and every
+# interval must ALSO be served as an open vintage stamped at (or before)
+# its entry, so knowledge-truncating the rows at any as_of yields an
+# honest membership view (no early exits, no backfilled entries).
+
+
+def _interval_rows(
+    family: FieldFamily, provider: DataProvider, table: str
+) -> list[dict[str, Any]] | None:
+    capabilities = provider.capabilities()
+    capability = capabilities.family(family)
+    if not capability.available:
+        return None
+    if not capability.supports_pit:
+        return None
+    frames = family_frames(provider, family, master_ids(provider))
+    frame = frames.get(table)
+    if frame is None:
+        return None
+    return normalized_records(frame)
+
+
+@pytest.mark.parametrize(
+    ("family", "table", "closure_field"),
+    [
+        (
+            FieldFamily.UNIVERSE_MEMBERSHIP,
+            "raw_universe_membership",
+            "valid_to",
+        ),
+        (
+            FieldFamily.SECURITY_MASTER,
+            "raw_security_master",
+            "delisting_date",
+        ),
+    ],
+    ids=["universe_membership", "listing_intervals"],
+)
+def test_ct16_interval_closures_are_never_knowable_early(
+    provider: DataProvider,
+    family: FieldFamily,
+    table: str,
+    closure_field: str,
+) -> None:
+    """CT-16(a): a row carrying a closure fact must be stamped AT or
+    AFTER the closure event — an early-stamped closure is a survivorship
+    oracle (LT-016) for any knowledge-truncating consumer."""
+    records = _interval_rows(family, provider, table)
+    if records is None:
+        pytest.skip(
+            f"{family.value}: unavailable or supports_pit=false — interval "
+            "PIT policing needs served knowledge stamps (refusal/stamping "
+            "paths are CT-03/CT-10)"
+        )
+    checked = 0
+    for record in records:
+        closure = record.get(closure_field)
+        if closure is None:
+            continue
+        knowledge = record.get("knowledge_time")
+        assert isinstance(knowledge, datetime), (
+            f"{table}: closure row without a knowledge stamp: {record!r}"
+        )
+        assert knowledge.date() >= closure, (
+            f"{table}: closure {closure_field}={closure} stamped "
+            f"{knowledge.isoformat()} — knowable BEFORE the exit "
+            "(LT-016 leak shape; CT-16)"
+        )
+        checked += 1
+    if not checked:
+        pytest.skip(f"{table}: no closed intervals in this world/window")
+
+
+def test_ct16_membership_closure_is_invisible_before_its_publication(
+    provider: DataProvider,
+) -> None:
+    """CT-16(b): fetching the SAME membership window with an end BEFORE a
+    closure's publication must serve the interval OPEN — the closure must
+    neither appear early (survivorship oracle) nor take the membership
+    with it (backfill shape). The security master has no windowed fetch
+    (snapshot semantics; its truncation honesty is CT-10 + the canonical
+    vintages), so this arm polices the membership surface."""
+    family = FieldFamily.UNIVERSE_MEMBERSHIP
+    records = _interval_rows(family, provider, "raw_universe_membership")
+    if records is None:
+        pytest.skip(
+            "universe membership: unavailable or supports_pit=false — "
+            "interval PIT policing needs served knowledge stamps"
+        )
+    coverage = sorted(provider.field_coverage(family))
+    universe_id = coverage[0] if coverage else "unknown"
+    start, _end = probe_window(provider, family)
+    closed = [r for r in records if r.get("valid_to") is not None][:5]
+    if not closed:
+        pytest.skip("no closed membership intervals in this world/window")
+    for record in closed:
+        valid_to = record["valid_to"]
+        early_end = valid_to - timedelta(days=1)
+        if early_end <= record["valid_from"] or early_end < start:
+            continue
+        early = normalized_records(
+            provider.fetch_universe_membership(universe_id, start, early_end)
+        )
+        key = (record["universe_id"], record["ticker"], record["exchange"])
+        matches = [
+            row
+            for row in early
+            if (row["universe_id"], row["ticker"], row["exchange"]) == key
+            and row["valid_from"] == record["valid_from"]
+        ]
+        assert matches, (
+            f"membership {key!r} vanished from a pre-closure window — "
+            "backfilled membership (LT-016; CT-16)"
+        )
+        for row in matches:
+            assert row.get("valid_to") is None or row["valid_to"] <= early_end, (
+                f"membership {key!r}: closure {row['valid_to']} served in a "
+                f"window ending {early_end} — knowable only later "
+                "(LT-016 leak shape; CT-16)"
             )

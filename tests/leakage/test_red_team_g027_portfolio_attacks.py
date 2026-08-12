@@ -475,16 +475,10 @@ class TestCashAccounting:
         assert ledger.periods[0].nav_end == pytest.approx(983.0)
         assert ledger.periods[0].net_pnl == pytest.approx(-17.0)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "RT-G027-5: negative charges from the CostModel hook are "
-            "accepted silently — a sign bug in a cost model FABRICATES "
-            "return (+7.5% here on zero-return marks) with no typed guard "
-            "(docs/red_team/G027.md)"
-        ),
-    )
     def test_negative_charges_are_rejected(self) -> None:
+        # RT-G027-5 FIXED at G029: the engine refuses negative charges
+        # from the cost hook (typed AccountingError; pre-fix a (-50, -25)
+        # model fabricated +7.5% on zero-return marks).
         @dataclass
         class MoneyPrinter:
             def period_charges(self, **kw: Any) -> tuple[float, float]:

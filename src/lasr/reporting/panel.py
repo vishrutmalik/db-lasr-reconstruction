@@ -10,20 +10,34 @@ documented hazards live exactly at this boundary:
   :class:`PanelExclusion` rows (reason ``incomplete_target_window``) —
   never zero-filled, never partially extrapolated.
 - **Overlapping fold test windows** (G026 red-team N12): with
-  ``step_steps < test_steps`` the same (security, as_of) outcome is
-  predicted in up to ``test_steps`` folds. A naive pooled IC silently
-  double-counts those rows. The panel builder either REFUSES duplicates
-  (``duplicate_policy="refuse"``, the default — refusal over guess) or
-  dedupes with the documented ``"latest_fit"`` rule (register candidate
-  A-G028-01): keep the prediction whose ``model_fit_time`` is greatest
-  (the freshest legal model — the production-like choice), ties broken
-  by ``fold_id``; superseded rows are ledgered, never silently dropped.
-  Duplicates within ONE fold are always refused (an upstream data
-  error, G026 red-team N4).
+  ``step_steps < test_steps`` the same outcome is predicted in up to
+  ``test_steps`` folds. A naive pooled IC silently double-counts those
+  rows. Outcome identity is keyed on the OUTCOME REALIZATION —
+  ``(security_id, target_end)`` — never on the ``as_of`` label, so a
+  one-second ``as_of`` (and with it ``target_start``) perturbation
+  cannot smuggle the same outcome in twice (RT-G028-2a; within one
+  family, two windows of one security can only share an end by sharing
+  the grid point). The panel builder either REFUSES
+  duplicates (``duplicate_policy="refuse"``, the default — refusal over
+  guess) or dedupes with the documented ``"latest_fit"`` rule (register
+  candidate A-G028-01): keep the prediction whose ``model_fit_time`` is
+  greatest (the freshest legal model — the production-like choice), ties
+  broken by ``fold_id``; superseded rows are ledgered, never silently
+  dropped. Duplicates within ONE fold are always refused (an upstream
+  data error, G026 red-team N4).
 
 Mixed-horizon prediction pools are refused outright (RT-G026-2's poison
 shape): per-date IC and the CI-052 Newey-West lag choice are only
-well-defined for a single target family.
+well-defined for a single target family. Equal ``horizon_steps`` is NOT
+sufficient: a cross-section mixing two window extents (e.g. month-end
+close vs next-open families) correlates scores against incommensurable
+outcomes, so per-date ``(target_start, target_end)`` heterogeneity is
+refused as well (RT-G028-2b).
+
+An EMPTY prediction set is a typed refusal (G028 verifier NB-3,
+reconciled at G029): a panel with a fabricated ``horizon_steps`` default
+is a hidden default; build panels only from runs that produced
+predictions.
 
 The realized outcome per observation is the record's ``target_raw`` —
 the raw forward return over the target window (CI-051: signal ranks vs
@@ -142,6 +156,12 @@ def build_scoring_panel(
     ``target_end`` exceeds it are excluded with a typed reason (CI-052).
     See the module docstring for the duplicate policies.
     """
+    if not prediction_set.predictions:
+        raise PanelConstructionError(
+            "empty prediction set — a panel with a fabricated default "
+            "horizon is a hidden default (G028 verifier NB-3, reconciled "
+            "at G029: typed refusal)"
+        )
     horizons = sorted(
         {p.record.overlap.horizon_steps for p in prediction_set.predictions}
     )
@@ -151,6 +171,21 @@ def build_scoring_panel(
             "per-date IC and overlap-robust errors are only defined for a "
             "single family (RT-G026-2; build one panel per family)"
         )
+    windows_by_date: dict[datetime, set[tuple[datetime, datetime]]] = {}
+    for p in prediction_set.predictions:
+        windows_by_date.setdefault(p.record.row.as_of, set()).add(
+            (p.timing.target_start, p.timing.target_end)
+        )
+    for as_of in sorted(windows_by_date):
+        windows = windows_by_date[as_of]
+        if len(windows) > 1:
+            raise PanelConstructionError(
+                f"cross-section at {as_of.isoformat()} mixes "
+                f"{len(windows)} distinct target windows "
+                f"{sorted(windows)[:2]}... — equal horizon_steps does not "
+                "make two families commensurable (RT-G028-2b; one panel "
+                "per family)"
+            )
     excluded: list[PanelExclusion] = []
     complete: list[Prediction] = []
     for p in prediction_set.predictions:
@@ -166,37 +201,42 @@ def build_scoring_panel(
         else:
             complete.append(p)
 
-    by_key: dict[tuple[datetime, str], list[Prediction]] = {}
+    # RT-G028-2a: outcome identity = the OUTCOME REALIZATION
+    # (security, target_end), never the as_of label — a perturbed as_of
+    # cannot double-count the same outcome.
+    by_key: dict[tuple[str, datetime], list[Prediction]] = {}
     for p in complete:
-        by_key.setdefault((p.record.row.as_of, p.security_id), []).append(p)
+        by_key.setdefault((p.security_id, p.timing.target_end), []).append(p)
 
     kept: dict[datetime, list[PanelObservation]] = {}
     duplicate_keys = sorted(
         (k for k, group in by_key.items() if len(group) > 1),
-        key=lambda k: (k[0], k[1]),
+        key=lambda k: (k[1], k[0]),
     )
-    for as_of, security_id in duplicate_keys:
-        group = by_key[(as_of, security_id)]
+    for security_id, target_end in duplicate_keys:
+        group = by_key[(security_id, target_end)]
         fold_ids = [p.fold_id for p in group]
         if len(set(fold_ids)) != len(fold_ids):
             raise PanelConstructionError(
                 f"duplicate predictions WITHIN one fold for "
-                f"({security_id!r}, {as_of.isoformat()}): folds "
-                f"{sorted(fold_ids)!r} — an upstream data error (G026 "
-                "red-team N4), not an overlap to dedupe"
+                f"({security_id!r}, realization "
+                f"{target_end.isoformat()}): folds {sorted(fold_ids)!r} — "
+                "an upstream data error (G026 red-team N4), not an "
+                "overlap to dedupe"
             )
     if duplicate_keys and duplicate_policy == "refuse":
-        as_of, security_id = duplicate_keys[0]
+        security_id, target_end = duplicate_keys[0]
         raise PanelConstructionError(
-            f"{len(duplicate_keys)} (security, as_of) outcomes are "
-            "predicted by multiple folds (overlapping test windows, "
-            f"step < test_steps; first: {security_id!r} @ "
-            f"{as_of.isoformat()}) — a naive pooled metric would "
-            "double-count them. Pass duplicate_policy='latest_fit' to "
-            "dedupe with the documented A-G028-01 rule."
+            f"{len(duplicate_keys)} (security, target_end) outcomes are "
+            "predicted more than once (overlapping test windows or "
+            f"perturbed as_of labels; first: {security_id!r} realizing "
+            f"{target_end.isoformat()}) — a naive pooled metric would "
+            "double-count them (RT-G028-2a). Pass "
+            "duplicate_policy='latest_fit' to dedupe with the documented "
+            "A-G028-01 rule."
         )
-    for (as_of, _security_id), group in sorted(
-        by_key.items(), key=lambda item: (item[0][0], item[0][1])
+    for _key, group in sorted(
+        by_key.items(), key=lambda item: (item[0][1], item[0][0])
     ):
         winner, superseded = (
             _dedup_latest_fit(group) if len(group) > 1 else (group[0], [])
@@ -210,6 +250,7 @@ def build_scoring_panel(
                     reason=PanelExclusionReason.DUPLICATE_SUPERSEDED,
                 )
             )
+        as_of = winner.record.row.as_of
         kept.setdefault(as_of, []).append(
             PanelObservation(
                 security_id=winner.security_id,
@@ -246,7 +287,7 @@ def build_scoring_panel(
     )
     return ScoringPanel(
         config_hash=prediction_set.config_hash,
-        horizon_steps=horizons[0] if horizons else 1,
+        horizon_steps=horizons[0],  # non-empty: empty sets refused above
         data_end=data_end,
         duplicate_policy=duplicate_policy,
         dates=dates,

@@ -4,9 +4,10 @@
 # PYTHONHASHSEED=0; BLAS single-threaded for test jobs; no credentials —
 # synthetic/local providers only.
 #
-# Jobs e2e-smoke / leakage-fast / determinism are wired but disabled
-# (`if: false`) until the suites they run exist; see ACTIVATION notes below.
-# nightly.yml (full LT battery, G038 double-run) lands with those suites.
+# Jobs e2e-smoke / leakage-fast / determinism are ACTIVE (G019/G029).
+# nightly.yml (full LT battery, G038 double-run) lands with G038.
+# Budget rules (2026-08-12 usage alert): the two G029 jobs run ubuntu-only,
+# small synthetic worlds, combined wall time well under 5 minutes.
 
 name: ci
 
@@ -110,10 +111,9 @@ jobs:
   # ── Disabled placeholders: workflow wiring only, no fake tests ─────────────
 
   e2e-smoke:
-    # ACTIVATION: G029 (CLI vertical slice on small synthetic data,
-    # testing_strategy.md §6 PR gate). Flip `if:` to true when `-m e2e`
-    # collects the vertical-slice test.
-    if: false
+    # ACTIVATED at G029: CLI vertical slice on a small synthetic world
+    # (testing_strategy.md §6 PR gate; 16 names x 4 years, seconds of
+    # test time). ubuntu-only per the Actions-minutes budget.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -124,7 +124,9 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --locked
-      - run: uv run pytest -m e2e
+      # excludes the determinism class (its own job below reuses one build
+      # of the same fixture world; no duplicated double-runs here).
+      - run: uv run pytest -m e2e -k "not TestDeterminism"
 
   leakage-fast:
     # ACTIVATED at G019 merge (PR #63): fast subset per testing_strategy.md §6.
@@ -143,10 +145,11 @@ jobs:
       - run: uv run pytest -m leakage -k "lt005 or lt010 or lt013 or lt019 or lt020 or lt021"
 
   determinism:
-    # ACTIVATION: G029 (vertical-slice CLI) — double-run hash comparison,
-    # CI-042 gate per toolchain_proposal.md §5; full-experiment version at
-    # G038 moves to nightly.
-    if: false
+    # ACTIVATED at G029: CI-042 double-run byte-identity of the FULL
+    # slice (fresh roots, same config+seed), seed sensitivity, and the
+    # idempotent-rerun no-op — one fixture build reused across the class
+    # (toolchain_proposal.md §5; full-experiment version moves to nightly
+    # at G038). ubuntu-only per the Actions-minutes budget.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -157,4 +160,4 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --locked
-      - run: echo "double-run hash comparison lands with the G029 vertical slice"
+      - run: uv run pytest -m e2e -k "TestDeterminism"

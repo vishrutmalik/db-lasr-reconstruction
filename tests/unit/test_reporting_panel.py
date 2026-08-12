@@ -245,7 +245,9 @@ class TestOverlapDedupN12:
         # the runner really did produce duplicated (security, as_of) rows
         keys = [(p.security_id, p.record.row.as_of) for p in result.predictions]
         assert len(keys) > len(set(keys))  # the double-count, exhibited
-        with pytest.raises(PanelConstructionError, match="multiple folds"):
+        # wording updated at the RT-G028-2a fix (outcome keying on
+        # (security, target_end)); the refusal behavior is unchanged.
+        with pytest.raises(PanelConstructionError, match="more than once"):
             build_scoring_panel(result, data_end=DATA_END)
 
     def test_latest_fit_dedup_keeps_the_freshest_model(

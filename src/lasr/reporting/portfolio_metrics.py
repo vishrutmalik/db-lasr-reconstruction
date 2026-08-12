@@ -229,7 +229,25 @@ def max_drawdown(ledger: Ledger) -> float:
 
 def cost_borrow_drag(ledger: Ledger) -> tuple[list[float], list[float]]:
     """Per-period cost and borrow drags from the LEDGER'S recorded
-    charges (fractions of pre-trade NAV; CI-046 units)."""
+    charges (fractions of pre-trade NAV; CI-046 units).
+
+    Negative recorded charges are REFUSED (RT-G028-1): a sign-buggy cost
+    feed (the RT-G027-5 shape, now also refused by the accounting engine)
+    would otherwise report a NEGATIVE drag — fabricated alpha on the
+    dashboard. Defense in depth: this layer refuses even a hand-built
+    ledger carrying the defect.
+    """
+    negative = [
+        row.rebalance_date for row in ledger.periods if row.cost < 0 or row.borrow < 0
+    ]
+    if negative:
+        raise MetricInputError(
+            f"ledger carries NEGATIVE recorded charges at "
+            f"{[d.isoformat() for d in negative[:5]]} "
+            f"({len(negative)} period(s)) — a negative cost/borrow drag "
+            "is fabricated alpha and is refused (RT-G028-1; RT-G027-5 "
+            "upstream shape)"
+        )
     costs = [row.cost / row.nav_start for row in ledger.periods]
     borrows = [row.borrow / row.nav_start for row in ledger.periods]
     return costs, borrows

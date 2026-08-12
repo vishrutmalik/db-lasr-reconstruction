@@ -323,14 +323,9 @@ def test_rt1_close_to_open_h1_backcast_must_not_retain_overlapping_rows() -> Non
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    reason=(
-        "RT-G026-2: mixed-horizon records accepted in one fold; 1M train "
-        "rows bypass the embargo and overlap 3M test outcome windows "
-        "(docs/red_team/G026.md)"
-    )
-)
 def test_rt2_mixed_horizon_fold_must_refuse_or_exclude_short_row_overlaps() -> None:
+    # RT-G026-2 FIXED at G029: select_training_records refuses mixed
+    # horizon_steps pools (uniformity refusal — the accepted fix arm).
     panel_1m = _panel(_spec())
     panel_3m = _panel(_spec(horizon="3M"))
     fold = FoldSpec(
@@ -364,14 +359,9 @@ def test_rt2_mixed_horizon_fold_must_refuse_or_exclude_short_row_overlaps() -> N
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    reason=(
-        "RT-G026-3: sub-horizon embargo (e=0.5) on a 3M family accepted "
-        "silently and under-excludes on backcast folds "
-        "(docs/red_team/G026.md; CI-015b 'at least one full horizon')"
-    )
-)
 def test_rt3_sub_horizon_embargo_must_be_refused_or_still_cover() -> None:
+    # RT-G026-3 FIXED at G029: 0 < embargo_horizons < 1 on an overlapping
+    # family is refused (CI-015b "at least one full horizon").
     panel_3m = _panel(_spec(horizon="3M"))
     fold = FoldSpec(
         "bc4",

@@ -196,41 +196,43 @@ def _weekly_periods(n: int) -> list[RebalancePeriod]:
     return out
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "RT-G028-1: portfolio_summary silently reports NEGATIVE cost/"
-        "borrow drag (fabricated alpha) from a ledger carrying RT-G027-5's"
-        " negative recorded charges; it must refuse or flag them"
-    ),
-)
 def test_negative_recorded_charges_must_not_report_negative_drag() -> None:
-    ledger = run_accounting(
-        _weekly_periods(4), initial_nav=1000.0, cost_model=_NegativeChargeModel()
+    # RT-G028-1 FIXED at G029, defense in depth with RT-G027-5:
+    # (1) the ACCOUNTING ENGINE now refuses a negative-charge cost model
+    #     outright (pre-fix: the ledger built and portfolio_summary
+    #     reported annualized_cost_drag ~ -2.35, Sharpe ~ 48, silently);
+    from lasr.portfolio.errors import AccountingError
+
+    with pytest.raises(AccountingError):
+        run_accounting(
+            _weekly_periods(4), initial_nav=1000.0, cost_model=_NegativeChargeModel()
+        )
+    # (2) the REPORTING layer refuses even a hand-built ledger carrying
+    #     negative recorded charges (the engine bypass: direct dataclass
+    #     construction — the original attack shape, preserved).
+    from dataclasses import replace
+
+    from lasr.portfolio.accounting import ZeroCostModel
+
+    clean = run_accounting(
+        _weekly_periods(4), initial_nav=1000.0, cost_model=ZeroCostModel()
     )
-    # premise: the upstream defect shape really reaches the reporting layer
-    assert all(row.cost < 0 for row in ledger.periods)
-    try:
-        summary = portfolio_summary(ledger, periods_per_year=52.0)
-    except MetricInputError:
-        return  # refusal is an accepted fix
-    # if it computes, the drag must not be silently negative
-    assert summary.mean_cost_drag_per_period >= 0.0
-    assert summary.mean_borrow_drag_per_period >= 0.0
+    poisoned_periods = tuple(
+        replace(row, cost=-50.0, borrow=-25.0) for row in clean.periods
+    )
+    poisoned = replace(clean, periods=poisoned_periods)
+    assert all(row.cost < 0 for row in poisoned.periods)  # premise intact
+    with pytest.raises(MetricInputError):
+        portfolio_summary(poisoned, periods_per_year=52.0)
 
 
 # ── RT-G028-2a: same outcome window, perturbed as_of, refuse bypassed ────
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "RT-G028-2a: duplicate detection keys on the exact as_of instant;"
-        " the same (security, target window) outcome with as_of +1s is"
-        " double-counted under duplicate_policy='refuse'"
-    ),
-)
 def test_same_outcome_window_different_as_of_must_be_refused() -> None:
+    # RT-G028-2a FIXED at G029: outcome identity is keyed on
+    # (security_id, target_end); a perturbed as_of no longer bypasses
+    # the refuse policy.
     preds = []
     for i, sec in enumerate(["a", "b", "c"]):
         preds.append(
@@ -261,15 +263,10 @@ def test_same_outcome_window_different_as_of_must_be_refused() -> None:
 # ── RT-G028-2b: mixed families with equal horizon_steps pool silently ────
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "RT-G028-2b: the mixed-horizon refusal keys on horizon_steps only;"
-        " two families with equal steps but different target windows pool"
-        " into one cross-section (RT-G026-2 shape)"
-    ),
-)
 def test_mixed_family_equal_horizon_steps_must_be_refused() -> None:
+    # RT-G028-2b FIXED at G029: per-date (target_start, target_end)
+    # heterogeneity is refused — equal horizon_steps no longer pools two
+    # window extents into one cross-section.
     open_end = datetime(2020, 7, 1, 14, 30, tzinfo=UTC)  # next-open family
     mixed = [
         _prediction(sec="a", as_of=T0, target_end=T0_END, score=1.0, target_raw=0.05),

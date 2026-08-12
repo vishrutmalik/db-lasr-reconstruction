@@ -84,6 +84,7 @@ from lasr.portfolio.level3_errors import (
     Level3ConfigError,
     MissingAttributeError,
     OptimizationFailedError,
+    RiskModelInputError,
 )
 from lasr.portfolio.level3_risk import FloatArray, RiskModel, RiskModelManifest
 
@@ -241,6 +242,32 @@ def _group_matrix(ids: tuple[str, ...], labels: list[str]) -> dict[str, FloatArr
     return groups
 
 
+def _require_full_rank_covariance(sigma: FloatArray, ids: tuple[str, ...]) -> None:
+    """RT-G035-3 rank/PD guard: a covariance consumed by the vol cap or
+    the risk-aversion penalty must be numerically positive-definite.
+
+    A rank-deficient or zero-variance covariance (LEGAL inputs: delta=0
+    on a T<=N history, or constant-return names) has a null space the
+    alpha maximizer ACTIVELY loads — 'predicted vol 0' is then vacuous
+    while the cap reports itself satisfied. Refused with the deficient
+    directions' scale named; the tolerance is the standard numerical-rank
+    cutoff ``n * eps * max|eigenvalue|``.
+    """
+    eigenvalues = np.linalg.eigvalsh(np.asarray(sigma, dtype=np.float64))
+    max_abs = float(np.max(np.abs(eigenvalues))) if eigenvalues.size else 0.0
+    tolerance = len(ids) * float(np.finfo(np.float64).eps) * max_abs
+    min_eig = float(np.min(eigenvalues))
+    if min_eig <= tolerance:
+        raise RiskModelInputError(
+            f"risk-model covariance over {len(ids)} securities is rank-"
+            f"deficient or not positive-definite (min eigenvalue "
+            f"{min_eig:.3e} <= tolerance {tolerance:.3e}) — a vol cap / "
+            "risk_aversion penalty over its null space is vacuous "
+            "(RT-G035-3). Refuse zero-variance names or use "
+            "shrinkage_intensity > 0 with T > N observations."
+        )
+
+
 def _prepare(
     alphas: Mapping[str, float],
     config: Level3Config,
@@ -354,6 +381,8 @@ def _prepare(
                 f"model {delta} (A-G035-01)"
             )
         problem.sigma = risk_model.covariance(ids)
+        if cons.target_volatility is not None or config.risk_aversion is not None:
+            _require_full_rank_covariance(problem.sigma, ids)
     elif risk_model is not None:
         raise Level3ConfigError(
             "a RiskModel instance was supplied but the config has no "

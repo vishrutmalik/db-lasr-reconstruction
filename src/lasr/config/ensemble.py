@@ -32,10 +32,17 @@ __all__ = [
 
 
 class TrailingWindowComponent(ConfigModel):
-    """Trailing window of realized periods (P1-19; P3-18; E-P4-10)."""
+    """Trailing window of realized periods (P1-19; P3-18; E-P4-10).
+
+    ``require_full_window`` (A-G025-04 strict arm; YAML leaf promoted at
+    G029 per the G025 handoff): ``true`` refuses a fit whose realized
+    history is shorter than ``periods``; the default (absent/``false``)
+    uses all available with a warning.
+    """
 
     type: Literal["trailing_window"] = "trailing_window"
     periods: Param[int]
+    require_full_window: Param[bool] | None = None  # A-G025-04
 
 
 class SeasonalSameMonthComponent(ConfigModel):
@@ -55,10 +62,15 @@ class SeasonalSameMonthComponent(ConfigModel):
 
 
 class PreviousPeriodComponent(ConfigModel):
-    """Most recent realized period(s) (P1-21; P3-18)."""
+    """Most recent realized period(s) (P1-21; P3-18).
+
+    ``require_full_window`` as on :class:`TrailingWindowComponent`
+    (A-G025-04; leaf promoted at G029).
+    """
 
     type: Literal["previous_period"] = "previous_period"
     periods: Param[int]
+    require_full_window: Param[bool] | None = None  # A-G025-04
 
 
 class HedgeBackcastComponent(ConfigModel):
@@ -82,6 +94,9 @@ class HedgeBackcastComponent(ConfigModel):
     backcast_object: Param[str]  # P2 Q8; A-G011-28/61
     backcast_excludes_hedge: Param[bool] | None = None  # P2 Q9; A-G011-29
     pnl_basis: Param[Literal["gross", "net"]] | None = None  # A-G011-61
+    #: A-G025-01 odd-count rule for the bottom-half metrics (YAML leaf
+    #: promoted at G029; default "floor" when absent).
+    bottom_half_rule: Param[Literal["floor", "ceil"]] | None = None
 
 
 ComponentConfig = Annotated[
@@ -105,6 +120,14 @@ class EnsembleConfig(ConfigModel):
     pooling_weights: Param[str]  # OQ-P1-04; A-G011-13
     weighting: Param[Literal["equal", "seasonal_rank_ic"]]  # CR-005
     ic_window: Param[Literal["expanding", "trailing_k"]] | None = None  # OQ-P1-06
+    #: Window depth for ``ic_window='trailing_k'`` (A-G025-07; YAML leaf
+    #: promoted at G029 — the trailing arm still refuses without an
+    #: EXPLICIT k, never a hidden default).
+    trailing_k: Param[int] | None = None
+    #: A-G025-02 fallback threshold: components with fewer realized
+    #: same-key IC observations force equal weights (default 1; YAML
+    #: leaf promoted at G029).
+    min_observations: Param[int] | None = None
     negative_ic_floor: Param[float] | None = None  # OQ-P1-06; A-G011-16
     first_year_weighting: Param[Literal["equal"]] | None = None  # P1-25
     hedge_weight_rule: (

@@ -92,11 +92,11 @@ def base_constraints(**kw: object) -> Level3ConstraintsConfig:
     return Level3ConstraintsConfig(**fields)
 
 
-def substitute_block() -> RiskModelConfig:
+def substitute_block(shrinkage_intensity: float = 0.5) -> RiskModelConfig:
     return RiskModelConfig(
         kind="shrinkage_substitute",
         substitute=True,
-        shrinkage_intensity=P(0.5),
+        shrinkage_intensity=P(shrinkage_intensity),
         annualization_periods=P(12),
     )
 
@@ -255,18 +255,12 @@ class TestManifestForgery:
 # target_volatility cap via the null space (legal inputs).
 # ─────────────────────────────────────────────────────────────────────
 class TestSingularCovarianceVolCap:
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "RT-G035-3: two constant-return names have sample variance "
-            "exactly 0 (a legal panel); the optimizer builds a full "
-            "2.0-gross book on them at predicted_volatility == 0.0, blessed "
-            "under a 1bp vol cap. A rank-deficient covariance under a vol "
-            "cap / risk_aversion must refuse or warn — the '0 vol' is "
-            "vacuous, not risk control (docs/red_team/G035.md)"
-        ),
-    )
     def test_zero_variance_names_must_not_pass_a_tight_vol_cap(self) -> None:
+        # RT-G035-3 FIXED at G029: a covariance consumed by the vol cap /
+        # risk_aversion penalty is eigenvalue-checked; rank deficiency is
+        # a typed RiskModelInputError (pre-fix: a 2.0-gross book on two
+        # zero-variance names was blessed under a 1bp cap at predicted
+        # vol 0.0).
         panel = {
             "A": [0.02, -0.01, 0.03, -0.02, 0.01, 0.00],
             "B": [0.01, 0.00, 0.01, -0.01, 0.02, 0.01],
@@ -288,32 +282,54 @@ class TestSingularCovarianceVolCap:
         ):
             build_level3_portfolio(alphas, cfg, risk_model=model)
 
-    def test_singular_covariance_currently_builds_a_levered_book(self) -> None:
-        """Teeth: the LIVE behaviour — a 2.0-gross book at predicted vol
-        0.0 under a 1bp cap (documents the ratchet target)."""
-        panel = {
-            "A": [0.02, -0.01, 0.03, -0.02, 0.01, 0.00],
-            "B": [0.01, 0.00, 0.01, -0.01, 0.02, 0.01],
-            "Z1": [0.01, 0.01, 0.01, 0.01, 0.01, 0.01],
-            "Z2": [0.02, 0.02, 0.02, 0.02, 0.02, 0.02],
-        }
-        model = ShrinkageRiskModel(
-            panel, shrinkage_intensity=0.5, annualization_periods=12
+    def test_singular_covariance_refusal_names_the_rank_deficiency(self) -> None:
+        """Teeth, strengthened at the RT-G035-3 fix (pre-fix this test
+        pinned the LIVE bug: gross 2.0, predicted vol 0.0, expected alpha
+        0.10 blessed under the 1bp cap). Post-fix: the delta=0, T<=N
+        collinear shape refuses with the deficiency named, and a genuinely
+        full-rank covariance still builds."""
+        singular = ShrinkageRiskModel(
+            {
+                "A": [0.02, -0.01, 0.03],
+                "B": [0.01, 0.00, 0.01],
+                "C": [0.04, -0.02, 0.06],  # collinear with A: T=3 <= N=4
+                "D": [0.03, -0.01, 0.04],
+            },
+            shrinkage_intensity=0.0,  # legal: A-G035-01 "0 = sample"
+            annualization_periods=12,
         )
         cfg = Level3Config(
             constraints=base_constraints(
-                max_position_weight=P(1.0), target_volatility=P(0.0001)
+                max_position_weight=P(1.0), target_volatility=P(0.30)
+            ),
+            risk_model=substitute_block(shrinkage_intensity=0.0),
+        )
+        with pytest.raises(RiskModelInputError, match="rank"):
+            build_level3_portfolio(
+                {"A": 0.001, "B": -0.001, "C": 0.05, "D": -0.05},
+                cfg,
+                risk_model=singular,
+            )
+        # A full-rank covariance under the same consumers still builds.
+        healthy = ShrinkageRiskModel(
+            {
+                "A": [0.02, -0.01, 0.03, -0.02, 0.01, 0.00],
+                "B": [0.01, 0.00, 0.01, -0.01, 0.02, 0.01],
+            },
+            shrinkage_intensity=0.5,
+            annualization_periods=12,
+        )
+        healthy_cfg = Level3Config(
+            constraints=base_constraints(
+                max_position_weight=P(1.0), target_volatility=P(0.30)
             ),
             risk_model=substitute_block(),
         )
         result = build_level3_portfolio(
-            {"A": 0.001, "B": -0.001, "Z1": 0.05, "Z2": -0.05},
-            cfg,
-            risk_model=model,
+            {"A": 0.001, "B": -0.001}, healthy_cfg, risk_model=healthy
         )
-        assert result.portfolio.gross == pytest.approx(2.0, abs=1e-6)
-        assert result.predicted_volatility == pytest.approx(0.0, abs=1e-9)
-        assert result.expected_alpha == pytest.approx(0.10, abs=1e-6)
+        assert result.predicted_volatility is not None
+        assert result.predicted_volatility > 0.0
 
 
 # ─────────────────────────────────────────────────────────────────────

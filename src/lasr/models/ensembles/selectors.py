@@ -411,9 +411,17 @@ def build_selector(component: ComponentConfig) -> SampleSelector:
     """Config-driven selector factory (CI-044: every knob is read from the
     tagged leaves; nothing here invents a value)."""
     if isinstance(component, TrailingWindowComponent):
-        return TrailingWindowSelector(periods=int(component.periods.value))
+        strict = component.require_full_window
+        return TrailingWindowSelector(
+            periods=int(component.periods.value),
+            require_full_window=False if strict is None else bool(strict.value),
+        )
     if isinstance(component, PreviousPeriodComponent):
-        return PreviousPeriodSelector(periods=int(component.periods.value))
+        strict = component.require_full_window
+        return PreviousPeriodSelector(
+            periods=int(component.periods.value),
+            require_full_window=False if strict is None else bool(strict.value),
+        )
     if isinstance(component, SeasonalSameMonthComponent):
         anchor_leaf = component.anchor
         anchor_value = "calibration_month" if anchor_leaf is None else anchor_leaf.value
@@ -435,12 +443,14 @@ def build_selector(component: ComponentConfig) -> SampleSelector:
         )
     if isinstance(component, HedgeBackcastComponent):
         threshold_leaf = component.threshold
+        rule_leaf = component.bottom_half_rule
         return HedgeBackcastSelector(
             selection_metric=component.selection_metric.value,
             lookback_periods=int(component.lookback_periods.value),
             backcast_object=component.backcast_object.value,
             grain=component.grain.value,
             threshold=None if threshold_leaf is None else float(threshold_leaf.value),
+            bottom_half_rule="floor" if rule_leaf is None else rule_leaf.value,
         )
     raise EnsembleError(  # pragma: no cover - union is closed today
         f"unknown ensemble component type {type(component).__name__!r}"

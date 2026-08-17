@@ -351,58 +351,67 @@ class SymbologyAdapter:
             )
         return tuple(seeds), resolution
 
+    def hydrate_identity_map(
+        self, seeds: Sequence[SecuritySeed]
+    ) -> tuple[IdentityMap, IdAccounting, int]:
+        """Hydration leg of §5.2: seeds in, dated intervals out.
+
+        Historical resolution takes the seeds' fsymSecurityIds as INPUTS
+        (the only dated direction that exists — pit_asymmetry) and hydrates
+        dated CUSIP/SEDOL/ISIN/tickerRegion intervals, dates verbatim.
+        Returns (map, hydration accounting, requests executed). Callers who
+        already resolved their universe pass those seeds here so the
+        seeding requests are never re-shaped into new cache identities.
+        """
+        identity_map = IdentityMap()
+        for seed in seeds:
+            identity_map.seed(seed)
+        fsym_inputs = [
+            TypedIdentifier(IdentifierScheme.FSYM_SECURITY, seed.fsym_security_id)
+            for seed in seeds
+        ]
+        if not fsym_inputs:
+            return identity_map, IdAccounting(requested=()), 0
+        hydration = self.resolve_historical(fsym_inputs)
+        for row in hydration.rows:
+            if row.value is None or row.output_type is None:
+                continue  # explicit-empty echo; accounted, not stored
+            scheme = _HISTORICAL_SCHEME.get(row.output_type.lower())
+            if scheme is None:
+                raise FactSetIdentityError(
+                    f"historical row carries undocumented outputType"
+                    f" {row.output_type!r} (F-004 limits outputs to"
+                    " SEDOL/CUSIP/ISIN/tickerRegion)"
+                )
+            identity_map.hydrate(
+                IdentifierInterval(
+                    security_id=identity_map.security_id_for(row.request_id),
+                    id_scheme=scheme,
+                    id_value=row.value,
+                    start_date_raw=row.start_date,
+                    end_date_raw=row.end_date,
+                    source="symbology/historical-identifier-resolution",
+                )
+            )
+        return identity_map, hydration.accounting, hydration.requests_executed
+
     def build_identity_map(
         self, identifiers: Sequence[TypedIdentifier]
     ) -> IdentityMapBuild:
         """Seed from fsym ids, hydrate outward with dated intervals (§5.2).
 
         Two passes: (1) current resolution mints the spine from
-        fsymSecurityId; (2) historical resolution with the fsym ids as
-        INPUTS (the only dated direction that exists — pit_asymmetry)
-        hydrates dated CUSIP/SEDOL/ISIN/tickerRegion intervals, dates
-        verbatim.
+        fsymSecurityId; (2) :meth:`hydrate_identity_map`.
         """
         seeds, seed_resolution = self.seed_securities(identifiers)
-        identity_map = IdentityMap()
-        for seed in seeds:
-            identity_map.seed(seed)
-
-        fsym_inputs = [
-            TypedIdentifier(IdentifierScheme.FSYM_SECURITY, seed.fsym_security_id)
-            for seed in seeds
-        ]
-        requests = seed_resolution.requests_executed
-        if fsym_inputs:
-            hydration = self.resolve_historical(fsym_inputs)
-            requests += hydration.requests_executed
-            for row in hydration.rows:
-                if row.value is None or row.output_type is None:
-                    continue  # explicit-empty echo; accounted, not stored
-                scheme = _HISTORICAL_SCHEME.get(row.output_type.lower())
-                if scheme is None:
-                    raise FactSetIdentityError(
-                        f"historical row carries undocumented outputType"
-                        f" {row.output_type!r} (F-004 limits outputs to"
-                        " SEDOL/CUSIP/ISIN/tickerRegion)"
-                    )
-                identity_map.hydrate(
-                    IdentifierInterval(
-                        security_id=identity_map.security_id_for(row.request_id),
-                        id_scheme=scheme,
-                        id_value=row.value,
-                        start_date_raw=row.start_date,
-                        end_date_raw=row.end_date,
-                        source="symbology/historical-identifier-resolution",
-                    )
-                )
-            hydrate_accounting = hydration.accounting
-        else:
-            hydrate_accounting = IdAccounting(requested=())
+        identity_map, hydrate_accounting, hydrate_requests = self.hydrate_identity_map(
+            seeds
+        )
         return IdentityMapBuild(
             identity_map=identity_map,
             seed_accounting=seed_resolution.accounting,
             hydrate_accounting=hydrate_accounting,
-            requests_executed=requests,
+            requests_executed=seed_resolution.requests_executed + hydrate_requests,
         )
 
     # ── legacy bridge (§5.1) ────────────────────────────────────────────

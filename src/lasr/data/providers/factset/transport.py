@@ -100,9 +100,12 @@ def live_gate_open(
 ) -> tuple[bool, str]:
     """Belt-and-braces live gate (FS002 §6.1) + kill switch (WP0).
 
-    Live requires config ``transport.live=true`` AND env ``FACTSET_LIVE=1``;
-    the kill switch (config ``transport.kill_switch`` or env
-    ``FACTSET_KILL_SWITCH=1``) refuses live regardless. Returns
+    Live requires config ``transport.live=true`` AND env ``FACTSET_LIVE``
+    equal to the EXACT string ``"1"`` (VF-FS010-4: consent tokens are
+    never normalized — a padded ``" 1 "`` stays closed); the kill switch
+    (config ``transport.kill_switch`` or env ``FACTSET_KILL_SWITCH``)
+    refuses live regardless, and IS whitespace-lenient because a lenient
+    STOP signal is fail-safe while a lenient consent is not. Returns
     ``(open, reason_if_closed)``.
     """
     if config.transport.kill_switch:
@@ -111,9 +114,10 @@ def live_gate_open(
         return False, f"env kill switch engaged ({ENV_KILL_SWITCH}=1)"
     if not config.transport.live:
         return False, "config transport.live is false"
-    if environ.get(ENV_LIVE, "").strip() != "1":
+    if environ.get(ENV_LIVE) != "1":
         return False, (
-            f"env {ENV_LIVE} is not '1' (a committed config alone can never go live)"
+            f"env {ENV_LIVE} is not exactly '1' (a committed config alone"
+            " can never go live; consent is never normalized)"
         )
     return True, ""
 

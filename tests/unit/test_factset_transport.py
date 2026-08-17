@@ -241,6 +241,22 @@ class TestLiveGate:
         assert live_gate_open(live_config, {})[0] is False
         assert live_gate_open(replay_config, {ENV_LIVE: "1"})[0] is False
 
+    def test_consent_token_is_exact_match_only(self) -> None:
+        # VF-FS010-4 regression: consent is never normalized — padded or
+        # variant tokens keep the gate CLOSED; only the exact "1" opens.
+        config = _config(live=True)
+        for token in (" 1 ", "1 ", " 1", "01", "true", "yes", "11"):
+            gate, reason = live_gate_open(config, {ENV_LIVE: token})
+            assert gate is False, f"gate opened on non-exact token {token!r}"
+            assert "exactly" in reason
+        assert live_gate_open(config, {ENV_LIVE: "1"})[0] is True
+
+    def test_kill_switch_stays_whitespace_lenient(self) -> None:
+        # Asymmetry is deliberate: a sloppy STOP signal must still stop.
+        config = _config(live=True)
+        gate, reason = live_gate_open(config, {ENV_LIVE: "1", ENV_KILL_SWITCH: " 1 "})
+        assert gate is False and "kill switch" in reason
+
     def test_env_kill_switch_wins(self) -> None:
         config = _config(live=True)
         gate, reason = live_gate_open(config, {ENV_LIVE: "1", ENV_KILL_SWITCH: "1"})

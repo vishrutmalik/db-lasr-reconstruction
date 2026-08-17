@@ -32,20 +32,26 @@ active:
     status: IN_PROGRESS
     runtime: LAUNCHED 2026-08-13 (agent a2980d2bcda46427a, live)
     owned_paths: ["docs/factset/capability/rbics.md", "docs/factset/capability/rbics.json", "docs/factset/capability/_extract_rbics.py"]
-  FS005:
+  FS008:
     agent_role: researcher (general-purpose)
-    objective: Exhaustive capability manifest — Global Prices + Corporate Actions v1
-    branch: agent/fs-researcher/FS005-globalprices
-    worktree: .worktrees/FS005
+    objective: Exhaustive capability manifest — Benchmarks v1 (historical membership focus)
+    branch: agent/fs-researcher/FS008-benchmarks
+    worktree: .worktrees/FS008
     status: IN_PROGRESS
-    runtime: LAUNCHED 2026-08-13 (agent a1fc93cb1e139ab6e, live); precedence addendum sent
-    owned_paths: ["docs/factset/capability/global_prices.md", "docs/factset/capability/global_prices.json", "docs/factset/capability/_extract_global_prices.py"]
+    runtime: LAUNCHED 2026-08-13 (agent a390cc30e8429c3c1, live)
+    owned_paths: ["docs/factset/capability/benchmarks.md", "docs/factset/capability/benchmarks.json", "docs/factset/capability/_extract_benchmarks.py"]
 
 queued:
+  FS021: Phase-2 PIT-Estimates DATAFEED contract (docs-only; next freed slot)
   FS008: Benchmarks v1 review
   FS021: Phase-2 PIT-Estimates DATAFEED contract (docs-only; the 2 PDFs)
 
 history:
+  - goal_id: FS005
+    objective: Exhaustive capability manifest — Global Prices + CA v1
+    agent: a1fc93cb1e139ab6e
+    final_commit: 7ed02b0 (PR #77, docs-only, OPEN — merges via FS009)
+    result: COMPLETE — 24/24 ops, 73/73 schemas, spec read in full (5843 lines); 14 discrepancies (demo marked NOT-a-template: uses CT-15-refused adjust=SPLIT default + phantom IdsBatchMax10000). ADAPTER-CRITICAL: vendor default basis is SPLIT (ADJUSTED — CT-15 refuses); FS013 must always request UNSPLIT + declare corporate_action_basis=UNADJUSTED + build factors in-house (D-013 fully satisfiable); vendor-adjusted arms + /returns (5 dividendAdjust conventions) = reconciliation cross-checks only. CA stream: 5 categories/13 type codes with eventId continuity + distInstFsymId; NOT covered: mergers, delistings, final trading dates (coverage gap for delisting handling — route to FS013/FS016 + fs_findings). 16 UNRESOLVED (4 VENDOR: adjust-arm composition GP-02, shares restatement basis GP-03 look-ahead risk, delisted coverage GP-05, gross-vs-net TR leg GP-15)
   - goal_id: FS004
     objective: Exhaustive capability manifest — Fundamentals v2
     agent: ac0c32d58181c1493

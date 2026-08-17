@@ -8,14 +8,6 @@
 # exceptions/models/methods for FS010.
 
 active:
-  FS009:
-    agent_role: verifier (reconciler)
-    objective: Reconciled shared capability manifest + independent verification of FS002-8/FS021 + binding design rulings (PIT mode map, canonical Estimates)
-    branch: agent/fs-verifier/FS009-reconciliation
-    worktree: .worktrees/FS009
-    status: IN_PROGRESS
-    runtime: LAUNCHED 2026-08-17 (agent a3500bd94afbcdebe, live) — PASS gates the merge of PRs #75-#82
-    owned_paths: ["docs/factset/capability/MANIFEST.md", "docs/factset/capability/manifest.json", "docs/verification/FS009.md"]
   FS010:
     agent_role: implementer
     objective: Shared FactSet transport + trial configuration (durable charter in fs_goals.md)
@@ -39,6 +31,11 @@ queued:
   FS021: Phase-2 PIT-Estimates DATAFEED contract (docs-only; the 2 PDFs)
 
 history:
+  - goal_id: FS009
+    objective: Reconciled shared manifest + verification + binding rulings
+    agent: a3500bd94afbcdebe
+    final_commit: 6928adb (PR #83 MERGED 2026-08-17; main 37ecf1b — ALL 9 docs PRs #75-#83 merged, branches/worktrees cleaned)
+    result: OVERALL PASS, 0 blocking, 6 NB — all 7 documents independently verified (extractor regeneration + extractor-independent spec probes; both PDF sha256s matched). BINDING RULINGS now normative in docs/factset/capability/MANIFEST.md — N1 PIT mode map (retrieval_mode mandatory; interval modes knowledge_time=pitStart + CE-10 valid_to=pitEnd vendor-basis; snapshot mode knowledge_time=pitEnd + valid_to NULL; mixed-mode refused; gaps measured never assumed); N2 canonical Estimates (expanded long consensus table + separate estimates_ratings; price targets as metric rows; broker detail raw-only; CE-5 knowledge_basis perspective|vendor_pit); N3 effective!=knowledge (RBICS/Benchmarks SNAPSHOT_STAMPED, excluded from PIT-safe headline, labeled assumption arm; exit via FS-VQ-47/52). Master register FS-VQ-01..75
   - goal_id: FS008
     objective: Capability manifest — Benchmarks v1
     agent: a390cc30e8429c3c1

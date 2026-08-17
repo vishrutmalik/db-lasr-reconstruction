@@ -1,4 +1,8 @@
 # FactSet Trial — Findings Register
+
+AUTHORITATIVE consolidated register: FS-VQ-01..75 in docs/verification/FS009.md
++ the normative rulings N1/N2/N3 in docs/factset/capability/MANIFEST.md (both
+on main since 37ecf1b). F-001..F-004 below are subsumed by that register.
 Classification: PROVEN / PARTIALLY_PROVEN / UNAVAILABLE / DEFERRED /
 VENDOR_CLARIFICATION_REQUIRED. Distinguish documented vs observed-live vs
 inferred. 

@@ -24,8 +24,8 @@ regardless of IC; synthetic slice must keep passing untouched.
 | FS005 | Doc review: Global Prices + CA v1 | researcher | — | DONE (PR #77) |
 | FS006 | Doc review: Estimates v2 | researcher | — | DONE (PR #79) |
 | FS007 | Doc review: RBICS v1 | researcher | — | DONE (PR #80) |
-| FS008 | Doc review: Benchmarks v1 | researcher | — | RESUMED (checkpoint-first) |
-| FS009 | Manifest reconciliation + verification + BINDING design rulings: PIT mode-mapping table, canonical Estimates representation, findings consolidation; merges PRs #75-80+ | verifier | FS002-8 | BLOCKED (FS008) |
+| FS008 | Doc review: Benchmarks v1 | researcher | — | DONE (PR #82) |
+| FS009 | Manifest reconciliation + verification + binding rulings (N1/N2/N3 in MANIFEST.md) | verifier | FS002-8 | DONE (PR #83; ALL 9 docs PRs MERGED main 37ecf1b) |
 | FS010 | Shared transport + trial config (charter below) | implementer | FS002 (family models gated on FS009) | IN_PROGRESS |
 | FS011 | Symbology adapter + identity mapping (A-ARCH-01 bridge) | implementer | FS010 | BLOCKED |
 | FS012 | Fundamentals adapter (standard + PIT arms, separated) | implementer | FS010,FS011 | BLOCKED |
@@ -37,7 +37,7 @@ regardless of IC; synthetic slice must keep passing untouched.
 | FS018 | Metric PROFILING + feature register (catalogued->profiled->model-ready; inclusion/exclusion register) | researcher | FS024,FS012-16 | BLOCKED |
 | FS019 | Real-data model panel: baseline + core N-LASR + PIT-safe config + labeled sensitivities | implementer | FS017,FS018 | BLOCKED |
 | FS020 | E2E real-data slice + notebook completion + purchase-decision memo (5-dim framework) | implementer | FS019,FS023,FS021 | BLOCKED |
-| FS021 | Phase-2 PIT-Estimates DATAFEED contract (docs only, 2 PDFs; ext §19 spec list) | researcher | — | READY (low priority) |
+| FS021 | Phase-2 PIT-Estimates DATAFEED spec | researcher | — | DONE (PR #81) |
 | FS022 | Deterministic samples (discovery 30-50 / panel 250-400 / edge 20-50; anchors 2010/14/18/22/recent; PREDECLARED split 2010 warmup, 2011-15 train, 2016-19 val, 2020-25 test; rebalance-date vendor snapshots, no inferred membership) | implementer | FS011,FS016,FS024 | BLOCKED |
 | FS023 | FactSet DQ battery (ext §9: 20 checks + 7-way accounting) + benchmark/RBICS temporal-honesty gates (effective!=knowledge policy) | implementer | FS011-16 | BLOCKED |
 | FS024 | Live metric-catalog + entitlement discovery (PIT and non-PIT dictionaries SEPARATELY; entitlement matrix; ALL endpoint families sampled per the 3-tier rule; notebook scaffold + sections 1-4) | implementer | FS010 | BLOCKED |

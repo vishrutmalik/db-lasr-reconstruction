@@ -319,18 +319,15 @@ def test_env_credentials_never_reach_any_artifact_or_surfaced_string(
     assert presence[ENV_USERNAME] is True
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="RT-FS010-3 (non-blocking hardening ratchet): capture meta.json "
-    "persists vendor-supplied quota headers and parsed error messages "
-    "VERBATIM, while telemetry, run manifests and raised exceptions all pass "
-    "the same material through the Sanitizer. If a vendor ever echoed "
-    "credential-like text in an x-factset-* header or an error body, it would "
-    "land unredacted in meta.json. Real FactSet does not echo credentials and "
-    "the file is under the data root (outside git/OneDrive), so this is "
-    "defense-in-depth only — but the capture-evidence write path should route "
-    "through the Sanitizer for symmetry with telemetry.",
-)
+# RT-FS010-3 ratchet — FLIPPED TO TEETH (was strict-xfail). Pre-fix
+# behavior: `transport._store_guarded` passed the parsed ErrorDetail and
+# retained vendor quota headers to `cache.store` UNSANITIZED, so a vendor
+# response echoing credential text in an x-factset-* header (or an error
+# body — VF-FS010-1, the verifier's converging BLOCKING finding) landed
+# verbatim in meta.json while telemetry/run-manifests/raised exceptions
+# were redacted. Fixed by sanitizing the EXTRACTED metadata on the
+# capture-index write path (transport._sanitize_detail/_sanitize_headers);
+# the verbatim .json.gz body intentionally stays raw (sha256 identity).
 def test_capture_metadata_is_sanitized_like_telemetry(tmp_path: Path) -> None:
     """A vendor response that echoes a sentinel in an x-factset-* header must
     be redacted in the persisted capture meta.json exactly as telemetry

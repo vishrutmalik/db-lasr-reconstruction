@@ -425,14 +425,19 @@ class FactSetTransport:
                 f" reserve ({storage.free_disk_reserve_bytes} bytes free"
                 " required); auto-stop (WP0 storage guard)"
             )
+        # VF-FS010-1 / RT-FS010-3: EXTRACTED vendor metadata (parsed error
+        # envelopes, quota headers) is sanitized exactly like telemetry —
+        # a vendor-echoed credential must never land in the meta.json
+        # capture index. The verbatim .json.gz body stays untouched (its
+        # sha256 IS the identity; the raw bytes are the licensed evidence).
         record = self._cache.store(
             request,
             response.body,
             http_status=response.status,
             retrieval_time=self._now(),
-            error_detail=detail,
+            error_detail=self._sanitize_detail(detail),
             entitlement_result=entitlement_result,
-            quota_headers=self._quota_headers(response),
+            quota_headers=self._sanitize_headers(self._quota_headers(response)),
             vendor_batch_id=vendor_batch_id,
             poll_count=poll_count,
         )
@@ -716,6 +721,30 @@ class FactSetTransport:
         if request.verb != "POST":
             return None
         return request.normalized_payload()["params"]
+
+    def _sanitize_detail(self, detail: ErrorDetail | None) -> ErrorDetail | None:
+        """Redact secret values from a parsed error envelope before it is
+        persisted to the capture index (VF-FS010-1: the raised message was
+        sanitized but meta.json was not)."""
+        if detail is None:
+            return None
+        clean = self._sanitizer.clean
+        return ErrorDetail(
+            envelope_shape=detail.envelope_shape,
+            messages=tuple(clean(m) for m in detail.messages),
+            codes=tuple(clean(c) for c in detail.codes),
+            sub_errors=tuple(clean(s) for s in detail.sub_errors),
+        )
+
+    def _sanitize_headers(
+        self, headers: dict[str, str] | None
+    ) -> dict[str, str] | None:
+        """Redact secret values from retained vendor headers (RT-FS010-3:
+        x-factset-*/x-ratelimit-* values are vendor-supplied strings)."""
+        if headers is None:
+            return None
+        clean = self._sanitizer.clean
+        return {clean(k): clean(v) for k, v in headers.items()}
 
     def _quota_headers(self, response: HttpResponse) -> dict[str, str] | None:
         found = {

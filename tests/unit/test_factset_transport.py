@@ -569,6 +569,53 @@ class TestSecretHygiene:
                 assert _CANARY_USER not in text, path
                 assert _CANARY_KEY not in text, path
 
+    def test_vendor_echoed_secret_in_error_body_never_reaches_meta(
+        self, tmp_path: Path
+    ) -> None:
+        # VF-FS010-1 regression (verifier probe): a 401 body echoing a
+        # canary credential landed VERBATIM in meta.json pre-fix, while
+        # the raised error message and telemetry were sanitized. The
+        # capture index must be sanitized exactly like telemetry; only
+        # the verbatim .json.gz body keeps the raw bytes (its sha256 is
+        # the identity).
+        echo_body = json.dumps(
+            {"status": "Unauthorized", "message": f"bad key {_CANARY_KEY}"}
+        ).encode()
+        sender = FakeSender([HttpResponse(status=401, body=echo_body, headers={})])
+        transport, _ = _transport(tmp_path, live=True, sender=sender)
+        with pytest.raises(FactSetAuthError) as excinfo:
+            transport.execute(_request())
+        assert _CANARY_KEY not in str(excinfo.value)
+        metas = list((tmp_path / "raw").rglob("meta.json"))
+        assert metas  # error evidence WAS captured
+        for meta in metas:
+            text = meta.read_text(encoding="utf-8")
+            assert _CANARY_KEY not in text, meta
+            assert "***REDACTED***" in text  # sanitized, not dropped
+
+    def test_vendor_echoed_secret_in_headers_never_reaches_meta(
+        self, tmp_path: Path
+    ) -> None:
+        # RT-FS010-3 regression: retained vendor quota headers
+        # (x-factset-*/x-ratelimit-*) are sanitized on the capture-index
+        # write path, symmetric with telemetry.
+        sender = FakeSender(
+            [
+                HttpResponse(
+                    status=403,
+                    body=b'{"errors": [{"title": "forbidden"}]}',
+                    headers={"x-factset-user": _CANARY_USER},
+                )
+            ]
+        )
+        transport, _ = _transport(tmp_path, live=True, sender=sender)
+        with pytest.raises(FactSetEntitlementError):
+            transport.execute(_request())
+        for path in sorted((tmp_path / "raw").rglob("*")):
+            if path.is_file() and not path.name.endswith(".json.gz"):
+                text = path.read_text(encoding="utf-8")
+                assert _CANARY_USER not in text, path
+
     def test_telemetry_has_no_payloads_or_id_lists(self, tmp_path: Path) -> None:
         sender = FakeSender([_ok({"data": ["SECRET-PAYLOAD-ROW"]})])
         transport, _ = _transport(tmp_path, live=True, sender=sender)

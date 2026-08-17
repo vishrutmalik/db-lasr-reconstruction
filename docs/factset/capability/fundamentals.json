@@ -1,0 +1,1780 @@
+{
+  "family": "fundamentals",
+  "goal": "FS004",
+  "generated_by": "_extract_fundamentals.py",
+  "spec_source": {
+    "path": "/Users/admin/Documents/factset_api_resources/factset_fundamentals_api-v2-yml.yml",
+    "sha256": "eaef9e0db4cfd5b6018be6160cfa3b73dc15ea0a46b2c60e231bcacd1d831f1b",
+    "openapi": "3.0.0",
+    "title": "FactSet Fundamentals API",
+    "api_version": "2.5.1",
+    "base_url": "https://api.factset.com/content/factset-fundamentals/v2",
+    "rate_limit": "10 requests/second and 10 concurrent requests per user (info block)"
+  },
+  "security": {
+    "global": [
+      "FactSetApiKey",
+      "FactSetOAuth2"
+    ],
+    "schemes": {
+      "FactSetOAuth2": {
+        "type": "oauth2",
+        "scheme": null,
+        "flows": [
+          "clientCredentials"
+        ]
+      },
+      "FactSetApiKey": {
+        "type": "http",
+        "scheme": "basic",
+        "flows": []
+      }
+    }
+  },
+  "operations": [
+    {
+      "verb": "GET",
+      "path": "/fundamentals",
+      "operationId": "getFdsFundamentals",
+      "tags": [
+        "FactSet Fundamentals"
+      ],
+      "summary": "Returns Company Fundamentals Data.",
+      "params": [
+        "idsBatchMax2000",
+        "periodicity",
+        "fiscalPeriodStart",
+        "fiscalPeriodEnd",
+        "metrics",
+        "currency",
+        "updateType",
+        "batch"
+      ],
+      "requestBodySchema": null,
+      "responses": {
+        "200": {
+          "schema": "FundamentalsResponse",
+          "headers": []
+        },
+        "202": {
+          "schema": "BatchStatusResponse",
+          "headers": [
+            "Location"
+          ]
+        },
+        "400": "400",
+        "401": "401",
+        "403": "403",
+        "415": "415",
+        "500": "500"
+      }
+    },
+    {
+      "verb": "POST",
+      "path": "/fundamentals",
+      "operationId": "getFdsFundamentalsForList",
+      "tags": [
+        "FactSet Fundamentals"
+      ],
+      "summary": "Returns Company Fundamentals Data.",
+      "params": [],
+      "requestBodySchema": "FundamentalsRequest",
+      "responses": {
+        "200": {
+          "schema": "FundamentalsResponse",
+          "headers": []
+        },
+        "202": {
+          "schema": "BatchStatusResponse",
+          "headers": [
+            "Location"
+          ]
+        },
+        "400": "400",
+        "401": "401",
+        "403": "403",
+        "415": "415",
+        "500": "500"
+      }
+    },
+    {
+      "verb": "GET",
+      "path": "/segments",
+      "operationId": "getFdsSegments",
+      "tags": [
+        "Segments"
+      ],
+      "summary": "Returns Company Segments data.",
+      "params": [
+        "idsBatchMax2000",
+        "segmentsPeriodicity",
+        "fiscalPeriodStart",
+        "fiscalPeriodEnd",
+        "segmentsMetrics",
+        "segmentType",
+        "batch"
+      ],
+      "requestBodySchema": null,
+      "responses": {
+        "200": {
+          "schema": "SegmentsResponse",
+          "headers": []
+        },
+        "202": {
+          "schema": "BatchStatusResponse",
+          "headers": [
+            "Location"
+          ]
+        },
+        "400": "400",
+        "401": "401",
+        "403": "403",
+        "415": "415",
+        "500": "500"
+      }
+    },
+    {
+      "verb": "POST",
+      "path": "/segments",
+      "operationId": "getFdsSegmentsForList",
+      "tags": [
+        "Segments"
+      ],
+      "summary": "Returns Company Segment Data.",
+      "params": [],
+      "requestBodySchema": "SegmentsRequest",
+      "responses": {
+        "200": {
+          "schema": "SegmentsResponse",
+          "headers": []
+        },
+        "202": {
+          "schema": "BatchStatusResponse",
+          "headers": [
+            "Location"
+          ]
+        },
+        "400": "400",
+        "401": "401",
+        "403": "403",
+        "415": "415",
+        "500": "500"
+      }
+    },
+    {
+      "verb": "POST",
+      "path": "/point-in-time",
+      "operationId": "postFundamentalsPITData",
+      "tags": [
+        "Fundamentals Point In Time"
+      ],
+      "summary": "Retrieve Point-in-Time data for multiple securities.",
+      "params": [],
+      "requestBodySchema": "FundamentalsPITRequest",
+      "responses": {
+        "202": {
+          "schema": "BatchStatusResponse",
+          "headers": [
+            "Location"
+          ]
+        },
+        "400": "400",
+        "401": "401",
+        "403": "403",
+        "429": "429",
+        "500": "500",
+        "503": "503"
+      }
+    },
+    {
+      "verb": "POST",
+      "path": "/periods",
+      "operationId": "postFundamentalsFiscalPeriods",
+      "tags": [
+        "Fundamentals Point In Time"
+      ],
+      "summary": "Fiscal Periods: Retrieve fiscal period details for multiple securities using POST.",
+      "params": [],
+      "requestBodySchema": "PeriodsRequest",
+      "responses": {
+        "202": {
+          "schema": "BatchStatusResponse",
+          "headers": [
+            "Location"
+          ]
+        },
+        "400": "400",
+        "401": "401",
+        "403": "403",
+        "429": "429",
+        "500": "500",
+        "503": "503"
+      }
+    },
+    {
+      "verb": "GET",
+      "path": "/company-reports/financial-statement",
+      "operationId": "getFinancials",
+      "tags": [
+        "Company Reports"
+      ],
+      "summary": "Returns company financial data.",
+      "params": [
+        "statementType",
+        "identifier",
+        "financialPeriodicity",
+        "currency",
+        "updateType",
+        "limit"
+      ],
+      "requestBodySchema": null,
+      "responses": {
+        "200": {
+          "schema": "FinancialResponse",
+          "headers": []
+        },
+        "400": "Company400",
+        "401": "401",
+        "403": "403",
+        "500": "500"
+      }
+    },
+    {
+      "verb": "GET",
+      "path": "/company-reports/profile",
+      "operationId": "getFdsProfiles",
+      "tags": [
+        "Company Reports"
+      ],
+      "summary": "Returns company profile information for a specified list of identifiers.",
+      "params": [
+        "ids"
+      ],
+      "requestBodySchema": null,
+      "responses": {
+        "200": {
+          "schema": "ProfileResponse",
+          "headers": []
+        },
+        "400": "Company400",
+        "401": "401",
+        "403": "403",
+        "500": "500"
+      }
+    },
+    {
+      "verb": "GET",
+      "path": "/company-reports/fundamentals",
+      "operationId": "getFundamentals",
+      "tags": [
+        "Company Reports"
+      ],
+      "summary": "Returns company fundamentals for a given list of identifiers.",
+      "params": [
+        "ids",
+        "currency",
+        "fundamentalsPeriodicity"
+      ],
+      "requestBodySchema": null,
+      "responses": {
+        "200": {
+          "schema": "CompanyFundamentalsResponse",
+          "headers": []
+        },
+        "400": "Company400",
+        "401": "401",
+        "403": "403",
+        "500": "500"
+      }
+    },
+    {
+      "verb": "GET",
+      "path": "/metrics",
+      "operationId": "getFdsFundamentalsMetrics",
+      "tags": [
+        "Metrics"
+      ],
+      "summary": "Returns available FactSet Fundamental metrics and ratios.",
+      "params": [
+        "category",
+        "subcategory",
+        "metricDataType",
+        "pitDataItems"
+      ],
+      "requestBodySchema": null,
+      "responses": {
+        "200": {
+          "schema": "MetricsResponse",
+          "headers": []
+        },
+        "400": "400",
+        "401": "401",
+        "403": "403",
+        "415": "415",
+        "500": "500"
+      }
+    },
+    {
+      "verb": "GET",
+      "path": "/batch-status",
+      "operationId": "getBatchStatus",
+      "tags": [
+        "Batch Processing"
+      ],
+      "summary": "Returns the status for a Batch Request",
+      "params": [
+        "batchId"
+      ],
+      "requestBodySchema": null,
+      "responses": {
+        "201": {
+          "schema": "BatchStatusResponse",
+          "headers": [
+            "Location"
+          ]
+        },
+        "202": {
+          "schema": "BatchStatusResponse",
+          "headers": []
+        },
+        "404": "404"
+      }
+    },
+    {
+      "verb": "GET",
+      "path": "/batch-result",
+      "operationId": "getBatchData",
+      "tags": [
+        "Batch Processing"
+      ],
+      "summary": "Returns the response for a Batch Request",
+      "params": [
+        "batchId"
+      ],
+      "requestBodySchema": null,
+      "responses": {
+        "200": {
+          "schema": "BatchResultResponse",
+          "headers": []
+        },
+        "202": {
+          "schema": "BatchStatusResponse",
+          "headers": []
+        },
+        "404": "404"
+      }
+    }
+  ],
+  "component_parameters": {
+    "idsBatchMax2000": {
+      "name": "ids",
+      "in": "query",
+      "required": true,
+      "type": "array",
+      "default": null,
+      "enum": null,
+      "maxItems": 2000
+    },
+    "periodicity": {
+      "name": "periodicity",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": "ANN",
+      "enum": [
+        "ANN",
+        "ANN_R",
+        "QTR",
+        "QTR_R",
+        "SEMI",
+        "SEMI_R",
+        "LTM",
+        "LTM_R",
+        "LTM_SEMI",
+        "LTM_SEMI_R",
+        "LTMSG",
+        "YTD"
+      ],
+      "maxItems": null
+    },
+    "financialPeriodicity": {
+      "name": "periodicity",
+      "in": "query",
+      "required": true,
+      "type": "string",
+      "default": null,
+      "enum": [
+        "ANN",
+        "ANN_R",
+        "QTR",
+        "QTR_R",
+        "SEMI",
+        "SEMI_R",
+        "LTM",
+        "YTD"
+      ],
+      "maxItems": null
+    },
+    "fundamentalsPeriodicity": {
+      "name": "periodicity",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": "ANN",
+      "enum": [
+        "ANN",
+        "QTR",
+        "SEMI"
+      ],
+      "maxItems": null
+    },
+    "segmentsPeriodicity": {
+      "name": "periodicity",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": "ANN",
+      "enum": [
+        "ANN",
+        "ANN_R"
+      ],
+      "maxItems": null
+    },
+    "statementType": {
+      "name": "statementType",
+      "in": "query",
+      "required": true,
+      "type": "string",
+      "default": null,
+      "enum": [
+        "BS",
+        "CF",
+        "IS"
+      ],
+      "maxItems": null
+    },
+    "identifier": {
+      "name": "id",
+      "in": "query",
+      "required": true,
+      "type": "string",
+      "default": null,
+      "enum": null,
+      "maxItems": null
+    },
+    "ids": {
+      "name": "ids",
+      "in": "query",
+      "required": true,
+      "type": "array",
+      "default": null,
+      "enum": null,
+      "maxItems": 50
+    },
+    "fiscalPeriodStart": {
+      "name": "fiscalPeriodStart",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": null,
+      "enum": null,
+      "maxItems": null
+    },
+    "fiscalPeriodEnd": {
+      "name": "fiscalPeriodEnd",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": null,
+      "enum": null,
+      "maxItems": null
+    },
+    "metrics": {
+      "name": "metrics",
+      "in": "query",
+      "required": true,
+      "type": "array",
+      "default": null,
+      "enum": null,
+      "maxItems": 1600
+    },
+    "segmentsMetrics": {
+      "name": "metrics",
+      "in": "query",
+      "required": true,
+      "type": "string",
+      "default": null,
+      "enum": [
+        "SALES",
+        "OPINC",
+        "ASSETS",
+        "DEP",
+        "CAPEX"
+      ],
+      "maxItems": null
+    },
+    "segmentType": {
+      "name": "segmentType",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": "BUS",
+      "enum": [
+        "BUS",
+        "GEO"
+      ],
+      "maxItems": null
+    },
+    "batch": {
+      "name": "batch",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": "N",
+      "enum": [
+        "Y",
+        "N"
+      ],
+      "maxItems": null
+    },
+    "batchId": {
+      "name": "id",
+      "in": "query",
+      "required": true,
+      "type": "string",
+      "default": null,
+      "enum": null,
+      "maxItems": null
+    },
+    "currency": {
+      "name": "currency",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": "LOCAL",
+      "enum": null,
+      "maxItems": null
+    },
+    "updateType": {
+      "name": "updateType",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": "RP",
+      "enum": [
+        "RP",
+        "RF"
+      ],
+      "maxItems": null
+    },
+    "limit": {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "type": "integer",
+      "default": 4,
+      "enum": null,
+      "maxItems": null
+    },
+    "category": {
+      "name": "category",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": null,
+      "enum": [
+        "INCOME_STATEMENT",
+        "BALANCE_SHEET",
+        "CASH_FLOW",
+        "RATIOS",
+        "FINANCIAL_SERVICES",
+        "INDUSTRY_METRICS",
+        "PENSION_AND_POSTRETIREMENT",
+        "MARKET_DATA",
+        "MISCELLANEOUS",
+        "DATES"
+      ],
+      "maxItems": null
+    },
+    "subcategory": {
+      "name": "subcategory",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": null,
+      "enum": [
+        "ASSETS",
+        "BALANCE_SHEET",
+        "HEALTHCARE",
+        "LIABILITIES",
+        "PER_SHARE",
+        "SHAREHOLDERS_EQUITY",
+        "SUPPLEMENTAL",
+        "CASH_FLOW",
+        "CHANGE_IN_CASH",
+        "FINANCING",
+        "INVESTING",
+        "OPERATING",
+        "DATES",
+        "INCOME_STATEMENT",
+        "NON-OPERATING",
+        "RETAIL",
+        "AIRLINES",
+        "BANK",
+        "BANKING",
+        "HOTELS_AND_GAMING",
+        "METALS_AND_MINING",
+        "OIL_AND_GAS",
+        "PHARMACEUTICAL",
+        "REIT",
+        "MARKET_DATA",
+        "CLASSIFICATION",
+        "CORPORATE_DATA",
+        "FINANCIAL_RECORDS",
+        "INDICATOR",
+        "EMPLOYEES_AND_MANAGEMENT",
+        "PENSION_AND_POSTRETIREMENT",
+        "FINANCIAL",
+        "GROWTH_RATE",
+        "LIQUIDITY",
+        "PROFITABILITY",
+        "SIZE",
+        "VALUATION",
+        "OTHER",
+        "HOMEBUILDING",
+        "NET_INCOME",
+        "TELECOM",
+        "UTILITY",
+        "INSURANCE",
+        "EXPENSES",
+        "OPERATING_COST",
+        "OPERATING_ACTIVITIES",
+        "NON-RECURRING_ITEMS",
+        "FINANCING_ACTIVITIES",
+        "INVESTING_ACTIVITIES",
+        "REVENUES"
+      ],
+      "maxItems": null
+    },
+    "metricDataType": {
+      "name": "metricDataType",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "default": "",
+      "enum": null,
+      "maxItems": null
+    },
+    "pitDataItems": {
+      "name": "pitDataItems",
+      "in": "query",
+      "required": false,
+      "type": "boolean",
+      "default": false,
+      "enum": null,
+      "maxItems": null
+    }
+  },
+  "schemas": {
+    "FundamentalsRequest": {
+      "type": "object",
+      "properties": [
+        "data"
+      ],
+      "required": [
+        "data"
+      ]
+    },
+    "FundamentalRequestBody": {
+      "type": "object",
+      "properties": [
+        "batch",
+        "currency",
+        "fiscalPeriod",
+        "ids",
+        "metrics",
+        "periodicity",
+        "updateType"
+      ],
+      "required": [
+        "ids",
+        "metrics"
+      ]
+    },
+    "FundamentalsResponse": {
+      "type": "object",
+      "properties": [
+        "data"
+      ]
+    },
+    "Fundamental": {
+      "type": "object",
+      "properties": [
+        "currency",
+        "epsReportDate",
+        "fiscalEndDate",
+        "fiscalPeriod",
+        "fiscalPeriodLength",
+        "fiscalYear",
+        "fsymId",
+        "metric",
+        "periodicity",
+        "reportDate",
+        "requestId",
+        "updateType",
+        "value"
+      ],
+      "required": [
+        "fiscalPeriod"
+      ]
+    },
+    "FundamentalValue": {
+      "oneOf": [
+        "",
+        ""
+      ]
+    },
+    "IdentifierList": {
+      "type": "array",
+      "maxItems": 1000
+    },
+    "MetricList": {
+      "type": "array",
+      "maxItems": 1600
+    },
+    "PeriodicityEnum": {
+      "type": "string",
+      "enum": [
+        "ANN",
+        "ANN_R",
+        "QTR",
+        "QTR_R",
+        "SEMI",
+        "SEMI_R",
+        "LTM",
+        "LTM_R",
+        "LTM_SEMI",
+        "LTM_SEMI_R",
+        "LTMSG",
+        "YTD"
+      ]
+    },
+    "FrequencyEnum": {
+      "type": "string",
+      "enum": [
+        "W",
+        "M"
+      ]
+    },
+    "FundamentalsPITData": {
+      "type": "object",
+      "properties": [
+        "currency",
+        "fiscalEndDate",
+        "fiscalPeriod",
+        "fiscalYear",
+        "fsymId",
+        "metric",
+        "periodicity",
+        "pitEnd",
+        "pitStart",
+        "requestId",
+        "updateType",
+        "value"
+      ]
+    },
+    "FundamentalsPITRequest": {
+      "type": "object",
+      "properties": [
+        "data"
+      ],
+      "required": [
+        "data"
+      ]
+    },
+    "FundamentalsPITRequestBody": {
+      "type": "object",
+      "properties": [
+        "active",
+        "fiscalPeriodEnd",
+        "fiscalPeriodStart",
+        "frequency",
+        "ids",
+        "metrics",
+        "periodicity",
+        "pitEnd",
+        "pitStart",
+        "updateType"
+      ],
+      "required": [
+        "ids",
+        "metrics",
+        "fiscalPeriodStart"
+      ]
+    },
+    "PeriodsRequest": {
+      "type": "object",
+      "properties": [
+        "data"
+      ],
+      "required": [
+        "data"
+      ]
+    },
+    "PeriodsRequestBody": {
+      "type": "object",
+      "properties": [
+        "fiscalPeriodEnd",
+        "fiscalPeriodStart",
+        "ids",
+        "periodicity"
+      ],
+      "required": [
+        "ids",
+        "fiscalPeriodStart"
+      ]
+    },
+    "PeriodInfo": {
+      "type": "object",
+      "properties": [
+        "fiscalDate",
+        "fiscalInterimNumber",
+        "fsymId",
+        "fyeChange",
+        "periodicity",
+        "pitEnd",
+        "pitStart",
+        "requestId"
+      ]
+    },
+    "SegmentsRequest": {
+      "type": "object",
+      "properties": [
+        "data"
+      ],
+      "required": [
+        "data"
+      ]
+    },
+    "SegmentRequestBody": {
+      "type": "object",
+      "properties": [
+        "batch",
+        "fiscalPeriod",
+        "ids",
+        "metrics",
+        "periodicity",
+        "segmentType"
+      ],
+      "required": [
+        "ids",
+        "metrics"
+      ]
+    },
+    "SegmentsResponse": {
+      "type": "object",
+      "properties": [
+        "data"
+      ]
+    },
+    "Segment": {
+      "type": "object",
+      "properties": [
+        "date",
+        "fsymId",
+        "label",
+        "metric",
+        "requestId",
+        "value"
+      ],
+      "required": [
+        "label"
+      ]
+    },
+    "SegmentValue": {
+      "oneOf": [
+        "",
+        ""
+      ]
+    },
+    "FinancialResponse": {
+      "type": "object",
+      "properties": [
+        "data"
+      ]
+    },
+    "Financials": {
+      "type": "object",
+      "properties": [
+        "fiscalYear",
+        "fsymId",
+        "items",
+        "reportDate",
+        "requestId"
+      ]
+    },
+    "Item": {
+      "type": "object",
+      "properties": [
+        "displayLevel",
+        "displayOrder",
+        "ffCode",
+        "name",
+        "value"
+      ]
+    },
+    "ReportDate": {
+      "type": "string"
+    },
+    "FiscalYear": {
+      "type": "string"
+    },
+    "ProfileResponse": {
+      "type": "object",
+      "properties": [
+        "data"
+      ]
+    },
+    "Profile": {
+      "type": "object",
+      "properties": [
+        "address",
+        "businessSummary",
+        "ceo",
+        "error",
+        "exchange",
+        "fsymId",
+        "industry",
+        "marketCapitalization",
+        "name",
+        "numberOfEmployees",
+        "peRatio",
+        "requestId",
+        "sector",
+        "sharesOutstanding",
+        "tickerRegion",
+        "totalMarketCapitalization",
+        "yearFounded"
+      ]
+    },
+    "Address": {
+      "type": "object",
+      "properties": [
+        "city",
+        "country",
+        "phoneNumber",
+        "state",
+        "stateName",
+        "streetLine1",
+        "streetLine2",
+        "website",
+        "zip"
+      ]
+    },
+    "Exchange": {
+      "type": "object",
+      "properties": [
+        "exchangeId",
+        "fullName"
+      ]
+    },
+    "CompanyFundamentalsResponse": {
+      "type": "object",
+      "properties": [
+        "data"
+      ]
+    },
+    "Fundamentals": {
+      "type": "object",
+      "properties": [
+        "asOfDate",
+        "currency",
+        "dividend",
+        "enterpriseValue",
+        "error",
+        "fiveYearAverageYield",
+        "fiveYearDividendGrowthRate",
+        "floatingSharesOutstanding",
+        "fsymId",
+        "netIncome",
+        "numberOfEmployees",
+        "perShare",
+        "periodicity",
+        "ratios",
+        "requestId",
+        "salesPerEmployee",
+        "shareHolderEquity",
+        "threeYearAverageYield",
+        "threeYearDividendGrowthRate",
+        "totalAssets",
+        "totalRevenue"
+      ]
+    },
+    "PerShare": {
+      "type": "object",
+      "properties": [
+        "bookValuePerShare",
+        "cashFlowPerShare",
+        "cashPerShare",
+        "earningsPerShare",
+        "revenuePerShare",
+        "salesPerShare",
+        "trailingTwelveMonthEarningsPerShare"
+      ]
+    },
+    "Ratios": {
+      "type": "object",
+      "properties": [
+        "assetTurnoverRatio",
+        "currentRatio",
+        "ebitMargin",
+        "ebitdaMargin",
+        "grossMargin",
+        "inventoryTurnover",
+        "longTermDebtToEquity",
+        "payoutRatio",
+        "pretaxMargin",
+        "priceToBookRatio",
+        "priceToCashFlowRatio",
+        "priceToEarningsRatio",
+        "priceToSalesRatio",
+        "quickRatio",
+        "returnOnAssets",
+        "returnOnEquity",
+        "returnOnInvestedCapital",
+        "totalDebtToEquity"
+      ]
+    },
+    "Dividend": {
+      "type": "object",
+      "properties": [
+        "annualDividendPerShare",
+        "distributionFrequency",
+        "dividendPerShare",
+        "exDividendDate",
+        "indicativeDividendRate",
+        "payableDate",
+        "recordDate",
+        "yield"
+      ]
+    },
+    "MetricsResponse": {
+      "type": "object",
+      "properties": [
+        "data"
+      ]
+    },
+    "Metric": {
+      "type": "object",
+      "properties": [
+        "baseCode",
+        "category",
+        "dataType",
+        "description",
+        "descriptionAddendum",
+        "factor",
+        "isNonPIT",
+        "isPIT",
+        "metric",
+        "name",
+        "oaPageId",
+        "oaUrl",
+        "sdfPackage",
+        "subcategory"
+      ]
+    },
+    "IdsBatchMax30000": {
+      "type": "array",
+      "maxItems": 30000
+    },
+    "Periodicity": {
+      "type": "string",
+      "enum": [
+        "ANN",
+        "ANN_R",
+        "QTR",
+        "QTR_R",
+        "SEMI",
+        "SEMI_R",
+        "LTM",
+        "LTM_R",
+        "LTMSG",
+        "LTM_SEMI",
+        "LTM_SEMI_R",
+        "YTD"
+      ]
+    },
+    "SegmentsPeriodicity": {
+      "type": "string",
+      "enum": [
+        "ANN",
+        "ANN_R"
+      ]
+    },
+    "FiscalPeriod": {
+      "type": "object",
+      "properties": [
+        "end",
+        "start"
+      ]
+    },
+    "Metrics": {
+      "type": "array",
+      "maxItems": 1600
+    },
+    "SegmentsMetrics": {
+      "type": "string"
+    },
+    "SegmentType": {
+      "type": "string",
+      "enum": [
+        "BUS",
+        "GEO"
+      ]
+    },
+    "Currency": {
+      "type": "string"
+    },
+    "UpdateType": {
+      "type": "string",
+      "enum": [
+        "RP",
+        "RF"
+      ]
+    },
+    "Batch": {
+      "type": "string",
+      "enum": [
+        "Y",
+        "N"
+      ]
+    },
+    "BatchStatusResponse": {
+      "type": "object",
+      "properties": [
+        "data"
+      ]
+    },
+    "BatchResultResponse": {
+      "type": "object",
+      "properties": [
+        "data"
+      ],
+      "required": [
+        "data"
+      ]
+    },
+    "BatchResult": {
+      "oneOf": [
+        "Fundamental",
+        "Segment",
+        "FundamentalsPITData",
+        "PeriodInfo"
+      ]
+    },
+    "BatchStatus": {
+      "type": "object",
+      "properties": [
+        "endTime",
+        "error",
+        "id",
+        "startTime",
+        "status"
+      ]
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": [
+        "errors"
+      ]
+    },
+    "ErrorObject": {
+      "type": "object",
+      "properties": [
+        "code",
+        "id",
+        "links",
+        "title"
+      ]
+    },
+    "BatchErrorObject": {
+      "type": "object",
+      "properties": [
+        "code",
+        "id",
+        "title"
+      ]
+    },
+    "CompanyReportErrorObject": {
+      "type": "object",
+      "properties": [
+        "code",
+        "detail",
+        "title"
+      ]
+    }
+  },
+  "enum_sites": [
+    {
+      "site": "components.parameters.periodicity.schema",
+      "values": [
+        "ANN",
+        "ANN_R",
+        "QTR",
+        "QTR_R",
+        "SEMI",
+        "SEMI_R",
+        "LTM",
+        "LTM_R",
+        "LTM_SEMI",
+        "LTM_SEMI_R",
+        "LTMSG",
+        "YTD"
+      ]
+    },
+    {
+      "site": "components.parameters.financialPeriodicity.schema",
+      "values": [
+        "ANN",
+        "ANN_R",
+        "QTR",
+        "QTR_R",
+        "SEMI",
+        "SEMI_R",
+        "LTM",
+        "YTD"
+      ]
+    },
+    {
+      "site": "components.parameters.fundamentalsPeriodicity.schema",
+      "values": [
+        "ANN",
+        "QTR",
+        "SEMI"
+      ]
+    },
+    {
+      "site": "components.parameters.segmentsPeriodicity.schema",
+      "values": [
+        "ANN",
+        "ANN_R"
+      ]
+    },
+    {
+      "site": "components.parameters.statementType.schema",
+      "values": [
+        "BS",
+        "CF",
+        "IS"
+      ]
+    },
+    {
+      "site": "components.parameters.segmentsMetrics.schema",
+      "values": [
+        "SALES",
+        "OPINC",
+        "ASSETS",
+        "DEP",
+        "CAPEX"
+      ]
+    },
+    {
+      "site": "components.parameters.segmentType.schema",
+      "values": [
+        "BUS",
+        "GEO"
+      ]
+    },
+    {
+      "site": "components.parameters.batch.schema",
+      "values": [
+        "Y",
+        "N"
+      ]
+    },
+    {
+      "site": "components.parameters.updateType.schema",
+      "values": [
+        "RP",
+        "RF"
+      ]
+    },
+    {
+      "site": "components.parameters.category.schema",
+      "values": [
+        "INCOME_STATEMENT",
+        "BALANCE_SHEET",
+        "CASH_FLOW",
+        "RATIOS",
+        "FINANCIAL_SERVICES",
+        "INDUSTRY_METRICS",
+        "PENSION_AND_POSTRETIREMENT",
+        "MARKET_DATA",
+        "MISCELLANEOUS",
+        "DATES"
+      ]
+    },
+    {
+      "site": "components.parameters.subcategory.schema",
+      "values": [
+        "ASSETS",
+        "BALANCE_SHEET",
+        "HEALTHCARE",
+        "LIABILITIES",
+        "PER_SHARE",
+        "SHAREHOLDERS_EQUITY",
+        "SUPPLEMENTAL",
+        "CASH_FLOW",
+        "CHANGE_IN_CASH",
+        "FINANCING",
+        "INVESTING",
+        "OPERATING",
+        "DATES",
+        "INCOME_STATEMENT",
+        "NON-OPERATING",
+        "RETAIL",
+        "AIRLINES",
+        "BANK",
+        "BANKING",
+        "HOTELS_AND_GAMING",
+        "METALS_AND_MINING",
+        "OIL_AND_GAS",
+        "PHARMACEUTICAL",
+        "REIT",
+        "MARKET_DATA",
+        "CLASSIFICATION",
+        "CORPORATE_DATA",
+        "FINANCIAL_RECORDS",
+        "INDICATOR",
+        "EMPLOYEES_AND_MANAGEMENT",
+        "PENSION_AND_POSTRETIREMENT",
+        "FINANCIAL",
+        "GROWTH_RATE",
+        "LIQUIDITY",
+        "PROFITABILITY",
+        "SIZE",
+        "VALUATION",
+        "OTHER",
+        "HOMEBUILDING",
+        "NET_INCOME",
+        "TELECOM",
+        "UTILITY",
+        "INSURANCE",
+        "EXPENSES",
+        "OPERATING_COST",
+        "OPERATING_ACTIVITIES",
+        "NON-RECURRING_ITEMS",
+        "FINANCING_ACTIVITIES",
+        "INVESTING_ACTIVITIES",
+        "REVENUES"
+      ]
+    },
+    {
+      "site": "components.schemas.Fundamental.properties.periodicity",
+      "values": [
+        "ANN",
+        "ANN_R",
+        "QTR",
+        "QTR_R",
+        "SEMI",
+        "SEMI_R",
+        "CAL",
+        "LTM",
+        "LTM_R",
+        "LTMSG",
+        "LTM_SEMI",
+        "LTM_SEMI_R",
+        "YTD"
+      ]
+    },
+    {
+      "site": "components.schemas.Fundamental.properties.updateType",
+      "values": [
+        "Preliminary",
+        "Final"
+      ]
+    },
+    {
+      "site": "components.schemas.PeriodicityEnum",
+      "values": [
+        "ANN",
+        "ANN_R",
+        "QTR",
+        "QTR_R",
+        "SEMI",
+        "SEMI_R",
+        "LTM",
+        "LTM_R",
+        "LTM_SEMI",
+        "LTM_SEMI_R",
+        "LTMSG",
+        "YTD"
+      ]
+    },
+    {
+      "site": "components.schemas.FrequencyEnum",
+      "values": [
+        "W",
+        "M"
+      ]
+    },
+    {
+      "site": "components.schemas.FundamentalsPITData.properties.updateType",
+      "values": [
+        "Preliminary",
+        "Final"
+      ]
+    },
+    {
+      "site": "components.schemas.Metric.properties.sdfPackage",
+      "values": [
+        "BASIC",
+        "ADVANCED"
+      ]
+    },
+    {
+      "site": "components.schemas.Periodicity",
+      "values": [
+        "ANN",
+        "ANN_R",
+        "QTR",
+        "QTR_R",
+        "SEMI",
+        "SEMI_R",
+        "LTM",
+        "LTM_R",
+        "LTMSG",
+        "LTM_SEMI",
+        "LTM_SEMI_R",
+        "YTD"
+      ]
+    },
+    {
+      "site": "components.schemas.SegmentsPeriodicity",
+      "values": [
+        "ANN",
+        "ANN_R"
+      ]
+    },
+    {
+      "site": "components.schemas.SegmentType",
+      "values": [
+        "BUS",
+        "GEO"
+      ]
+    },
+    {
+      "site": "components.schemas.UpdateType",
+      "values": [
+        "RP",
+        "RF"
+      ]
+    },
+    {
+      "site": "components.schemas.Batch",
+      "values": [
+        "Y",
+        "N"
+      ]
+    },
+    {
+      "site": "components.schemas.BatchStatus.properties.status",
+      "values": [
+        "queued",
+        "executing",
+        "created",
+        "failed"
+      ]
+    }
+  ],
+  "limits": {
+    "rate": {
+      "requests_per_second": 10,
+      "concurrent_requests": 10,
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    "long_running_max_minutes": 20,
+    "ids": {
+      "GET /fundamentals, GET /segments": "250 non-batch / 2000 batch (desc; schema bound malformed, see D5)",
+      "POST /fundamentals, POST /segments": "250 non-batch / 5000 batch (desc; schema name says 30000, see D5)",
+      "POST /point-in-time, POST /periods": "1000 (IdentifierList maxItems)",
+      "GET /company-reports/profile|fundamentals": "50 (ids maxItems)",
+      "GET /company-reports/financial-statement": "single id"
+    },
+    "metrics": "1600 (Metrics/MetricList maxItems) — but see discrepancy D7",
+    "get_url_bytes": 8192,
+    "company_reports_financial_statement_limit_param": "periods 1..100, default 4",
+    "pagination": "NONE — no cursor/offset parameters anywhere in this API",
+    "csv_output": "GET /batch-result honors Accept: text/csv",
+    "retry_after": "429 and 503 documented to carry/reference Retry-After"
+  },
+  "pit_semantics": {
+    "pit_arm_operations": [
+      "POST /point-in-time (postFundamentalsPITData)",
+      "POST /periods (postFundamentalsFiscalPeriods)"
+    ],
+    "documented": [
+      {
+        "fact": "PIT purpose statement: 'PIT data allows you to view fundamentals data as it was known on a specific date. This is crucial for backtesting trading strategies, performing academic research, and avoiding lookahead bias.'",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "Each /point-in-time data point carries a bitemporal validity window [pitStart, pitEnd], inclusive, UTC, ISO 8601, 'during which this value was current'; pitEnd=null means the value is the latest active snapshot",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "Omitting request pitStart/pitEnd returns the FULL PIT revision history; equal pitStart=pitEnd addresses a single knowledge instant; spec example shows a genuine value revision (FF_SALES 20,345,000 -> 21,345,000 across the 2018-01-10/11 window boundary)",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "frequency=W|M switches to end-of-week/end-of-month snapshot mode (pitStart null, pitEnd = snapshot stamp); omitted frequency = every change",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "/periods pitStart = 'UTC timestamp for when the fiscal period information was first published and became available'; pitEnd = when superseded (null = current version); second-precision example timestamps back to 2001",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "updateType request flag RP (include preliminary) / RF (final only); each PIT response row is tagged Preliminary|Final = 'status of the source filing when this data point was recorded'",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "active flag (default true) restricts to securities active on the snapshot date; 'Prevents inclusion of future-dated entities'",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "PIT endpoints support only primary securities; secondary/regional identifiers may return nothing; resolve via Symbology API first",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "Fiscal-period addressing is calendar-range only (fiscalPeriodStart required, filters period END dates); response addresses periods absolutely via fiscalYear + fiscalPeriod int + fiscalEndDate; NO relative-period syntax exists",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "PIT-eligible metrics discoverable via GET /metrics with pitDataItems=true / per-metric isPIT flag; the PIT and non-PIT metric dictionaries are SEPARATE overlapping sets ('A metric can be available in both PIT and non-PIT datasets') — pull the catalog twice, never assume identity (external_analysis.md WP3/WP5 bind)",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "Both PIT operations are ALWAYS asynchronous (202 + Location -> /batch-status -> /batch-result)",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "Non-PIT /fundamentals arm has NO as-of parameter; its only vintage controls are Original vs _R ('Latest - Includes Restatements') periodicities and updateType RP/RF — it is a latest-database-view, not PIT",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "Non-PIT publication-timing fields: epsReportDate ('date the EPS was reported') is the only publication-date-like field; reportDate is the AS-REPORTED PERIOD END date (not a publication date), fiscalEndDate is the normalized period end",
+        "evidence": "DOCUMENTED_OPENAPI"
+      }
+    ],
+    "inferred": [
+      {
+        "fact": "pitStart on /point-in-time rows is FactSet's database-availability (collection/publication) timestamp, by analogy with the explicit /periods wording — the /point-in-time schema itself only says 'was current'",
+        "evidence": "INFERRED"
+      },
+      {
+        "fact": "PIT values are returned in reported/local currency only: FundamentalsPITRequestBody has NO currency parameter; response carries a per-row ISO currency code",
+        "evidence": "INFERRED"
+      }
+    ],
+    "silent_or_unresolved": [
+      {
+        "fact": "Recording basis never stated: filing time vs press-release time vs FactSet collection lag; no promise that pitStart approximates public availability",
+        "evidence": "VENDOR_CLARIFICATION_REQUIRED"
+      },
+      {
+        "fact": "Immutability of PIT windows not promised anywhere (could FactSet backfill/correct pitStart/pitEnd retroactively?)",
+        "evidence": "VENDOR_CLARIFICATION_REQUIRED"
+      },
+      {
+        "fact": "PIT history depth / coverage start date undocumented (examples reach 2001; no coverage statement)",
+        "evidence": "UNRESOLVED"
+      },
+      {
+        "fact": "Meaning of _R periodicities inside a PIT request undocumented (restated-series evolution?)",
+        "evidence": "VENDOR_CLARIFICATION_REQUIRED"
+      },
+      {
+        "fact": "Delisted/inactive security queryability (survivorship) undocumented; semantics of active=false not fully specified",
+        "evidence": "VENDOR_CLARIFICATION_REQUIRED"
+      },
+      {
+        "fact": "No revision-reason / source-document metadata on PIT rows (no filing type, no accession number)",
+        "evidence": "DOCUMENTED_OPENAPI"
+      },
+      {
+        "fact": "Trial entitlement to /point-in-time and /periods unknown (403 = not authorized channel exists)",
+        "evidence": "UNRESOLVED"
+      }
+    ]
+  },
+  "sdk": {
+    "source": "https://github.com/factset/enterprise-sdk/tree/main/code/python/FactSetFundamentals/v2",
+    "read_on": "2026-08-17",
+    "package": "fds.sdk.FactSetFundamentals",
+    "sdk_version": "3.1.0",
+    "sdk_targets_api_version": "2.5.0",
+    "local_spec_api_version": "2.5.1",
+    "python_requires": ">=3.7",
+    "install": "pip install fds.sdk.utils fds.sdk.FactSetFundamentals==3.1.0",
+    "generator": "OpenAPI Generator (PythonClientCodegen)",
+    "auth": {
+      "oauth2_preferred": "Configuration(fds_oauth_client=ConfidentialClient('/path/to/app-config.json')) from fds.sdk.utils.authentication",
+      "api_key_basic": "Configuration(username='USERNAME-SERIAL', password='API-KEY')"
+    },
+    "api_classes": {
+      "FactSetFundamentalsApi": [
+        "get_fds_fundamentals_for_list (POST /fundamentals)"
+      ],
+      "SegmentsApi": [
+        "get_fds_segments_for_list (POST /segments)"
+      ],
+      "FundamentalsPointInTimeApi": [
+        "post_fundamentals_pit_data (POST /point-in-time)",
+        "post_fundamentals_fiscal_periods (POST /periods)"
+      ],
+      "MetricsApi": [
+        "get_fds_fundamentals_metrics (GET /metrics)"
+      ],
+      "CompanyReportsApi": [
+        "get_financials (GET /company-reports/financial-statement)",
+        "get_fds_profiles (GET /company-reports/profile)",
+        "get_fundamentals (GET /company-reports/fundamentals)"
+      ],
+      "BatchProcessingApi": [
+        "get_batch_status (GET /batch-status)",
+        "get_batch_data (GET /batch-result)"
+      ]
+    },
+    "sdk_method_count": 10,
+    "response_wrapper": "Multi-status endpoints return a wrapper; call get_response_200() / get_response_202() per received status code",
+    "async_support": "_async method variants documented (e.g. get_batch_data_async, get_batch_data_with_http_info_async); no SDK-side batch auto-polling documented",
+    "retries": "configuration.retries = urllib3.Retry(total=3, status_forcelist=[500, 502, 503, 504]) — opt-in, no default retry",
+    "exceptions": "fds.sdk.FactSetFundamentals.ApiException",
+    "other": "proxy/proxy_headers, ssl_ca_cert/verify_ssl, debug logging on Configuration; pandas via api_response.to_dict()['data']",
+    "evidence": "DOCUMENTED_SDK"
+  },
+  "demo": {
+    "source": "/Users/admin/Documents/factset_api_resources/fundamentals.py",
+    "pins_sdk_version": "2.2.0",
+    "uses": "FactSetFundamentalsApi.get_fds_fundamentals_for_list with FundamentalsRequest(FundamentalRequestBody(ids=IdsBatchMax30000(['FDS-US']), periodicity=Periodicity('QTR'), fiscal_period=FiscalPeriod(start='2012-01-01', end='2014-01-01'), metrics=Metrics(['FF_SALES']), currency='USD', update_type=UpdateType('RP'), batch=Batch('N'))) then get_response_200()",
+    "imports_but_does_not_call": [
+      "metrics_api",
+      "segments_api",
+      "batch_processing_api"
+    ],
+    "does_not_touch": "FundamentalsPointInTimeApi — the PIT arm has NO vendor sample",
+    "evidence": "DOCUMENTED_SAMPLE"
+  },
+  "discrepancies": [
+    {
+      "id": "D1",
+      "what": "Three-way version skew: demo pins SDK 2.2.0; current SDK is 3.1.0 targeting API 2.5.0; local spec is API 2.5.1",
+      "evidence": [
+        "DOCUMENTED_SAMPLE",
+        "DOCUMENTED_SDK",
+        "DOCUMENTED_OPENAPI"
+      ]
+    },
+    {
+      "id": "D2",
+      "what": "SDK 3.1.0 exposes 10 methods; spec 2.5.1 defines 12 operations. Missing from SDK: GET /fundamentals (getFdsFundamentals) and GET /segments (getFdsSegments). Spec is authoritative per charter; POST is the SDK-canonical path",
+      "evidence": [
+        "DOCUMENTED_SDK",
+        "DOCUMENTED_OPENAPI"
+      ]
+    },
+    {
+      "id": "D3",
+      "what": "Vendor demo never exercises the PIT arm (FundamentalsPointInTimeApi) — no sample exists for the trial's hard-gate endpoints",
+      "evidence": [
+        "DOCUMENTED_SAMPLE"
+      ]
+    },
+    {
+      "id": "D4",
+      "what": "Response periodicity enum has 13 values (adds CAL) vs request enum 12 — CAL can be returned but not requested",
+      "evidence": [
+        "DOCUMENTED_OPENAPI"
+      ]
+    },
+    {
+      "id": "D5",
+      "what": "IdsBatchMax30000 schema: name says 30000, description says 250 non-batch / 5000 batch; minItems/maxItems are misplaced INSIDE the items subschema (apply to a string, i.e. no array-length bound is actually enforced by schema). Same malformation on idsBatchMax2000 parameter",
+      "evidence": [
+        "DOCUMENTED_OPENAPI"
+      ]
+    },
+    {
+      "id": "D6",
+      "what": "BatchStatus startTime/endTime documented as Eastern Time while all PIT payload timestamps are UTC — mixed time-zone conventions in one API",
+      "evidence": [
+        "DOCUMENTED_OPENAPI"
+      ]
+    },
+    {
+      "id": "D7",
+      "what": "metrics maxItems=1600 vs 400-error example 'getFdsFundamentals.metrics: size must be between 1 and 1' and ids-limit phrasing '(1 metric per ID, for 1 day)' — effective ids x metrics x days budget is contradictory/undocumented",
+      "evidence": [
+        "DOCUMENTED_OPENAPI",
+        "VENDOR_CLARIFICATION_REQUIRED"
+      ]
+    },
+    {
+      "id": "D8",
+      "what": "Non-PIT fiscalPeriod dates 'fall back to the most recently completed period during resolution' vs PIT dates being pure filters on period end dates — subtly different date resolution semantics between arms",
+      "evidence": [
+        "DOCUMENTED_OPENAPI"
+      ]
+    },
+    {
+      "id": "D9",
+      "what": "Segments accepts exactly ONE metric per request (SegmentsMetrics is a plain string enum of 5) unlike fundamentals' metric array",
+      "evidence": [
+        "DOCUMENTED_OPENAPI"
+      ]
+    }
+  ],
+  "unresolved": [
+    "U1: Entitlements (see VC9) — cannot be resolved offline; requires FS010 controlled live smoke.",
+    "U2: Metric universe size (count of FF_* items, count with isPIT=true) — only enumerable via a live GET /metrics call.",
+    "U3: PIT history depth and coverage start (see VC8).",
+    "U4: Batch result retention/TTL (see VC7).",
+    "U5: Whether /batch-result pages or truncates very large PIT extractions — no pagination params exist anywhere in this API."
+  ],
+  "vendor_clarification_required": [
+    "VC1: Exact event semantics of pitStart on /point-in-time rows (FactSet collection/publication timestamp vs source filing/press-release time) and typical collection lag.",
+    "VC2: Are PIT windows immutable once written, or can pitStart/pitEnd/values be retroactively backfilled or corrected?",
+    "VC3: Effective request-size budget for /fundamentals and /segments: reconcile ids limits '(1 metric per ID, for 1 day)', metrics maxItems=1600, and the 'size must be between 1 and 1' error example.",
+    "VC4: Meaning of _R (restated) periodicities within /point-in-time requests; precise definition of 'Original' (first preliminary vs first final) and its interaction with updateType.",
+    "VC5: Currency for PIT: confirm values are reporting/local currency only (no conversion); for non-PIT currency conversion, which FX dates/rates are applied per periodicity?",
+    "VC6: Delisted/inactive security coverage under PIT (survivorship-free backtests): are dead companies queryable via permanent identifiers, and what exactly does active=false return?",
+    "VC7: Batch job result retention TTL and recommended polling cadence for /batch-status.",
+    "VC8: PIT history depth (earliest pit timestamps) and universe/regional coverage; size of the FF_* metric universe and of the isPIT=true subset.",
+    "VC9: Trial entitlement scope: which of the 12 operations (esp. /point-in-time, /periods, Company Reports) are enabled for the trial key?"
+  ],
+  "notes": [
+    "The two PDFs in the resource dir (FactSetStandardDataFeed_Estimates_V1_Point-in-Time_UserGuide.pdf, FactSet Standard DataFeed Estimates Content Methodology.pdf) are PIT-ESTIMATES DATAFEED docs — out of FS004 scope, they belong to FS021. Existence noted only.",
+    "No field dictionary, methodology document, or database map specific to Fundamentals exists in the resource dir beyond the OpenAPI spec and demo script; metric-level methodology lives behind per-metric oaPageId/oaUrl links (my.apps.factset.com, auth-gated).",
+    "Charter rule applied: where demo and spec conflict, the SPEC is authoritative.",
+    "Requirements alignment: manifest structured to answer external_analysis.md §3.3 per-endpoint checklist (fundamentals.md §1.3 matrix); documentation precedence per §3.4 (live > spec > SDK > demo > other; no live observations yet); WP2 primary-identifier bind, WP3/WP5 separate PIT metric dictionary, WP4/WP5 field-preservation maps recorded in fundamentals.md §2/§3/§10.",
+    "Per-endpoint checklist fields constant across all 12 operations in the offline phase: entitlement status = UNRESOLVED (403 is the documented failure channel); observed live-API discrepancies = none yet; implementation status = not started (FS012); test status = not started (FS017)."
+  ],
+  "completeness_proof": {
+    "operations_defined_in_spec": 12,
+    "operations_documented_in_manifest": 12,
+    "paths": 10,
+    "component_parameters_defined": 22,
+    "component_parameters_documented": 22,
+    "schemas_defined": 54,
+    "schemas_documented": 54,
+    "orphan_schemas_never_referenced": 0,
+    "enum_sites": 23,
+    "distinct_enum_value_sets": 17,
+    "component_responses": 9,
+    "component_examples": 43,
+    "security_schemes": 2,
+    "sdk_methods_documented": 10,
+    "sdk_vs_spec_operation_gap": "2 (GET /fundamentals, GET /segments absent from SDK 3.1.0)"
+  }
+}

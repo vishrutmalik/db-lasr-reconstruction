@@ -15,13 +15,14 @@ active:
     worktree: .worktrees/FS008
     status: RESUMED 2026-08-17 (agent a390cc30e8429c3c1, live) — spend-limit killed at final step; inventory pushed 2432195; uncommitted benchmarks.md preserved; checkpoint-first ordered
     owned_paths: ["docs/factset/capability/benchmarks.md", "docs/factset/capability/benchmarks.json", "docs/factset/capability/_extract_benchmarks.py"]
-  FS021:
-    agent_role: researcher (general-purpose)
-    objective: Phase-2 PIT-Estimates DATAFEED specification (docs only)
-    branch: (not yet created)
-    worktree: .worktrees/FS021
-    status: INTERRUPTED_DEPRIORITIZED (spend-limit killed with zero work 2026-08-17; per adjudicated review §11.6 resumes when slots idle — agent a16186e670b1d8d11 transcript-resumable)
-    owned_paths: ["docs/factset/phase2_pit_estimates_spec.md"]
+  FS010:
+    agent_role: implementer
+    objective: Shared FactSet transport + trial configuration (durable charter in fs_goals.md)
+    branch: agent/fs-implementer/FS010-transport
+    worktree: .worktrees/FS010
+    status: IN_PROGRESS
+    runtime: LAUNCHED 2026-08-17 (agent ac723078d6a4e2880, live) — D-020 transport rulings binding; symbology family models in scope; <=5-request live smoke at completion only
+    owned_paths: ["src/lasr/data/providers/factset/**", "tests/unit/test_factset_*.py", "configs/factset/trial.yaml", "grant: one HTTP-client dependency line in pyproject if direct-HTTP chosen"]
   FS008:
     agent_role: researcher (general-purpose)
     objective: Exhaustive capability manifest — Benchmarks v1 (historical membership focus)
@@ -37,6 +38,11 @@ queued:
   FS021: Phase-2 PIT-Estimates DATAFEED contract (docs-only; the 2 PDFs)
 
 history:
+  - goal_id: FS021
+    objective: Phase-2 PIT-Estimates DATAFEED specification
+    agent: a16186e670b1d8d11
+    final_commit: 0903677 (PR #81, docs-only, OPEN)
+    result: COMPLETE (long-running, NOT killed — earlier INTERRUPTED record corrected) — feed is interval-vintaged [pit_start_date,pit_end_date] keyed on (fsym_id, fe_item, pit_start[, fe_per_label]), absolute locked fiscal axis, 3 regional midnight runs/day, as-was warranty (no dilution/QA/currency adjustments), history from 2009-12, consensus-only. CAVEAT: 2017-09-09 consensus methodology applied BACKWARD (PIT-available, not methodology-stationary). Sizing undocumented -> measure-first protocol + PE-Q4. 16 vendor questions PE-Q1..Q16; CE-5/CE-6 ratification items enumerated for Phase-2
   - goal_id: FS002
     objective: FactSet integration architecture + manifest schema
     agent: a2986c44383d08113

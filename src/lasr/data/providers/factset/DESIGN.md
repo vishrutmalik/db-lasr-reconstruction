@@ -58,3 +58,42 @@ does not grant `data.providers` an `artifacts` edge, so `request_norm.py`
 carries its own encoder with identical rules (sorted keys, compact
 separators, ISO-8601, no NaN). Flagged for FS009 as a documentation
 reconciliation item, not a behavior divergence.
+
+## Live smoke evidence (2026-08-17, user-authorized credential use)
+
+Executed `smoke.py::run_live_smoke` on the committed `configs/factset/
+trial.yaml` (credentials from env at runtime; values nowhere below —
+presence-only). Raw capture + run manifest live under
+`FACTSET_TRIAL_DATA_ROOT` (outside the repo), cited by hash:
+
+- Request: ONE `POST /symbology/v3/identifier-resolution`, 5 tickerRegion
+  ids, outputs `fsymSecurityId, fsymRegionalId, tickerRegion`.
+  `request_hash=8fbb04003b73ce265e1c35b423bbed145ccd05055132a394769a254f76c3d3aa`,
+  `response_sha256=3f76e961e8b5a208aa8902c457fef625cfa7fd0dd52b38044b6d8c278d418a79`,
+  HTTP 200, latency ~1610 ms, retry_count 0.
+- **Auth**: HTTP Basic (FS003 D-2 primary) ACCEPTED. **Entitlement**:
+  ENTITLED for tickerRegion input + fsym outputs; recorded in the run
+  manifest (`entitlement_results["symbology:/identifier-resolution"]`).
+- **Rows**: 5/5 resolved; every requested output AND all three enrichment
+  fields (`name`, `frefListingExchange`, `currency`) non-null 5/5.
+- **Cache-first proven live**: immediate re-run = 1 cache hit, 0 live
+  calls (FT-02 on real captures).
+- **OBSERVED_LIVE facts for FS009/FS024 to fold into the symbology
+  manifest lifecycle fields** (this memo is the interim record; the
+  manifest merge is FS009's):
+  1. Vendor rate headers exist: `x-ratelimit-limit-second: 10`,
+     `x-ratelimit-remaining-second: 9` — confirms the documented 10 rps
+     (FS003 `limits.rate_limit_rps`) and gives U-4 (exceedance shape) its
+     first partial evidence: per-second limit headers are emitted;
+     exceedance status itself remains unprobed.
+  2. D-6/U-5 dynamic-key casing: response keys ECHOED THE ENUM CASING
+     (`fsymSecurityId`, `fsymRegionalId`, `tickerRegion`) — NOT the
+     lowercased form the spec examples show for cusip/sedol. The
+     case-insensitive parser handles both; U-5 stays open for the
+     remaining types (CUSIP/SEDOL/ISIN untested — subscription-flagged,
+     FS003 U-1).
+  3. Entitlement U-1/U-2 remain open beyond tickerRegion/fsym outputs;
+     FS024 probes per-type.
+- **Hygiene audit**: post-run scan of every file under the data root
+  (meta, ledger, telemetry, run manifest, capture) found zero credential
+  fragments; run-manifest `credential_presence` carries booleans only.

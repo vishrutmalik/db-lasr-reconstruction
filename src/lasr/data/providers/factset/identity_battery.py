@@ -275,12 +275,16 @@ def run_identity_battery(
     run_id: str = "fs011-identity-battery",
     sender: HttpSender | None = None,
     cache_root: Path | None = None,
+    force_refresh: bool = False,
 ) -> dict[str, object]:
     """Execute the WP2 battery; returns the value-free summary mapping.
 
     ``cache_root`` set → REPLAY mode (tests / free re-runs without a data
     root); otherwise LIVE mode is requested and still passes through every
     FS010 gate (env consent, kill switches, data-root validation, budgets).
+    ``force_refresh=True`` re-attempts past cached entitlement evidence
+    after entitlements are fixed (D-020(d)); it also bypasses success
+    caches, so it re-spends live quota — still budget-capped.
     """
     base = load_trial_config(config_path)
     live = cache_root is None
@@ -305,7 +309,9 @@ def run_identity_battery(
         TypedIdentifier(IdentifierScheme.TICKER_REGION, t)
         for t in spec.active_ticker_regions
     ]
-    seeds_active, active = adapter.seed_securities(active_ids)
+    seeds_active, active = adapter.seed_securities(
+        active_ids, force_refresh=force_refresh
+    )
     accountings.append(active.accounting)
     checks.append(_check_active_resolution(spec, active))
     checks.append(_check_share_classes(spec, active))
@@ -316,7 +322,9 @@ def run_identity_battery(
         TypedIdentifier(IdentifierScheme.TICKER_REGION, t)
         for t in spec.inactive_ticker_regions
     ]
-    seeds_inactive, inactive = adapter.seed_securities(inactive_ids)
+    seeds_inactive, inactive = adapter.seed_securities(
+        inactive_ids, force_refresh=force_refresh
+    )
     accountings.append(inactive.accounting)
     checks.append(_check_inactive_probes(spec, inactive))
 
@@ -333,6 +341,7 @@ def run_identity_battery(
         result = adapter.resolve_current(
             [TypedIdentifier(scheme, v) for v in values],
             output_symbol_types=("fsymSecurityId",),
+            force_refresh=force_refresh,
         )
         scheme_results[scheme.value] = result
         accountings.append(result.accounting)
@@ -343,7 +352,7 @@ def run_identity_battery(
     identity_map = IdentityMap()
     try:
         identity_map, hydrate_accounting, _ = adapter.hydrate_identity_map(
-            [*seeds_active, *seeds_inactive]
+            [*seeds_active, *seeds_inactive], force_refresh=force_refresh
         )
         accountings.append(hydrate_accounting)
         checks.append(_check_identity_map(identity_map))
@@ -359,7 +368,7 @@ def run_identity_battery(
     # Pass 5 — historical ticker changes (full history + asOf straddles).
     for probe in spec.ticker_change_probes:
         probe_check, probe_accountings = _run_ticker_change_probe(
-            adapter, active, identity_map, probe
+            adapter, active, identity_map, probe, force_refresh=force_refresh
         )
         checks.append(probe_check)
         accountings.extend(probe_accountings)
@@ -628,6 +637,8 @@ def _run_ticker_change_probe(
     active: CurrentResolution,
     identity_map: IdentityMap,
     probe: TickerChangeProbe,
+    *,
+    force_refresh: bool = False,
 ) -> tuple[CheckResult, list[IdAccounting]]:
     """Historical tickers resolve correctly (WP2): the fsym behind the
     current ticker must carry the OLD ticker in full history and resolve
@@ -662,7 +673,10 @@ def _run_ticker_change_probe(
     as_of_values: dict[str, list[str]] = {}
     for as_of in (probe.as_of_old, probe.as_of_new):
         result = adapter.resolve_historical(
-            [fsym], output_symbol_types=("tickerRegion",), as_of_date=as_of
+            [fsym],
+            output_symbol_types=("tickerRegion",),
+            as_of_date=as_of,
+            force_refresh=force_refresh,
         )
         accountings.append(result.accounting)
         as_of_values[as_of.isoformat()] = [
@@ -715,6 +729,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--run-id", default="fs011-identity-battery")
     parser.add_argument(
+        "--force-refresh",
+        action="store_true",
+        help=(
+            "re-attempt past cached entitlement evidence AFTER entitlements"
+            " are fixed (also bypasses success caches; re-spends budget)"
+        ),
+    )
+    parser.add_argument(
         "--replay-cache-root",
         type=Path,
         default=None,
@@ -741,6 +763,7 @@ def main(argv: list[str] | None = None) -> int:
         now=datetime.now(UTC),
         run_id=args.run_id,
         cache_root=args.replay_cache_root,
+        force_refresh=args.force_refresh,
     )
     print(json.dumps(report, sort_keys=True, indent=1, ensure_ascii=True))
     return 0 if report["overall"] != "FAIL" else 1

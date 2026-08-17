@@ -315,7 +315,11 @@ class SymbologyAdapter:
     # ── identity map: seed + hydrate (§5.2) ─────────────────────────────
 
     def seed_securities(
-        self, identifiers: Sequence[TypedIdentifier]
+        self,
+        identifiers: Sequence[TypedIdentifier],
+        *,
+        output_symbol_types: Sequence[str] = FSYM_OUTPUT_TYPES,
+        force_refresh: bool = False,
     ) -> tuple[tuple[SecuritySeed, ...], CurrentResolution]:
         """CURRENT resolution → fsym-level seeds (§5.2 seeding leg).
 
@@ -323,9 +327,13 @@ class SymbologyAdapter:
         explained in the accounting (its category is already NOT_COVERED
         or the row-level outputs simply lack the security level — the
         latter is re-accounted here as evidence in the returned rows).
+        ``force_refresh`` re-attempts past cached entitlement evidence
+        AFTER entitlements are fixed (D-020(d) error-cache policy).
         """
         resolution = self.resolve_current(
-            identifiers, output_symbol_types=FSYM_OUTPUT_TYPES
+            identifiers,
+            output_symbol_types=output_symbol_types,
+            force_refresh=force_refresh,
         )
         seeds: list[SecuritySeed] = []
         for row in resolution.rows:
@@ -352,7 +360,10 @@ class SymbologyAdapter:
         return tuple(seeds), resolution
 
     def hydrate_identity_map(
-        self, seeds: Sequence[SecuritySeed]
+        self,
+        seeds: Sequence[SecuritySeed],
+        *,
+        force_refresh: bool = False,
     ) -> tuple[IdentityMap, IdAccounting, int]:
         """Hydration leg of §5.2: seeds in, dated intervals out.
 
@@ -372,7 +383,7 @@ class SymbologyAdapter:
         ]
         if not fsym_inputs:
             return identity_map, IdAccounting(requested=()), 0
-        hydration = self.resolve_historical(fsym_inputs)
+        hydration = self.resolve_historical(fsym_inputs, force_refresh=force_refresh)
         for row in hydration.rows:
             if row.value is None or row.output_type is None:
                 continue  # explicit-empty echo; accounted, not stored

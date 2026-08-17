@@ -29,6 +29,7 @@ from lasr.data.providers.factset.identity_battery import (
     load_credentials_file,
     run_identity_battery,
 )
+from lasr.data.providers.factset.http import HttpResponse
 from lasr.data.providers.factset.request_norm import NormalizedRequest
 from lasr.data.providers.factset.symbology_adapter import FSYM_OUTPUT_TYPES
 from lasr.data.providers.factset.symbology_models import (
@@ -287,6 +288,74 @@ def test_battery_replay_is_deterministic(tmp_path: Path) -> None:
     assert first["checks"] == second["checks"]
     assert first["seven_way_accounting"] == second["seven_way_accounting"]
     assert second["live_calls"] == 0
+
+
+class _ForbiddenSender:
+    """Scripted all-403 sender ('User Authorization Failed' plain-text
+    shape observed live 2026-08-17); counts wire calls."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def send(
+        self,
+        *,
+        method: str,
+        url: str,
+        params: dict[str, str] | None,
+        json_body: object | None,
+        timeout_seconds: float,
+    ) -> HttpResponse:
+        self.calls += 1
+        return HttpResponse(status=403, body=b"User Authorization Failed", headers={})
+
+
+def _live_run(
+    data_root: Path, sender: _ForbiddenSender, *, force_refresh: bool
+) -> dict[str, object]:
+    data_root.mkdir(parents=True, exist_ok=True)
+    environ = {
+        "FACTSET_LIVE": "1",
+        "FACTSET_USERNAME": "TEST-USER-0000",
+        "FACTSET_API_KEY": "TEST-KEY-0000",
+        "FACTSET_TRIAL_DATA_ROOT": str(data_root),
+    }
+    return run_identity_battery(
+        config_path=_TRIAL_YAML,
+        environ=environ,
+        repo_root=_REPO_ROOT,
+        code_revision="test-rev",
+        now=_T0,
+        sender=sender,  # type: ignore[arg-type]
+        force_refresh=force_refresh,
+    )
+
+
+def test_battery_force_refresh_reattempts_cached_entitlement_evidence(
+    tmp_path: Path,
+) -> None:
+    """The 2026-08-17 live scenario in miniature: an all-403 vendor, then a
+    re-run. Without force_refresh the D-020(d) error-cache policy answers
+    from evidence (ZERO wire calls); with force_refresh every pass goes
+    back to the wire — proving the flag is threaded end-to-end."""
+    data_root = tmp_path / "trialroot"
+    first = _ForbiddenSender()
+    report = _live_run(data_root, first, force_refresh=False)
+    assert report["overall"] == "FAIL"
+    seven = report["seven_way_accounting"]
+    assert isinstance(seven, dict)
+    assert seven["not_entitled"] == 17  # 8 active + 3 inactive + 6 market
+    assert first.calls == 5  # 2 tickerRegion passes + CUSIP/ISIN/SEDOL
+
+    second = _ForbiddenSender()
+    blocked = _live_run(data_root, second, force_refresh=False)
+    assert second.calls == 0  # fresh evidence blocks quota-free
+    assert blocked["seven_way_accounting"] == seven
+
+    third = _ForbiddenSender()
+    refreshed = _live_run(data_root, third, force_refresh=True)
+    assert third.calls == 5  # force_refresh reached every request path
+    assert refreshed["seven_way_accounting"] == seven
 
 
 def test_battery_replay_incomplete_cache_is_typed_miss(tmp_path: Path) -> None:

@@ -175,3 +175,27 @@
 - **Evidence:** FS002 (D-018 ratified with A1-A3); FS003/FS004/FS005 manifests.
 - **Reversibility:** MODERATE (additive; golden gate protects).
   **Date:** 2026-08-17. **Agent:** orchestrator. **Goal:** FS010-FS016.
+
+## D-020 — FactSet architecture rulings from the external-review adjudication
+- **Decision:** (a) benchmark index LEVELS are an auxiliary FactSet service
+  outside the DataProvider Protocol for the trial — CE-4 amended; the FS002
+  "zero Protocol changes" statement stands; production Protocol extension
+  deferred with its own future decision. (b) Generic FactSet adapter entrance
+  accepts ONLY fsym permanent ids + tickerRegion; CUSIP/ISIN/SEDOL resolution
+  is a typed symbology-layer request (FS011) — identifier schemes are never
+  guessed from string shape. (c) supports_universe_screening=false for
+  FactSet. (d) Transport: full SHA-256 cache identities; error responses
+  cached as evidence only (never replayed as success; retryable classes +
+  expiry + force-refresh); FACTSET_TRIAL_DATA_ROOT required and validated
+  outside repo+OneDrive in live mode. (e) CE-10 added to the D-019 queue:
+  provider-neutral nullable knowledge_valid_to preserving vendor supersession
+  (reconstructed values must be marked inferred). (f) Benchmark membership:
+  vendor snapshots on actual rebalance dates; any inferred continuous
+  intervals carry the distinct basis index_vendor_snapshot_interpolated.
+  (g) Effective-dated data (RBICS, benchmark history) without vendor
+  frozen/as-published evidence is EXCLUDED from the strict PIT-safe headline
+  (labeled assumption arm allowed).
+- **Evidence:** coordination/factset_trial/fs_review_adjudication.md; FS002-8
+  manifests; docs/architecture/factset_integration.md.
+- **Reversibility:** MODERATE. **Date:** 2026-08-17. **Agent:** orchestrator.
+  **Goals:** FS009-FS024.

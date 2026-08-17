@@ -8,13 +8,19 @@
 # exceptions/models/methods for FS010.
 
 active:
+  FS008:
+    agent_role: researcher (general-purpose)
+    objective: Capability manifest — Benchmarks v1
+    branch: agent/fs-researcher/FS008-benchmarks
+    worktree: .worktrees/FS008
+    status: RESUMED 2026-08-17 (agent a390cc30e8429c3c1, live) — spend-limit killed at final step; inventory pushed 2432195; uncommitted benchmarks.md preserved; checkpoint-first ordered
+    owned_paths: ["docs/factset/capability/benchmarks.md", "docs/factset/capability/benchmarks.json", "docs/factset/capability/_extract_benchmarks.py"]
   FS021:
     agent_role: researcher (general-purpose)
     objective: Phase-2 PIT-Estimates DATAFEED specification (docs only)
-    branch: agent/fs-researcher/FS021-pit-estimates-spec
+    branch: (not yet created)
     worktree: .worktrees/FS021
-    status: IN_PROGRESS
-    runtime: LAUNCHED 2026-08-17 (agent a16186e670b1d8d11, live)
+    status: INTERRUPTED_DEPRIORITIZED (spend-limit killed with zero work 2026-08-17; per adjudicated review §11.6 resumes when slots idle — agent a16186e670b1d8d11 transcript-resumable)
     owned_paths: ["docs/factset/phase2_pit_estimates_spec.md"]
   FS008:
     agent_role: researcher (general-purpose)

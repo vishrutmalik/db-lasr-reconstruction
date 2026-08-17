@@ -42,3 +42,11 @@ FS024. Cache-first proven on real captures (re-run = 1 hit, 0 live calls).
 Hygiene verified: zero credential fragments in data-root artifacts + diffs.
 Evidence: DESIGN.md smoke section, run manifest at
 $FACTSET_TRIAL_DATA_ROOT/runs/fs010-live-smoke/manifest.json (outside git).
+
+## F-006 (FS010 register candidates VF-FS010-8 i-iv, orchestrator record)
+(i) UNRESOLVED-family rate limits default to conservative 5rps/5conc,
+documented:false, telemetry-flagged (FS002 §6.4 rule). (ii) error-cache TTL
+24h = policy choice, config-visible. (iii) symbology 29s-timeout split-marker
+matching is wording-fragile — OBSERVED_LIVE recheck at FS024. (iv) symbology
+429 kept retryable despite U-4 silence — conservative. (v)=F-005. OBSERVED_
+LIVE fold-in of smoke facts into MANIFEST lifecycle fields: FS024 duty.

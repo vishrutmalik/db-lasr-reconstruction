@@ -143,6 +143,11 @@ select = [
 # The determinism ban targets src/lasr/ (proposal §4); test fixtures manage
 # their own seeded Generators via tests/conftest.py.
 "tests/**" = ["TID251"]
+# FactSet capability-manifest provenance scripts (FS003-FS008): one-shot
+# research artifacts committed for reproducibility, not production code.
+# Style-family nits relaxed; correctness rules (F*) stay active; ruff format
+# still applies. (2026-08-17 CI triage, orchestrator control plane.)
+"docs/factset/capability/_extract_*.py" = ["E501", "RUF", "B", "T201", "C901", "SIM", "PLR"]
 
 # ── mypy: strict on src/lasr, relaxed on tests (proposal §4) ─────────────────
 

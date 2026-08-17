@@ -33,8 +33,8 @@ passing untouched.
 | FS008 | Doc review: Benchmarks v1 | researcher | — | DONE (PR #82) |
 | FS009 | Manifest reconciliation + verification + binding rulings (N1/N2/N3 in MANIFEST.md) | verifier | FS002-8 | DONE (PR #83; ALL 9 docs PRs MERGED main 37ecf1b) |
 | FS010 | Shared transport + trial config (charter below) | implementer | FS002 (family models gated on FS009) | IN_PROGRESS |
-| FS011 | Symbology adapter + identity mapping (A-ARCH-01 bridge) | implementer | FS010 | BLOCKED |
-| FS012 | Fundamentals adapter (standard + PIT arms, separated) | implementer | FS010,FS011 | BLOCKED |
+| FS011 | Symbology adapter + identity mapping (A-ARCH-01 bridge; adapters MUST route ids through normalize_id_list — VF-FS010-9; tickerRegion casing policy = RT-FS010-2) | implementer | FS010 | BLOCKED |
+| FS012 | Fundamentals adapter (standard + PIT arms, separated; MUST fix VF-FS010-3 batch-poll budget bypass before batch goes live) | implementer | FS010,FS011 | BLOCKED |
 | FS013 | Global Prices + CA adapter + reconciliation battery | implementer | FS010,FS011 | BLOCKED |
 | FS014 | Estimates adapter (NON-PIT labeled, exploratory arm) | implementer | FS010,FS011 | BLOCKED |
 | FS015 | RBICS adapter (historical intervals) | implementer | FS010,FS011 | BLOCKED |

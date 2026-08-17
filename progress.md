@@ -58,6 +58,12 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-08-17: CI-email triage (PR #76/#77 lint failures): researcher
+  provenance scripts under docs/factset/capability/ were written while
+  docs-only PRs were CI-exempt; the user-directed CI revert re-gated them.
+  Orchestrator integration fix: ruff-format applied on all three researcher
+  branches (content unchanged); live researchers FS006/7/8 instructed to
+  gate their scripts pre-PR. Not systemic; no goals created.
 - 2026-08-13: FIFTH kill wave — ORG monthly Claude spend limit killed all
   three variant implementers (G030/G031 pre-setup, G033 while reading; zero
   work product lost). User then directed a deliberate pause of the core

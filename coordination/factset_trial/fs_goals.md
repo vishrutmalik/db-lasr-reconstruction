@@ -37,7 +37,40 @@ regardless of IC; synthetic slice must keep passing untouched.
 | FS018 | Metric catalog -> profiled -> model-ready feature register | researcher | FS012-16 | BLOCKED |
 | FS019 | Real-data model panel: baseline + core N-LASR + PIT-safe config + labeled sensitivities | implementer | FS017,FS018 | BLOCKED |
 | FS020 | E2E real-data vertical slice + notebook + findings + purchase-decision artifact | implementer | FS019 | BLOCKED |
-| FS021 | Phase-2 PIT-Estimates DATAFEED contract (docs only, 2 PDFs) | researcher | — | READY (low priority) |
+| FS021 | Phase-2 PIT-Estimates DATAFEED contract (docs only, 2 PDFs; ext §19 spec list) | researcher | — | READY (low priority) |
+| FS022 | Trial configuration + deterministic samples (discovery 30-50 / panel 250-400 / edge 20-50; anchors 2010/14/18/22/recent; PREDECLARED time split 2010 warmup, 2011-15 train, 2016-19 val, 2020-25 test) + storage estimator (ext §6/§7.3/§11.1/§14) | implementer | FS002,FS010 (design may start at FS009) | BLOCKED |
+| FS023 | FactSet data-quality battery (ext §9: 20 automated checks + 7-way record accounting; silent loss prohibited) | implementer | FS011-16 (partial per-adapter) | BLOCKED |
+
+## Requirements reconciliation (external_analysis.md, arrived 2026-08-13 after wave-1 launch)
+Authoritative requirements input: /Users/admin/Documents/factset_api_resources/
+external_analysis.md (NOT committed — repo is public; local paths + trial
+strategy stay out). Reconciliation verdict: NOTHING already executed was
+invalidated — wave 1 (FS002-FS005) is exactly the doc's mandatory
+documentation-first phase (§3), same precedence rules (§3.4), same exclusions
+(§4.2). Changes made: FS022/FS023 added; acceptance criteria strengthened by
+section reference below. Coverage map (requirement -> goal):
+- §3.1 repo review -> FS002. §3.2 exhaustive doc review -> FS003-8.
+- §3.3 manifest fields -> FS002 schema (addendum sent) + FS003-8 outputs.
+- §5 flow + no-canonical-bypass -> D-018/FS002. §6+§7.3+§11.1+§14 -> FS022.
+- §7.1 env reuse -> standing. §7.2 storage formats -> FS002/FS010.
+- WP0+WP1 (incl. kill switch, per-endpoint limits, storage caps, retention
+  register, run manifests) -> FS010. WP2 -> FS011 (+FS003 U-items).
+- WP3 live metric catalogs (PIT dict SEPARATE from non-PIT) -> FS018
+  (catalog half) feeding FS012/FS014. WP4/WP5 (+12-step mandatory PIT
+  validation) -> FS012 + FS017 (HARD GATE). WP6 (+warning label, overlap
+  question) -> FS014. WP7 (return reconciliation vs vendor, mcap derivation)
+  -> FS013. WP8 (RBICS-not-GICS, effective dating) -> FS015. WP9
+  (entitlement table, snapshot reconstruction, Russell/MSCI/TSX/BMI probes)
+  -> FS016. WP10 raw/canonical field lists -> FS002 schema + all adapters.
+- §9 DQ battery -> FS023. §10 feature states + category-balanced set +
+  20-40 candidates + inclusion/exclusion register -> FS018. §11 diagnostics
+  + predeclared split -> FS019/FS022. §12 five required experiments ->
+  FS019. §13 notebook (notebooks/factset_api_trial.ipynb, LIVE_PULL flag,
+  18 sections, artifacts saved separately) -> FS020. §15 test classes ->
+  per-adapter + FS020 e2e + synthetic regression standing. §16 steps ≈ DAG
+  order. §17 acceptance -> per-goal gates. §18 24 deliverables -> FS020
+  coverage checklist. §19 -> FS021. §20 5-dimension purchase framework ->
+  FS020 memo.
 
 Doc researchers (FS003-8): inputs = /Users/admin/Documents/factset_api_resources
 (spec YAML + demo .py + sdk_docs.txt URL for the family; WebFetch SDK GitHub

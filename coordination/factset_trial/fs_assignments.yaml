@@ -16,14 +16,14 @@ active:
     status: IN_PROGRESS
     runtime: LAUNCHED 2026-08-13 (agent a2986c44383d08113, live)
     owned_paths: ["docs/architecture/factset_integration.md"]
-  FS003:
+  FS006:
     agent_role: researcher (general-purpose)
-    objective: Exhaustive capability manifest — Symbology v3
-    branch: agent/fs-researcher/FS003-symbology
-    worktree: .worktrees/FS003
+    objective: Exhaustive capability manifest — Estimates v2 (NON-PIT posture)
+    branch: agent/fs-researcher/FS006-estimates
+    worktree: .worktrees/FS006
     status: IN_PROGRESS
-    runtime: LAUNCHED 2026-08-13 (agent aafb4e699aaac66cc, live); precedence addendum sent
-    owned_paths: ["docs/factset/capability/symbology.md", "docs/factset/capability/symbology.json", "docs/factset/capability/_extract_symbology.py"]
+    runtime: LAUNCHED 2026-08-13 (agent aace0f7cf80e5c2ae, live)
+    owned_paths: ["docs/factset/capability/estimates.md", "docs/factset/capability/estimates.json", "docs/factset/capability/_extract_estimates.py"]
   FS004:
     agent_role: researcher (general-purpose)
     objective: Exhaustive capability manifest — Fundamentals v2 (PIT semantics focus)
@@ -42,9 +42,13 @@ active:
     owned_paths: ["docs/factset/capability/global_prices.md", "docs/factset/capability/global_prices.json", "docs/factset/capability/_extract_global_prices.py"]
 
 queued:
-  FS006: Estimates v2 review (launch on next freed slot; owns the 2 Estimates PDFs context check)
   FS007: RBICS v1 review
   FS008: Benchmarks v1 review
   FS021: Phase-2 PIT-Estimates DATAFEED contract (docs-only; the 2 PDFs)
 
-history: []
+history:
+  - goal_id: FS003
+    objective: Exhaustive capability manifest — Symbology v3
+    agent: aafb4e699aaac66cc
+    final_commit: 6bd914e (PR #75, docs-only, OPEN — merges via FS009 reconciliation)
+    result: COMPLETE — 4/4 ops, 16/16 schemas, 8/8 enum sites accounted; 10 discrepancies (spec ruled authoritative incl. BasicAuth-vs-demo-OAuth); 12 UNRESOLVED items U-1..U-12 (U-1/U-9 VENDOR_CLARIFICATION; rest -> FS010 live probes). Load-bearing: POST-only adapter; 10 req/s + 10 concurrent + 29s timeout returning HTTP 400; historical outputs CUSIP/SEDOL/ISIN/tickerRegion only (fsym ids are historical INPUTS -> FS011 seeds fsym-side); dual error envelopes need dual-shape parser in FS010

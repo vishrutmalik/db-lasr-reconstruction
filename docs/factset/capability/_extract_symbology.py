@@ -118,8 +118,10 @@ def main() -> None:
     sec = comp.get("securitySchemes", {})
     print(f"\n== COMPONENT RESPONSES: {len(responses)} == {sorted(responses)}")
     print(f"== COMPONENT EXAMPLES:  {len(examples)} == {sorted(examples)}")
-    print(f"== SECURITY SCHEMES:    {len(sec)} == "
-          f"{ {k: (v.get('type'), v.get('scheme')) for k, v in sec.items()} }")
+    print(
+        f"== SECURITY SCHEMES:    {len(sec)} == "
+        f"{ {k: (v.get('type'), v.get('scheme')) for k, v in sec.items()} }"
+    )
 
     # ---- machine-readable summary (mirrors symbology.json counts) --------
     summary = {

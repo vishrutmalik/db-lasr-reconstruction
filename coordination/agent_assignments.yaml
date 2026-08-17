@@ -1,16 +1,22 @@
 # Agent assignment registry — orchestrator is the sole normal writer.
 # One entry per ACTIVE goal. Completed assignments move to `history`.
 
-active:
+# ⚠ CORE LASR WAVE SUSPENDED 2026-08-13 by user directive (FactSet trial
+# phase takes priority). See coordination/core_lasr_pause_handoff.md.
+# The G030/G031/G033 entries below are SUSPENDED, not active. Do not dispatch
+# original-wave goals until the user asks. FactSet trial state lives in
+# coordination/factset_trial/ (FS0xx namespace).
+
+suspended_core_wave:
   G030:
     agent_role: implementer
     objective: N-LASR2 (2013) neutralization + hedge learner (P2)
     github_issue: 40
     branch: agent/implementer/G030-nlasr2
     worktree: .worktrees/G030-implementer
-    status: IN_PROGRESS (dispatched 2026-08-13 on G029 merge)
-    runtime_implementer: LAUNCHED 2026-08-13 (agent a26523851aaf7c1dc, live) — charter: nlasr2_2013 spec, backcast producer (CI-008) with stamps, neutralization + hedge learner, CI-017/020/025/026/029/030; grants: RT-G025-4 fix in ensembles + RT-G025-3 enforcement/flip
-    next_action: collect implementation; then verifier + red-team
+    status: SUSPENDED (org-spend-limit killed pre-setup 2026-08-13; zero work; no branch/worktree)
+    runtime_implementer: agent a26523851aaf7c1dc — RESUME FROM TRANSCRIPT on user-directed wave resume — charter: nlasr2_2013 spec, backcast producer (CI-008) with stamps, neutralization + hedge learner, CI-017/020/025/026/029/030; grants: RT-G025-4 fix in ensembles + RT-G025-3 enforcement/flip
+    next_action: SUSPENDED — see core_lasr_pause_handoff.md
     owned_paths: ["src/lasr/models/nlasr2/**", "tests/unit/test_models_nlasr2*.py", "configs/models/nlasr2_2013.yaml", "grants: RT-G025-3/4 at ensembles definition sites"]
   G031:
     agent_role: implementer
@@ -18,9 +24,9 @@ active:
     github_issue: 30
     branch: agent/implementer/G031-lasr2014
     worktree: .worktrees/G031-implementer
-    status: IN_PROGRESS (dispatched 2026-08-13 on G029 merge)
-    runtime_implementer: LAUNCHED 2026-08-13 (agent ab4f45c50be000f00, live) — charter: lasr_2014 spec, linearized kernel via shared loop interfaces, NB-A3 design constraint, CI-031/034/036/038/041/054; close_to_open leg STOPS if required (RT-G023-1 is G033's)
-    next_action: collect implementation; then verifier + red-team
+    status: SUSPENDED (org-spend-limit killed pre-setup 2026-08-13; zero work; no branch/worktree)
+    runtime_implementer: agent ab4f45c50be000f00 — RESUME FROM TRANSCRIPT on user-directed wave resume — charter: lasr_2014 spec, linearized kernel via shared loop interfaces, NB-A3 design constraint, CI-031/034/036/038/041/054; close_to_open leg STOPS if required (RT-G023-1 is G033's)
+    next_action: SUSPENDED — see core_lasr_pause_handoff.md
     owned_paths: ["src/lasr/models/lasr2014/**", "tests/unit/test_models_lasr2014*.py", "configs/models/lasr_2014.yaml"]
   G033:
     agent_role: implementer
@@ -28,9 +34,9 @@ active:
     github_issue: 32
     branch: agent/implementer/G033-nlasr2020
     worktree: .worktrees/G033-implementer
-    status: IN_PROGRESS (dispatched 2026-08-13 on G029 merge)
-    runtime_implementer: LAUNCHED 2026-08-13 (agent a0b93594892886023, live) — charter: nlasr_2020 spec, weekly cadence + 4 overlapping samples, CR-029/CR-030, weekly-native feature kernels (new files only), 12 CI bindings; grants: RT-G023-1 targets-metadata fix + flip, N5 registry guard
-    next_action: collect implementation; then verifier + red-team
+    status: SUSPENDED (org-spend-limit killed while reading 2026-08-13; zero writes; local branch @ b32ecd3 unpushed + clean worktree PRESERVED)
+    runtime_implementer: agent a0b93594892886023 — RESUME FROM TRANSCRIPT on user-directed wave resume — charter: nlasr_2020 spec, weekly cadence + 4 overlapping samples, CR-029/CR-030, weekly-native feature kernels (new files only), 12 CI bindings; grants: RT-G023-1 targets-metadata fix + flip, N5 registry guard
+    next_action: SUSPENDED — see core_lasr_pause_handoff.md
     owned_paths: ["src/lasr/models/nlasr2020/**", "tests/unit/test_models_nlasr2020*.py", "configs/models/nlasr_2020.yaml", "NEW files under src/lasr/features/ (weekly kernels)", "grants: RT-G023-1 targets metadata + N5 registry guard"]
 history:
   - goal_id: G029

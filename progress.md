@@ -5,10 +5,10 @@ Session-independent status. Update at every session end and major milestone.
 - **Last orchestrator update:** 2026-08-12 (M5 model phase COMPLETE — all of
   G024/G025/G026/G027/G028/G034/G035 merged with dual gates; G029
   integration slice dispatched)
-- **Current milestone:** M7 — variants (M0-M6 complete; G029 merged
-  2026-08-12 with dual gates). G030 ∥ G031 ∥ G033 IN_PROGRESS; G032 after
-  G031; G036 after G033; then G037 audit, G038 repro, G040 final (E-1
-  user decision pending).
+- **Current milestone:** CORE WAVE SUSPENDED at M7 by user directive
+  (2026-08-13) — FactSet API trial phase (FS0xx) takes priority. Resume
+  state: coordination/core_lasr_pause_handoff.md. FactSet control surface:
+  coordination/factset_trial/.
 - **Remote:** git@github.com:vishrutmalik/db-lasr-reconstruction.git (PRIVATE)
 
 ## Completed & merged
@@ -32,8 +32,8 @@ Session-independent status. Update at every session end and major milestone.
 - G029 MERGED 2026-08-12 (PR #74, main b32ecd3): verifier PASS + red-team
   NO_BLOCKING (10/10 upstream flips genuine; RT-G029-1..3 tooling ratchets
   -> G038; byte-identity independently reproduced 48/48)
-- G030/G031/G033 IN_PROGRESS (variant wave dispatched 2026-08-13; 3
-  parallel lanes, disjoint scopes)
+- G030/G031/G033 SUSPENDED pre-work (org-spend-limit kill 2026-08-13 +
+  user-directed pause; agents resumable from transcripts)
 - G026 MERGED 2026-08-09 (PR #69, main f863b1d): verifier PASS + red-team
   NO_BLOCKING_FINDINGS (3 ratchets RT-G026-1/2/3 routed in integration_queue)
 - G028 MERGED 2026-08-10 (PR #71, main 15ab5f8): verifier PASS + red-team
@@ -58,6 +58,15 @@ Session-independent status. Update at every session end and major milestone.
   repo scope. GitHub API shows occasional transient connection-refused — retry.
 
 ## Incident log
+- 2026-08-13: FIFTH kill wave — ORG monthly Claude spend limit killed all
+  three variant implementers (G030/G031 pre-setup, G033 while reading; zero
+  work product lost). User then directed a deliberate pause of the core
+  LASR wave for a time-limited FactSet API trial (FS0xx namespace). Pause
+  checkpoint: coordination/core_lasr_pause_handoff.md. Also pruned 16
+  OneDrive-resurrected merged worktrees (known pattern) + the corrupt G021
+  entry. NOTE: credentials found in the FactSet resources dir
+  (api_keys.txt, datafeed.txt) — never read/print/commit these; FS agents
+  are barred from cat-ing them.
 - 2026-08-12 (2): GitHub Actions minutes alert (user email): 1,800/2,000
   free minutes used, resets Sep 1; overage blocked unless the user raises
   the budget. Root causes: (1) every orchestrator coordination push to main

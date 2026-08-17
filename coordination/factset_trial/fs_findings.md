@@ -30,3 +30,15 @@ Historical symbology outputs are CUSIP/SEDOL/ISIN/tickerRegion ONLY; fsym ids
 are historical INPUTS. 10 req/s + 10 concurrent caps; 29s server timeout
 returns HTTP 400 (not 429) — FS010 retry logic must parse response bodies;
 dual error envelope shapes across endpoint families.
+
+## F-005 (2026-08-17, OBSERVED_LIVE — first live evidence) — auth + symbology ENTITLED
+FS010 live smoke (1 request of <=5 budget): HTTP Basic auth ACCEPTED
+(env names FACTSET_USERNAME / FACTSET_API_KEY); POST identifier-resolution
+5/5 tickerRegion ids resolved incl. all enrichment fields; vendor emits
+x-ratelimit-*-second headers confirming 10 rps (exceedance shape unprobed —
+U-4 partial); dynamic response keys ECHO ENUM CASING (not spec-example
+lowercase) — D-6/U-5 partially resolved, CUSIP/SEDOL/ISIN casing open for
+FS024. Cache-first proven on real captures (re-run = 1 hit, 0 live calls).
+Hygiene verified: zero credential fragments in data-root artifacts + diffs.
+Evidence: DESIGN.md smoke section, run manifest at
+$FACTSET_TRIAL_DATA_ROOT/runs/fs010-live-smoke/manifest.json (outside git).

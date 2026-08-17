@@ -13,7 +13,7 @@ active:
     objective: Shared FactSet transport + trial configuration (durable charter in fs_goals.md)
     branch: agent/fs-implementer/FS010-transport
     worktree: .worktrees/FS010
-    status: IN_VERIFICATION (PR #84 at 2d6cba5; 153 new tests; suite 2727/23/21; httpx direct-HTTP decision in DESIGN.md; live smoke UNRESOLVED — env credentials absent)
+    status: IN_VERIFICATION (PR #84 at 462fa90; 153 new tests; suite 2727/23/21; httpx direct-HTTP; LIVE SMOKE PASSED — auth ACCEPTED, symbology ENTITLED, 10rps confirmed, cache-first proven, hygiene verified; F-005)
     runtime_implementer: HANDOFF COLLECTED 2026-08-17 (agent ac723078d6a4e2880) — 2 disclosed extra touches (granted pyproject httpx line + test_package_imports registration; verifier rules); 5 register candidates; .env.example env-names routed to orchestrator; pre-existing zscore hypothesis flake routed to features owner (core wave)
     runtime_verifier: LAUNCHED 2026-08-17 (agent a6848fd27009eef25, live) — charter-line-by-line D-020 audit, symbology models vs MANIFEST, identity soundness, encoder-duplication ruling
     runtime_red_team: LAUNCHED 2026-08-17 (agent a0ab73744f6c1f063, live) — secret-leakage sentinel attacks, replay integrity, hash collisions, budget/gate bypass, data-root symlink evasion

@@ -119,13 +119,19 @@ def build_fundamentals_metrics_request(*, pit_data_items: bool) -> NormalizedReq
     invoke this twice and never assume the dictionaries coincide.
     ``category``/``subcategory`` are omitted: the documented
     omitted-behavior is the FULL catalog, which is exactly the WP3 ask.
+
+    The selector is carried as the OpenAPI-lowercase wire string
+    (``"true"``/``"false"``): this is a GET query parameter and the
+    FS010 transport serializes query values verbatim via ``str()`` —
+    a Python bool would hit the wire as ``"True"``, which the spec does
+    not document. The string IS the canonical identity value here.
     """
     return NormalizedRequest(
         api_family=FUNDAMENTALS_FAMILY,
         api_version=_FUNDAMENTALS_VERSION,
         endpoint="/metrics",
         verb="GET",
-        params={"pitDataItems": pit_data_items},
+        params={"pitDataItems": "true" if pit_data_items else "false"},
     )
 
 

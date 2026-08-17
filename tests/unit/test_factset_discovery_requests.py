@@ -40,8 +40,10 @@ class TestFundamentalsBuilders:
         capture."""
         pit = build_fundamentals_metrics_request(pit_data_items=True)
         non_pit = build_fundamentals_metrics_request(pit_data_items=False)
-        assert pit.params == {"pitDataItems": True}
-        assert non_pit.params == {"pitDataItems": False}
+        # OpenAPI-lowercase wire strings: the FS010 transport str()-encodes
+        # GET query values, so a Python bool would leave as "True".
+        assert pit.params == {"pitDataItems": "true"}
+        assert non_pit.params == {"pitDataItems": "false"}
         assert request_hash(pit) != request_hash(non_pit)
 
     def test_metrics_request_is_deterministic(self) -> None:

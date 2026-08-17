@@ -482,3 +482,168 @@ class TestMarkdownRendering:
         # full 64-hex lineage hashes, never truncated (D-020(d))
         for r in report.probes:
             assert len(r.request_hash) == 64
+
+
+class TestReplayErrorEvidence:
+    """F-009 offline shape: cached ERROR captures classify in replay —
+    displayed as evidence, never replayed as success."""
+
+    def test_cached_403_classifies_unauthorized_in_replay(self, tmp_path: Path) -> None:
+        cache_root = tmp_path / "raw"
+        cache = ResponseCache(cache_root)
+        config = load_trial_config(TRIAL_YAML)
+        plan = {spec.probe_id: spec for spec in build_probe_plan(config)}
+        # F-009 shape: plain-text 403 body (undocumented THIRD envelope)
+        cache.store(
+            plan["symbology-historical-identifier-resolution"].request,
+            b"User Authorization Failed",
+            http_status=403,
+            retrieval_time=_T0,
+        )
+        report = run_discovery(
+            config_path=TRIAL_YAML,
+            environ={},
+            repo_root=REPO_ROOT,
+            code_revision="deadbeef",
+            now=_T0,
+            cache_root=cache_root,
+            write_outputs=False,
+        )
+        by_id = {r.spec.probe_id: r for r in report.probes}
+        result = by_id["symbology-historical-identifier-resolution"]
+        assert result.classification is EndpointClassification.UNAUTHORIZED
+        assert result.http_status == 403
+        assert result.from_cache
+        assert result.capture_id is not None
+        assert "never replayed as success" in result.detail
+        assert report.live_calls == 0
+
+    def test_cached_5xx_classifies_unavailable_in_replay(self, tmp_path: Path) -> None:
+        cache_root = tmp_path / "raw"
+        cache = ResponseCache(cache_root)
+        config = load_trial_config(TRIAL_YAML)
+        plan = {spec.probe_id: spec for spec in build_probe_plan(config)}
+        cache.store(
+            plan["rbics-structure"].request,
+            _error_body("upstream broke"),
+            http_status=503,
+            retrieval_time=_T0,
+        )
+        report = run_discovery(
+            config_path=TRIAL_YAML,
+            environ={},
+            repo_root=REPO_ROOT,
+            code_revision="deadbeef",
+            now=_T0,
+            cache_root=cache_root,
+            write_outputs=False,
+        )
+        by_id = {r.spec.probe_id: r for r in report.probes}
+        assert (
+            by_id["rbics-structure"].classification
+            is EndpointClassification.UNAVAILABLE
+        )
+
+    def test_success_capture_beats_error_evidence(self, tmp_path: Path) -> None:
+        """A SUCCESS capture replays as success even when older error
+        evidence exists for the same request (latest_success wins)."""
+        cache_root = tmp_path / "raw"
+        cache = ResponseCache(cache_root)
+        config = load_trial_config(TRIAL_YAML)
+        plan = {spec.probe_id: spec for spec in build_probe_plan(config)}
+        request = plan["benchmarks-id-list"].request
+        cache.store(request, b"boom", http_status=500, retrieval_time=_T0)
+        cache.store(request, _data_body(2), http_status=200, retrieval_time=_T0)
+        report = run_discovery(
+            config_path=TRIAL_YAML,
+            environ={},
+            repo_root=REPO_ROOT,
+            code_revision="deadbeef",
+            now=_T0,
+            cache_root=cache_root,
+            write_outputs=False,
+        )
+        by_id = {r.spec.probe_id: r for r in report.probes}
+        assert (
+            by_id["benchmarks-id-list"].classification is EndpointClassification.WORKING
+        )
+
+
+class TestForceRefreshRerun:
+    def test_force_refresh_reissues_every_probe_live(self, tmp_path: Path) -> None:
+        """The post-restoration single bounded re-run (F-009/VENDOR-1):
+        force_refresh bypasses success cache AND the error-cache block,
+        so all 15 probes go back to the wire exactly once."""
+        environ = _live_environ(tmp_path)
+        first = FakeSender(_scripted_responses())
+        run_discovery(
+            config_path=TRIAL_YAML,
+            environ=environ,
+            repo_root=REPO_ROOT,
+            code_revision="deadbeef",
+            now=_T0,
+            live=True,
+            sender=first,
+        )
+        # restoration: everything answers 200 now
+        healthy: list[HttpResponse] = []
+        for response in _scripted_responses():
+            if response.status == 200:
+                healthy.append(response)
+            else:
+                healthy.append(HttpResponse(status=200, body=_data_body(1), headers={}))
+        second = FakeSender(healthy)
+        report = run_discovery(
+            config_path=TRIAL_YAML,
+            environ=environ,
+            repo_root=REPO_ROOT,
+            code_revision="deadbeef",
+            now=_T0,
+            live=True,
+            sender=second,
+            force_refresh=True,
+        )
+        assert len(second.calls) == 15
+        assert report.live_calls == 15
+        assert all(
+            r.classification
+            in (
+                EndpointClassification.WORKING,
+                EndpointClassification.PARTIALLY_WORKING,
+            )
+            for r in report.probes
+        )
+
+
+class TestAccountBlockRendering:
+    def test_account_block_overrides_family_status(self, tmp_path: Path) -> None:
+        report = run_discovery(
+            config_path=TRIAL_YAML,
+            environ={},
+            repo_root=REPO_ROOT,
+            code_revision="deadbeef",
+            now=_T0,
+            cache_root=tmp_path / "raw",
+        )
+        markdown = render_entitlements_markdown(
+            report,
+            account_block=("F-009: authorization revoked between 12:45Z and 19:23Z."),
+        )
+        assert markdown.count("**BLOCKED_BY_ACCOUNT_AUTHORIZATION**") == len(
+            FAMILY_OPERATION_TOTALS
+        )
+        assert "ACCOUNT AUTHORIZATION BLOCK" in markdown
+        assert "F-009" in markdown
+        assert "force_refresh=True" in markdown  # completion path documented
+
+    def test_no_block_keeps_observed_verdicts(self, tmp_path: Path) -> None:
+        report = run_discovery(
+            config_path=TRIAL_YAML,
+            environ={},
+            repo_root=REPO_ROOT,
+            code_revision="deadbeef",
+            now=_T0,
+            cache_root=tmp_path / "raw",
+        )
+        markdown = render_entitlements_markdown(report)
+        assert "BLOCKED_BY_ACCOUNT_AUTHORIZATION" not in markdown

@@ -495,17 +495,48 @@ def _error_evidence(
     return record.http_status, record.capture_id, record.retrieval_time
 
 
+def _classify_error_status(status: int | None) -> EndpointClassification:
+    """Map a captured error HTTP status to the EA vocabulary."""
+    if status in (401, 403):
+        return EndpointClassification.UNAUTHORIZED
+    if status == 404 or (status is not None and status >= 500):
+        return EndpointClassification.UNAVAILABLE
+    return EndpointClassification.REQUIRES_CLARIFICATION
+
+
 def _execute_probe(
     spec: ProbeSpec,
     transport: FactSetTransport,
     evidence_cache: ResponseCache,
     sanitizer: Sanitizer,
+    *,
+    force_refresh: bool = False,
 ) -> ProbeResult:
     rhash = request_hash(spec.request)
     hits_before = transport.stats.cache_hits
     try:
-        response = transport.execute(spec.request)
+        response = transport.execute(spec.request, force_refresh=force_refresh)
     except FactSetCacheMissError:
+        # Replay-mode miss. Error CAPTURES are still evidence (D-020(d):
+        # never replayed as SUCCESS — but their status is exactly what an
+        # entitlement matrix displays): classify from the latest error
+        # capture when one exists; otherwise this is an honest absence.
+        status, capture_id, retrieved = _error_evidence(evidence_cache, spec.request)
+        if status is not None:
+            return ProbeResult(
+                spec=spec,
+                classification=_classify_error_status(status),
+                http_status=status,
+                row_count=None,
+                from_cache=True,
+                request_hash=rhash,
+                capture_id=capture_id,
+                retrieval_time=retrieved,
+                detail=(
+                    f"cached ERROR evidence (HTTP {status}) served in replay"
+                    " — evidence display only, never replayed as success"
+                ),
+            )
         return ProbeResult(
             spec=spec,
             classification=EndpointClassification.NOT_CAPTURED,
@@ -561,8 +592,8 @@ def _execute_probe(
     except FactSetClientError as exc:
         status, capture_id, retrieved = _error_evidence(evidence_cache, spec.request)
         classification = (
-            EndpointClassification.UNAVAILABLE
-            if status == 404
+            _classify_error_status(status)
+            if status is not None
             else EndpointClassification.REQUIRES_CLARIFICATION
         )
         return ProbeResult(
@@ -609,8 +640,14 @@ def run_discovery(
     cache_root: Path | None = None,
     sender: HttpSender | None = None,
     write_outputs: bool = True,
+    force_refresh: bool = False,
 ) -> DiscoveryReport:
     """Execute the FS024 probe plan + catalog pulls; return the report.
+
+    ``force_refresh=True`` is the SINGLE BOUNDED post-restoration re-run
+    path (F-009/VENDOR-1): it bypasses both the success cache and the
+    error-cache block, so one live re-run refreshes every probe after
+    the user restores account authorization. Budgets still apply.
 
     ``live=True`` flips the loaded config's ``transport.live`` (the human
     invoking discovery IS the config half of the consent — same pattern
@@ -658,7 +695,13 @@ def run_discovery(
     results: list[ProbeResult] = []
     by_id: dict[str, ProbeResult] = {}
     for spec in plan:
-        result = _execute_probe(spec, transport, evidence_cache, sanitizer)
+        result = _execute_probe(
+            spec,
+            transport,
+            evidence_cache,
+            sanitizer,
+            force_refresh=force_refresh and live,
+        )
         results.append(result)
         by_id[spec.probe_id] = result
         logger.info(
@@ -835,9 +878,19 @@ def _family_verdict(results: Sequence[ProbeResult], family: str) -> str:
     return "Mixed — see rows"
 
 
-def render_entitlements_markdown(report: DiscoveryReport) -> str:
+def render_entitlements_markdown(
+    report: DiscoveryReport, *, account_block: str | None = None
+) -> str:
     """The committed entitlement matrix + catalog summaries (counts and
-    lineage hashes only — no vendor payload content beyond row counts)."""
+    lineage hashes only — no vendor payload content beyond row counts).
+
+    ``account_block`` — when the ACCOUNT itself is blocked (F-009-class
+    vendor event), the per-family verdict column is overridden with
+    ``BLOCKED_BY_ACCOUNT_AUTHORIZATION`` and the given citation text is
+    rendered as a banner: per F-009, entitlement claims are TIME-VARIABLE
+    and endpoint-level verdicts must not be inferred while account-level
+    authorization is failing.
+    """
     lines: list[str] = []
     lines.append("# FactSet Trial — Entitlement Matrix + Live Metric Catalogs (FS024)")
     lines.append("")
@@ -847,6 +900,9 @@ def render_entitlements_markdown(report: DiscoveryReport) -> str:
         f" · live calls {report.live_calls} · cache hits {report.cache_hits}"
     )
     lines.append("")
+    if account_block is not None:
+        lines.append(f"> **ACCOUNT AUTHORIZATION BLOCK.** {account_block}")
+        lines.append("")
     lines.append(
         "Classification vocabulary is the EA Step-1 exit condition"
         " (Working / Partially working / Unauthorized / Unavailable /"
@@ -855,19 +911,23 @@ def render_entitlements_markdown(report: DiscoveryReport) -> str:
         " `Deferred` (deliberately not probed, reason given). Evidence"
         " precedence: everything here is OBSERVED_LIVE against verbatim"
         " captures addressed by the full request hash + capture sha256"
-        " under `$FACTSET_TRIAL_DATA_ROOT/raw/` (outside git)."
+        " under `$FACTSET_TRIAL_DATA_ROOT/raw/` (outside git). All"
+        " entitlement claims are TIMESTAMPED: F-009 proved entitlement is"
+        " time-variable within a single trial day."
     )
     lines.append("")
     lines.append("## 1. Family summary")
     lines.append("")
-    lines.append("| Family | Probed ops | Family verdict | Ops in manifest |")
+    lines.append("| Family | Probed ops | Family status | Ops in manifest |")
     lines.append("|---|---|---|---|")
     for family, total in FAMILY_OPERATION_TOTALS.items():
         probed = [r for r in report.probes if r.spec.family == family]
-        lines.append(
-            f"| {family} | {len(probed)} | {_family_verdict(report.probes, family)}"
-            f" | {total} |"
+        verdict = (
+            "**BLOCKED_BY_ACCOUNT_AUTHORIZATION**"
+            if account_block is not None
+            else _family_verdict(report.probes, family)
         )
+        lines.append(f"| {family} | {len(probed)} | {verdict} | {total} |")
     lines.append("")
     lines.append(
         "Unprobed operations remain UNRESOLVED and are owned by the family"
@@ -910,6 +970,26 @@ def render_entitlements_markdown(report: DiscoveryReport) -> str:
     lines.append("")
     lines.append("## 4. Metric catalogs (counts only; parsed rows in the data root)")
     lines.append("")
+    if (
+        report.fundamentals_pit_summary is None
+        and report.fundamentals_non_pit_summary is None
+        and report.estimates_summary is None
+    ):
+        lines.append(
+            "NOT CAPTURED"
+            + (
+                " — blocked by the account-authorization event above."
+                if account_block is not None
+                else "."
+            )
+            + " Completion path: ONE bounded live re-run of"
+            " `run_discovery(live=True, force_refresh=True)` (15 probes,"
+            " <=150 budget) after authorization is restored; the PIT and"
+            " NON-PIT Fundamentals dictionaries are pulled SEPARATELY"
+            " (`pitDataItems=true`/`false`) plus the Estimates catalog,"
+            " and this document is regenerated from the captures."
+        )
+        lines.append("")
     for summary in (
         report.fundamentals_non_pit_summary,
         report.fundamentals_pit_summary,

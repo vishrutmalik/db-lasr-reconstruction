@@ -21,6 +21,13 @@ reports/generated/
 *.key
 credentials*.json
 secrets*
+api_keys*
+*.apikey
+# FactSet trial: raw vendor responses/caches live under /data/ (already
+# ignored); belt-and-suspenders for any stray vendor payloads + notebooks out
+factset_cache/
+*.factset.json
+notebooks/outputs/
 
 # ── Worktrees (agent isolation, never tracked) ───────────────────────────────
 .worktrees/

@@ -137,3 +137,23 @@
   provider_contract.md §3 alongside UnknownProviderIdError (D-015).
 - **Evidence:** G018 verification NB-1; G019 implementation.
 - **Reversibility:** EASY. **Date:** 2026-07-23. **Agent:** implementer (G019), orchestrator ratifies pending verification. **Goal:** G019.
+
+## D-018 — FactSet integrates as a second provider at the canonical boundary (PROVISIONAL)
+- **Decision:** the FactSet trial implements FactSet as an additional provider
+  family behind the existing G018 provider contract, converging into the SAME
+  canonical -> PIT -> features -> targets -> models -> validation -> portfolio
+  -> reporting stack. The synthetic vertical slice is PRESERVED as the
+  deterministic contract implementation, offline dev path, regression baseline
+  and adversarial PIT environment. Vendor flow: API -> immutable permitted
+  raw-response cache (request-hashed) -> FactSet-specific normalization ->
+  canonical tables (smallest provider-neutral extensions where FactSet
+  semantics demand) -> PIT/as-of. No FactSet-specific assumptions enter
+  generic downstream model code; no canonical-layer bypass for quick results;
+  synthetic results must not silently change (regression-pinned).
+- **Evidence:** provider_contract.md (G018, D-011/D-012/D-013/D-015/D-017),
+  canonical_schemas.md (G017), PIT layer (G020), A-ARCH-01 id minting,
+  docs/data/real_data_integration.md (G039 AlphaSense adapter precedent).
+- **Status:** PROVISIONAL — FS002 (integration architecture) ratifies or
+  amends after direct contract inspection; any amendment gets its own entry.
+- **Reversibility:** MODERATE. **Date:** 2026-08-13. **Agent:** orchestrator.
+  **Goal:** FS002.

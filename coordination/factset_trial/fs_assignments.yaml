@@ -1,0 +1,4 @@
+# FactSet trial agent registry — orchestrator sole writer.
+# Same lifecycle discipline as the core registry. FS goals only.
+active: {}
+history: []

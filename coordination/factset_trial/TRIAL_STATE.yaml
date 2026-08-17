@@ -4,7 +4,7 @@
 # Lifecycle + ownership + recovery rules: ORCHESTRATOR_BOOTSTRAP.md.
 meta:
   schema_version: 1
-  state_revision: 1
+  state_revision: 2
   orchestration_generation: 1  # Claude Fable 5 orchestrator, session of 2026-08-13..17
   last_reconciled_main: 36d802d
   last_reconciled_at: 2026-08-17T
@@ -24,22 +24,22 @@ goals:
   FS010:
     title: Shared transport + trial configuration
     scope_basis: EA WP0+WP1; D-020(d)
-    lifecycle: REMEDIATING  # verifier FAIL (VF-FS010-1, adjudicated blocking) -> fixes 1-6 pushed, fix 7 + final gates in flight
+    lifecycle: REVERIFYING  # remediation COMPLETE at d6c3f7e (all 7 fixes, gates green 2794/23/21, keepers 52 teeth); narrow re-checks dispatched
     branch: agent/fs-implementer/FS010-transport
     worktree: .worktrees/FS010
     owned_paths: ["src/lasr/data/providers/factset/**", "tests/unit/test_factset_*.py", "configs/factset/trial.yaml"]
     pr: 84
     start_sha: 37ecf1b
-    latest_reconciled_sha: 652b2f0
+    latest_reconciled_sha: d6c3f7e
     implementation: IMPLEMENTED (2d6cba5) + live smoke PASSED (auth ACCEPTED, symbology ENTITLED, F-005)
     verification: FAIL r1 (928f2d5; VF-FS010-1..9) -> narrow re-check pending after remediation
     red_team: NO_BLOCKING r1 (fadd2cd; RT-FS010-1..3) -> keeper-flip integrity re-check pending
-    remediation: fixes 1-6 COMMITTED (25ea0e8 sanitize-blocking, ba2b25f reserve-before-send+per-attempt, 05ec78a exact-"1" gate, 652b2f0 encoder pin, 0cc90f0 keeper format); remaining = PR body refresh + full gates
+    remediation: COMPLETE d6c3f7e (25ea0e8 sanitize+canary regressions; ba2b25f atomic reserve-before-send w/ flock + per-attempt consumption; 05ec78a exact-"1" consent w/ fail-safe kill; 652b2f0 encoder pin; 0cc90f0 keeper format; PR body refreshed)
     lanes:
-      FS010-IMPLEMENT-01: {state: REMEDIATING, agent_runtime: ac723078d6a4e2880 (ephemeral), checkpoint: lanes/FS010-IMPLEMENT-01.md on branch}
-      FS010-VERIFY-01: {state: VERDICT_DELIVERED_FAIL, report: docs/verification/FS010.md on branch}
-      FS010-REDTEAM-01: {state: VERDICT_DELIVERED_NO_BLOCKING, report: docs/red_team/FS010.md on branch}
-    next_action: collect remediation -> resume both reviewer lanes for NARROW re-checks (sanitize fix + ratchet-flip integrity) -> CI green -> merge PR 84
+      FS010-IMPLEMENT-01: {state: REMEDIATED_IDLE, agent_runtime: ac723078d6a4e2880 (ephemeral), checkpoint: lanes/FS010-IMPLEMENT-01.md on branch}
+      FS010-VERIFY-02: {state: DISPATCHED (narrow re-check of d6c3f7e remediation diff), agent_runtime: a6848fd27009eef25 resume, writes: docs/verification/FS010.md addendum}
+      FS010-REDTEAM-02: {state: DISPATCHED (ratchet-flip integrity + sanitize/budget re-attack), agent_runtime: a0ab73744f6c1f063 resume, writes: docs/red_team/FS010.md addendum + keeper edits}
+    next_action: collect both r2 verdicts -> CI green -> merge PR 84 -> write-ahead dispatch FS011 + FS024
   FS011:
     title: Symbology adapter + identity spine (fsym-seeded, typed resolution)
     scope_basis: EA WP2; D-020(b); MANIFEST identity_semantics

@@ -24,7 +24,9 @@ from pathlib import Path
 
 import yaml
 
-SPEC = Path("/Users/admin/Documents/factset_api_resources/factset_fundamentals_api-v2-yml.yml")
+SPEC = Path(
+    "/Users/admin/Documents/factset_api_resources/factset_fundamentals_api-v2-yml.yml"
+)
 DEMO = Path("/Users/admin/Documents/factset_api_resources/fundamentals.py")
 OUT = Path(__file__).parent / "fundamentals.json"
 
@@ -51,7 +53,9 @@ SDK_FACTS = {
         "api_key_basic": "Configuration(username='USERNAME-SERIAL', password='API-KEY')",
     },
     "api_classes": {
-        "FactSetFundamentalsApi": ["get_fds_fundamentals_for_list (POST /fundamentals)"],
+        "FactSetFundamentalsApi": [
+            "get_fds_fundamentals_for_list (POST /fundamentals)"
+        ],
         "SegmentsApi": ["get_fds_segments_for_list (POST /segments)"],
         "FundamentalsPointInTimeApi": [
             "post_fundamentals_pit_data (POST /point-in-time)",
@@ -81,53 +85,162 @@ DEMO_FACTS = {
     "source": str(DEMO),
     "pins_sdk_version": "2.2.0",
     "uses": "FactSetFundamentalsApi.get_fds_fundamentals_for_list with FundamentalsRequest(FundamentalRequestBody(ids=IdsBatchMax30000(['FDS-US']), periodicity=Periodicity('QTR'), fiscal_period=FiscalPeriod(start='2012-01-01', end='2014-01-01'), metrics=Metrics(['FF_SALES']), currency='USD', update_type=UpdateType('RP'), batch=Batch('N'))) then get_response_200()",
-    "imports_but_does_not_call": ["metrics_api", "segments_api", "batch_processing_api"],
+    "imports_but_does_not_call": [
+        "metrics_api",
+        "segments_api",
+        "batch_processing_api",
+    ],
     "does_not_touch": "FundamentalsPointInTimeApi — the PIT arm has NO vendor sample",
     "evidence": "DOCUMENTED_SAMPLE",
 }
 
 PIT_SEMANTICS = {
-    "pit_arm_operations": ["POST /point-in-time (postFundamentalsPITData)", "POST /periods (postFundamentalsFiscalPeriods)"],
+    "pit_arm_operations": [
+        "POST /point-in-time (postFundamentalsPITData)",
+        "POST /periods (postFundamentalsFiscalPeriods)",
+    ],
     "documented": [
-        {"fact": "PIT purpose statement: 'PIT data allows you to view fundamentals data as it was known on a specific date. This is crucial for backtesting trading strategies, performing academic research, and avoiding lookahead bias.'", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "Each /point-in-time data point carries a bitemporal validity window [pitStart, pitEnd], inclusive, UTC, ISO 8601, 'during which this value was current'; pitEnd=null means the value is the latest active snapshot", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "Omitting request pitStart/pitEnd returns the FULL PIT revision history; equal pitStart=pitEnd addresses a single knowledge instant; spec example shows a genuine value revision (FF_SALES 20,345,000 -> 21,345,000 across the 2018-01-10/11 window boundary)", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "frequency=W|M switches to end-of-week/end-of-month snapshot mode (pitStart null, pitEnd = snapshot stamp); omitted frequency = every change", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "/periods pitStart = 'UTC timestamp for when the fiscal period information was first published and became available'; pitEnd = when superseded (null = current version); second-precision example timestamps back to 2001", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "updateType request flag RP (include preliminary) / RF (final only); each PIT response row is tagged Preliminary|Final = 'status of the source filing when this data point was recorded'", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "active flag (default true) restricts to securities active on the snapshot date; 'Prevents inclusion of future-dated entities'", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "PIT endpoints support only primary securities; secondary/regional identifiers may return nothing; resolve via Symbology API first", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "Fiscal-period addressing is calendar-range only (fiscalPeriodStart required, filters period END dates); response addresses periods absolutely via fiscalYear + fiscalPeriod int + fiscalEndDate; NO relative-period syntax exists", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "PIT-eligible metrics discoverable via GET /metrics with pitDataItems=true / per-metric isPIT flag; the PIT and non-PIT metric dictionaries are SEPARATE overlapping sets ('A metric can be available in both PIT and non-PIT datasets') — pull the catalog twice, never assume identity (external_analysis.md WP3/WP5 bind)", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "Both PIT operations are ALWAYS asynchronous (202 + Location -> /batch-status -> /batch-result)", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "Non-PIT /fundamentals arm has NO as-of parameter; its only vintage controls are Original vs _R ('Latest - Includes Restatements') periodicities and updateType RP/RF — it is a latest-database-view, not PIT", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "Non-PIT publication-timing fields: epsReportDate ('date the EPS was reported') is the only publication-date-like field; reportDate is the AS-REPORTED PERIOD END date (not a publication date), fiscalEndDate is the normalized period end", "evidence": "DOCUMENTED_OPENAPI"},
+        {
+            "fact": "PIT purpose statement: 'PIT data allows you to view fundamentals data as it was known on a specific date. This is crucial for backtesting trading strategies, performing academic research, and avoiding lookahead bias.'",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "Each /point-in-time data point carries a bitemporal validity window [pitStart, pitEnd], inclusive, UTC, ISO 8601, 'during which this value was current'; pitEnd=null means the value is the latest active snapshot",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "Omitting request pitStart/pitEnd returns the FULL PIT revision history; equal pitStart=pitEnd addresses a single knowledge instant; spec example shows a genuine value revision (FF_SALES 20,345,000 -> 21,345,000 across the 2018-01-10/11 window boundary)",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "frequency=W|M switches to end-of-week/end-of-month snapshot mode (pitStart null, pitEnd = snapshot stamp); omitted frequency = every change",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "/periods pitStart = 'UTC timestamp for when the fiscal period information was first published and became available'; pitEnd = when superseded (null = current version); second-precision example timestamps back to 2001",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "updateType request flag RP (include preliminary) / RF (final only); each PIT response row is tagged Preliminary|Final = 'status of the source filing when this data point was recorded'",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "active flag (default true) restricts to securities active on the snapshot date; 'Prevents inclusion of future-dated entities'",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "PIT endpoints support only primary securities; secondary/regional identifiers may return nothing; resolve via Symbology API first",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "Fiscal-period addressing is calendar-range only (fiscalPeriodStart required, filters period END dates); response addresses periods absolutely via fiscalYear + fiscalPeriod int + fiscalEndDate; NO relative-period syntax exists",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "PIT-eligible metrics discoverable via GET /metrics with pitDataItems=true / per-metric isPIT flag; the PIT and non-PIT metric dictionaries are SEPARATE overlapping sets ('A metric can be available in both PIT and non-PIT datasets') — pull the catalog twice, never assume identity (external_analysis.md WP3/WP5 bind)",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "Both PIT operations are ALWAYS asynchronous (202 + Location -> /batch-status -> /batch-result)",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "Non-PIT /fundamentals arm has NO as-of parameter; its only vintage controls are Original vs _R ('Latest - Includes Restatements') periodicities and updateType RP/RF — it is a latest-database-view, not PIT",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "Non-PIT publication-timing fields: epsReportDate ('date the EPS was reported') is the only publication-date-like field; reportDate is the AS-REPORTED PERIOD END date (not a publication date), fiscalEndDate is the normalized period end",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
     ],
     "inferred": [
-        {"fact": "pitStart on /point-in-time rows is FactSet's database-availability (collection/publication) timestamp, by analogy with the explicit /periods wording — the /point-in-time schema itself only says 'was current'", "evidence": "INFERRED"},
-        {"fact": "PIT values are returned in reported/local currency only: FundamentalsPITRequestBody has NO currency parameter; response carries a per-row ISO currency code", "evidence": "INFERRED"},
+        {
+            "fact": "pitStart on /point-in-time rows is FactSet's database-availability (collection/publication) timestamp, by analogy with the explicit /periods wording — the /point-in-time schema itself only says 'was current'",
+            "evidence": "INFERRED",
+        },
+        {
+            "fact": "PIT values are returned in reported/local currency only: FundamentalsPITRequestBody has NO currency parameter; response carries a per-row ISO currency code",
+            "evidence": "INFERRED",
+        },
     ],
     "silent_or_unresolved": [
-        {"fact": "Recording basis never stated: filing time vs press-release time vs FactSet collection lag; no promise that pitStart approximates public availability", "evidence": "VENDOR_CLARIFICATION_REQUIRED"},
-        {"fact": "Immutability of PIT windows not promised anywhere (could FactSet backfill/correct pitStart/pitEnd retroactively?)", "evidence": "VENDOR_CLARIFICATION_REQUIRED"},
-        {"fact": "PIT history depth / coverage start date undocumented (examples reach 2001; no coverage statement)", "evidence": "UNRESOLVED"},
-        {"fact": "Meaning of _R periodicities inside a PIT request undocumented (restated-series evolution?)", "evidence": "VENDOR_CLARIFICATION_REQUIRED"},
-        {"fact": "Delisted/inactive security queryability (survivorship) undocumented; semantics of active=false not fully specified", "evidence": "VENDOR_CLARIFICATION_REQUIRED"},
-        {"fact": "No revision-reason / source-document metadata on PIT rows (no filing type, no accession number)", "evidence": "DOCUMENTED_OPENAPI"},
-        {"fact": "Trial entitlement to /point-in-time and /periods unknown (403 = not authorized channel exists)", "evidence": "UNRESOLVED"},
+        {
+            "fact": "Recording basis never stated: filing time vs press-release time vs FactSet collection lag; no promise that pitStart approximates public availability",
+            "evidence": "VENDOR_CLARIFICATION_REQUIRED",
+        },
+        {
+            "fact": "Immutability of PIT windows not promised anywhere (could FactSet backfill/correct pitStart/pitEnd retroactively?)",
+            "evidence": "VENDOR_CLARIFICATION_REQUIRED",
+        },
+        {
+            "fact": "PIT history depth / coverage start date undocumented (examples reach 2001; no coverage statement)",
+            "evidence": "UNRESOLVED",
+        },
+        {
+            "fact": "Meaning of _R periodicities inside a PIT request undocumented (restated-series evolution?)",
+            "evidence": "VENDOR_CLARIFICATION_REQUIRED",
+        },
+        {
+            "fact": "Delisted/inactive security queryability (survivorship) undocumented; semantics of active=false not fully specified",
+            "evidence": "VENDOR_CLARIFICATION_REQUIRED",
+        },
+        {
+            "fact": "No revision-reason / source-document metadata on PIT rows (no filing type, no accession number)",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        {
+            "fact": "Trial entitlement to /point-in-time and /periods unknown (403 = not authorized channel exists)",
+            "evidence": "UNRESOLVED",
+        },
     ],
 }
 
 DISCREPANCIES = [
-    {"id": "D1", "what": "Three-way version skew: demo pins SDK 2.2.0; current SDK is 3.1.0 targeting API 2.5.0; local spec is API 2.5.1", "evidence": ["DOCUMENTED_SAMPLE", "DOCUMENTED_SDK", "DOCUMENTED_OPENAPI"]},
-    {"id": "D2", "what": "SDK 3.1.0 exposes 10 methods; spec 2.5.1 defines 12 operations. Missing from SDK: GET /fundamentals (getFdsFundamentals) and GET /segments (getFdsSegments). Spec is authoritative per charter; POST is the SDK-canonical path", "evidence": ["DOCUMENTED_SDK", "DOCUMENTED_OPENAPI"]},
-    {"id": "D3", "what": "Vendor demo never exercises the PIT arm (FundamentalsPointInTimeApi) — no sample exists for the trial's hard-gate endpoints", "evidence": ["DOCUMENTED_SAMPLE"]},
-    {"id": "D4", "what": "Response periodicity enum has 13 values (adds CAL) vs request enum 12 — CAL can be returned but not requested", "evidence": ["DOCUMENTED_OPENAPI"]},
-    {"id": "D5", "what": "IdsBatchMax30000 schema: name says 30000, description says 250 non-batch / 5000 batch; minItems/maxItems are misplaced INSIDE the items subschema (apply to a string, i.e. no array-length bound is actually enforced by schema). Same malformation on idsBatchMax2000 parameter", "evidence": ["DOCUMENTED_OPENAPI"]},
-    {"id": "D6", "what": "BatchStatus startTime/endTime documented as Eastern Time while all PIT payload timestamps are UTC — mixed time-zone conventions in one API", "evidence": ["DOCUMENTED_OPENAPI"]},
-    {"id": "D7", "what": "metrics maxItems=1600 vs 400-error example 'getFdsFundamentals.metrics: size must be between 1 and 1' and ids-limit phrasing '(1 metric per ID, for 1 day)' — effective ids x metrics x days budget is contradictory/undocumented", "evidence": ["DOCUMENTED_OPENAPI", "VENDOR_CLARIFICATION_REQUIRED"]},
-    {"id": "D8", "what": "Non-PIT fiscalPeriod dates 'fall back to the most recently completed period during resolution' vs PIT dates being pure filters on period end dates — subtly different date resolution semantics between arms", "evidence": ["DOCUMENTED_OPENAPI"]},
-    {"id": "D9", "what": "Segments accepts exactly ONE metric per request (SegmentsMetrics is a plain string enum of 5) unlike fundamentals' metric array", "evidence": ["DOCUMENTED_OPENAPI"]},
+    {
+        "id": "D1",
+        "what": "Three-way version skew: demo pins SDK 2.2.0; current SDK is 3.1.0 targeting API 2.5.0; local spec is API 2.5.1",
+        "evidence": ["DOCUMENTED_SAMPLE", "DOCUMENTED_SDK", "DOCUMENTED_OPENAPI"],
+    },
+    {
+        "id": "D2",
+        "what": "SDK 3.1.0 exposes 10 methods; spec 2.5.1 defines 12 operations. Missing from SDK: GET /fundamentals (getFdsFundamentals) and GET /segments (getFdsSegments). Spec is authoritative per charter; POST is the SDK-canonical path",
+        "evidence": ["DOCUMENTED_SDK", "DOCUMENTED_OPENAPI"],
+    },
+    {
+        "id": "D3",
+        "what": "Vendor demo never exercises the PIT arm (FundamentalsPointInTimeApi) — no sample exists for the trial's hard-gate endpoints",
+        "evidence": ["DOCUMENTED_SAMPLE"],
+    },
+    {
+        "id": "D4",
+        "what": "Response periodicity enum has 13 values (adds CAL) vs request enum 12 — CAL can be returned but not requested",
+        "evidence": ["DOCUMENTED_OPENAPI"],
+    },
+    {
+        "id": "D5",
+        "what": "IdsBatchMax30000 schema: name says 30000, description says 250 non-batch / 5000 batch; minItems/maxItems are misplaced INSIDE the items subschema (apply to a string, i.e. no array-length bound is actually enforced by schema). Same malformation on idsBatchMax2000 parameter",
+        "evidence": ["DOCUMENTED_OPENAPI"],
+    },
+    {
+        "id": "D6",
+        "what": "BatchStatus startTime/endTime documented as Eastern Time while all PIT payload timestamps are UTC — mixed time-zone conventions in one API",
+        "evidence": ["DOCUMENTED_OPENAPI"],
+    },
+    {
+        "id": "D7",
+        "what": "metrics maxItems=1600 vs 400-error example 'getFdsFundamentals.metrics: size must be between 1 and 1' and ids-limit phrasing '(1 metric per ID, for 1 day)' — effective ids x metrics x days budget is contradictory/undocumented",
+        "evidence": ["DOCUMENTED_OPENAPI", "VENDOR_CLARIFICATION_REQUIRED"],
+    },
+    {
+        "id": "D8",
+        "what": "Non-PIT fiscalPeriod dates 'fall back to the most recently completed period during resolution' vs PIT dates being pure filters on period end dates — subtly different date resolution semantics between arms",
+        "evidence": ["DOCUMENTED_OPENAPI"],
+    },
+    {
+        "id": "D9",
+        "what": "Segments accepts exactly ONE metric per request (SegmentsMetrics is a plain string enum of 5) unlike fundamentals' metric array",
+        "evidence": ["DOCUMENTED_OPENAPI"],
+    },
 ]
 
 VENDOR_CLARIFICATION_REQUIRED = [
@@ -195,7 +308,9 @@ def main() -> None:
                             else {
                                 "schema": next(
                                     (
-                                        m.get("schema", {}).get("$ref", "").rsplit("/", 1)[-1]
+                                        m.get("schema", {})
+                                        .get("$ref", "")
+                                        .rsplit("/", 1)[-1]
                                         for m in (r.get("content") or {}).values()
                                     ),
                                     None,
@@ -219,7 +334,8 @@ def main() -> None:
             "type": sch.get("type"),
             "default": sch.get("default"),
             "enum": sch.get("enum"),
-            "maxItems": sch.get("maxItems") or (sch.get("items", {}) or {}).get("maxItems"),
+            "maxItems": sch.get("maxItems")
+            or (sch.get("items", {}) or {}).get("maxItems"),
         }
 
     # ---- schemas ----------------------------------------------------------
@@ -230,7 +346,8 @@ def main() -> None:
             "properties": sorted(s.get("properties", {})),
             "required": s.get("required"),
             "enum": s.get("enum"),
-            "oneOf": [r.get("$ref", "").rsplit("/", 1)[-1] for r in s.get("oneOf", [])] or None,
+            "oneOf": [r.get("$ref", "").rsplit("/", 1)[-1] for r in s.get("oneOf", [])]
+            or None,
             "maxItems": s.get("maxItems") or (s.get("items", {}) or {}).get("maxItems"),
         }
         schemas[name] = {k: v for k, v in schemas[name].items() if v}
@@ -267,7 +384,11 @@ def main() -> None:
         "security": {
             "global": [list(s)[0] for s in spec.get("security", [])],
             "schemes": {
-                k: {"type": v.get("type"), "scheme": v.get("scheme"), "flows": sorted(v.get("flows", {}))}
+                k: {
+                    "type": v.get("type"),
+                    "scheme": v.get("scheme"),
+                    "flows": sorted(v.get("flows", {})),
+                }
                 for k, v in comp.get("securitySchemes", {}).items()
             },
         },
@@ -276,7 +397,11 @@ def main() -> None:
         "schemas": schemas,
         "enum_sites": enum_sites,
         "limits": {
-            "rate": {"requests_per_second": 10, "concurrent_requests": 10, "evidence": "DOCUMENTED_OPENAPI"},
+            "rate": {
+                "requests_per_second": 10,
+                "concurrent_requests": 10,
+                "evidence": "DOCUMENTED_OPENAPI",
+            },
             "long_running_max_minutes": 20,
             "ids": {
                 "GET /fundamentals, GET /segments": "250 non-batch / 2000 batch (desc; schema bound malformed, see D5)",

@@ -8,12 +8,18 @@ Global Prices + Corporate Actions, RBICS, Benchmarks. PIT Estimates DATAFEED
 = Phase-2 documentation-only (FS021). Core LASR wave suspended
 (coordination/core_lasr_pause_handoff.md).
 
-HARD RULES (all FS goals): never read/print/commit api_keys.txt or
-datafeed.txt (credentials — load via env at runtime only); no live API calls
-before FS010's controlled transport exists (doc phase is offline + SDK-docs
-web reads); no raw vendor responses in git (data/ is gitignored); no local
-resource paths hardcoded in reusable modules; PIT gate failures block
-regardless of IC; synthetic slice must keep passing untouched.
+HARD RULES (all FS goals): CREDENTIAL POLICY (user authorization 2026-08-17):
+agents MAY read /Users/admin/Documents/factset_api_resources/api_keys.txt and
+use the API keys end-to-end (parse -> export as env vars in-process for live
+calls). Values must STILL never be printed, logged, echoed, or committed
+anywhere (repo is PUBLIC) — presence-only reporting, sanitized telemetry,
+grep-your-diff-before-commit. datafeed.txt stays untouched (Phase-2
+credential). Live calls only through the FS010 shared transport (budgets,
+cache, kill switch); live data root = FACTSET_TRIAL_DATA_ROOT (default
+$HOME/factset_trial_data, outside repo+OneDrive); no raw vendor responses in
+git (data/ gitignored); no local resource paths hardcoded in reusable
+modules; PIT gate failures block regardless of IC; synthetic slice must keep
+passing untouched.
 
 | ID | Objective | Agent | Deps | Status |
 |----|-----------|-------|------|--------|

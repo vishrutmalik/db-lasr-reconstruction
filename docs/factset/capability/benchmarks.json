@@ -3123,7 +3123,8 @@
       "verdict": "RECONSTRUCTION REQUIRED. /constituents accepts exactly ONE benchmark id and ONE optional date per request and returns the full membership snapshot for that single date in one unpaginated 200. There is no date-range parameter, no membership-interval endpoint, no add/drop or delta endpoint, and no reconstitution-calendar endpoint anywhere in the spec. Historical membership therefore MUST be reconstructed from repeated single-date snapshots, exactly as WP9 anticipated.",
       "pull_cost_model": "one request per (benchmark, date): monthly 2010-2025 principal ~192 snapshots; quarterly secondary ~64 each; Russell 3000 snapshot ~3,000 rows, S&P Global BMI ~14,000 rows (29s read timeout is the size risk \u2014 no way to split a snapshot)",
       "count_series_trick": "constituentNumber is served time-serially by /index-history (frequency=D): daily count changes locate membership-change dates cheaply and target extra snapshots (INFERRED strategy from documented fields)",
-      "reconstitution_dates": "NOT servable from this API; must come from an external calendar source (BM-UNRES-09)"
+      "reconstitution_dates": "NOT servable from this API; must come from an external calendar source (BM-UNRES-09)",
+      "snapshot_vs_inferred": "vendor documents ONLY dated snapshot observations; continuous membership intervals are FS016-constructed inferences (transformation-versioned), never vendor data; spec is silent on frozen-as-published vs retrospectively maintained history (BM-UNRES-02) -> until resolved, knowledge-time = retrieval time, effective-date = snapshot date; not PIT-gradable"
     },
     "constituent_fields": {
       "evidence": "DOCUMENTED_OPENAPI",
@@ -3225,7 +3226,7 @@
         "tag": "UNRESOLVED (FS010 smoke + FS016 entitlement table)"
       },
       "BM-UNRES-02": {
-        "item": "whether /constituents at a past date returns membership as it stood then (frozen) or a restated/backfilled current view \u2014 the survivorship-honesty linchpin; zero vendor statements",
+        "item": "whether /constituents at a past date returns membership as it stood then (frozen-as-published) or a retrospectively maintained/backfilled view \u2014 the survivorship-honesty linchpin; zero vendor statements; feeds the knowledge-time-vs-effective-date grading policy",
         "tag": "VENDOR_CLARIFICATION_REQUIRED (+ WP9 live probes: delisted securities present in old snapshots; current members not backfilled)"
       },
       "BM-UNRES-03": {

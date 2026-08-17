@@ -239,10 +239,21 @@ FS016 pull design:
    letting FS016 target additional snapshots without daily membership pulls.
    The count series cannot detect same-day one-in-one-out swaps (count
    unchanged) — it bounds, not replaces, snapshot density.
-4. Snapshot cadence honesty: between two snapshots, membership is UNKNOWN, not
-   interpolatable — the canonical membership table must carry
-   observed-snapshot dates, not synthetic intervals, unless a swap-free count
-   series justifies interval closure (FS016 design decision, flagged here).
+4. Snapshot cadence honesty — vendor observations vs inferred membership: the
+   only thing the vendor DOCUMENTS is the dated snapshot observation
+   (benchmark, date) → members. Any continuous membership interval built
+   between two snapshots is an FS016-constructed INFERENCE, never vendor data,
+   and the canonical membership table must keep the two ontologically
+   separate: observed-snapshot rows (vendor-attributable) vs derived intervals
+   (transformation-versioned), with interval closure justified only by a
+   swap-free count series (FS016 design decision, flagged here).
+5. Knowledge-time vs effective-date policy: the spec is SILENT on whether a
+   past-date snapshot is served frozen-as-originally-published or
+   retrospectively maintained (corrections, restatements, backfills) —
+   BM-UNRES-02, VENDOR_CLARIFICATION_REQUIRED. Until resolved, a snapshot
+   retrieved today for e.g. 2015-06-30 carries knowledge-time = retrieval
+   date and effective-date = 2015-06-30, and must NOT be graded as
+   known-at-2015 (PIT) without the BM-UNRES-02 answer or a WP9 probe result.
 
 ## 5. Index-level series (WP9 item 3)
 
@@ -495,7 +506,7 @@ Spec is authoritative (charter). `DOCUMENTED_SAMPLE` facts from `benchmarks.py`;
 | ID | Item | Tag |
 |---|---|---|
 | BM-UNRES-01 | Trial entitlements per endpoint AND per benchmark id (both 403 modes documented); which WP9 benchmarks are accessible; whether one bad id fails a 500-id index request. | UNRESOLVED (FS010 smoke + FS016 entitlement table) |
-| BM-UNRES-02 | Whether `/constituents` at a past date returns membership **as it stood then** (frozen) or a restated/backfilled view — the survivorship-honesty linchpin. Zero vendor statements. | VENDOR_CLARIFICATION_REQUIRED (+ WP9 live probes: delisted securities present in old snapshots; current members not backfilled) |
+| BM-UNRES-02 | Whether `/constituents` at a past date returns membership **as it stood then** (frozen-as-published) or a retrospectively maintained/backfilled view — the survivorship-honesty linchpin. Zero vendor statements. Feeds the knowledge-time-vs-effective-date grading policy (§4 item 5). | VENDOR_CLARIFICATION_REQUIRED (+ WP9 live probes: delisted securities present in old snapshots; current members not backfilled) |
 | BM-UNRES-03 | Constituent-history depth per benchmark (does membership reach 2010?). `inceptionDate` is index inception, not data depth. | UNRESOLVED (live probe; entitlement-table column) |
 | BM-UNRES-04 | Behavior when `date` omitted (constituents/snapshot) and on non-trading dates; both-dates-omitted behavior on index-history. | UNRESOLVED (live pin) |
 | BM-UNRES-05 | `weightClose` units: documented "percent" but example magnitudes are implausible; whether snapshot weights sum to ~100 or ~1 must be pinned before WP9 tolerance checks. | UNRESOLVED (live pin) |
@@ -548,6 +559,11 @@ calendars, so panel-grade historical membership must be **reconstructed from
 repeated single-date snapshots** (monthly principal / quarterly secondary +
 externally-sourced reconstitution dates), with `/index-history`'s daily
 `constituentNumber` series as a cheap change-detector between snapshots.
-Whether past-date snapshots are frozen-as-published or restated (BM-UNRES-02),
-and how deep they reach (BM-UNRES-03), are the two live-probe gates on which
-the WP9 survivorship validation stands.
+The spec documents ONLY dated snapshot observations; any continuous membership
+series is an FS016-constructed inference and must be labeled as such, never as
+vendor data. The spec says NOTHING about whether past-date snapshots are
+frozen-as-published or retrospectively maintained (BM-UNRES-02,
+VENDOR_CLARIFICATION_REQUIRED) — until answered, reconstructed membership
+carries knowledge-time = retrieval time and effective-date = snapshot date and
+cannot be graded point-in-time; that answer plus history depth (BM-UNRES-03)
+are the two live-probe gates on which the WP9 survivorship validation stands.

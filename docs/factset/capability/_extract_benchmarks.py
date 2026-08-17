@@ -265,6 +265,12 @@ CURATED = {
         "from documented fields)",
         "reconstitution_dates": "NOT servable from this API; must come from an "
         "external calendar source (BM-UNRES-09)",
+        "snapshot_vs_inferred": "vendor documents ONLY dated snapshot "
+        "observations; continuous membership intervals are FS016-constructed "
+        "inferences (transformation-versioned), never vendor data; spec is "
+        "silent on frozen-as-published vs retrospectively maintained history "
+        "(BM-UNRES-02) -> until resolved, knowledge-time = retrieval time, "
+        "effective-date = snapshot date; not PIT-gradable",
     },
     "constituent_fields": {  # md §3 — WP9 special-depth item 2
         "evidence": "DOCUMENTED_OPENAPI",
@@ -436,8 +442,10 @@ CURATED = {
         },
         "BM-UNRES-02": {
             "item": "whether /constituents at a past date returns membership as it "
-            "stood then (frozen) or a restated/backfilled current view — the "
-            "survivorship-honesty linchpin; zero vendor statements",
+            "stood then (frozen-as-published) or a retrospectively maintained/"
+            "backfilled view — the survivorship-honesty linchpin; zero vendor "
+            "statements; feeds the knowledge-time-vs-effective-date grading "
+            "policy",
             "tag": "VENDOR_CLARIFICATION_REQUIRED (+ WP9 live probes: delisted "
             "securities present in old snapshots; current members not "
             "backfilled)",

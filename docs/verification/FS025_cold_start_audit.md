@@ -325,3 +325,106 @@ PRs, committed reports and lane checkpoints make repetition structurally detecta
 but the takeover procedure itself has a demonstrated dual-writer hazard (CS-1) plus
 pointer/metadata defects (CS-2..CS-9) that must be fixed by one bootstrap amendment
 cycle before this control plane can be called safely single-writer under takeover.
+
+---
+---
+
+# Rerun (r2) — audit of the CS-1..CS-13 remediation at main `e563404`
+
+Rerun ordered by the coordinator after control-plane remediation. Audited from the
+same fresh-context posture (read-only; every claim re-verified on disk/API except
+CS-10, taken on the coordinator's word per instruction — with an on-disk observation
+noted). Subject: main `e563404` (2026-08-17 22:47:31), post PR-#84 merge (`8897849`).
+
+## Per-finding remediation verification
+
+| Finding | Status | Evidence re-verified |
+|---|---|---|
+| CS-1 liveness/writer fence | **FIXED** | Bootstrap §8.0 present: pre-write liveness check (TAKEOVER row + `git log -1 --format=%cI` on main and every `agent/fs-*` branch; 30-min observe-only window), writer fence = TAKEOVER.md generation row commit+push, mandatory re-verification of latest-ACTIVE-generation before EACH control-plane write, stand-down rule. Adequacy assessed below. |
+| CS-2 FS-VQ pointer | **NOT FIXED** | Bootstrap §4.5 still reads "FS-VQ-01..75 in `docs/verification/FS009.md`"; fs_findings.md header line 3 unchanged; TRIAL_STATE FS009 evidence line unchanged. `e563404` touched neither pointer (7-file stat: no FS009.md, and the edited files retain the old text). The actual register remains `docs/factset/capability/MANIFEST.md` (75 rows re-confirmed at r1). |
+| CS-3 TRIAL_STATE meta | **FIXED** | revision 4; `last_reconciled_at: 2026-08-17T19:05:00+04:00` (full RFC3339); `last_reconciled_main: 8897849` with an explicit update-every-revision + drift-tolerance comment. (Structural self-reference of one commit remains — now acknowledged in the comment.) |
+| CS-4 remediation enumeration | **FIXED** | TRIAL_STATE FS010.remediation enumerates all fixes by finding-id + commit (25ea0e8/ba2b25f/05ec78a/652b2f0/0cc90f0 + PR body refresh); no opaque ordinals remain in the canonical file (but see R2-2: CURRENT_STATE.md still carries "fix 7"). |
+| CS-5 fs_goals contradiction | **FIXED** | Header now states external_analysis.md "arrived later on 2026-08-13, reconciled"; explicit "Status column may LAG TRIAL_STATE.yaml (the authoritative registry)" disclaimer added. |
+| CS-6 FS025 artifact/paths | **FIXED** | FS025.owned_paths now include lanes/README.md and record the audit report path `docs/verification/FS025_cold_start_audit.md` (auditor-owned, audit branch); FS025 lifecycle REMEDIATING with next_action = this rerun. |
+| CS-7 .env.example | **FIXED** | 7/7 names present (adds FACTSET_AUTH_MODE, FACTSET_OAUTH_CONFIG_PATH). |
+| CS-8 REST fallback | **FIXED** | Documented in bootstrap §8.0 ("GraphQL endpoints 503 transiently — REST (`gh api repos/...`) works as fallback"). |
+| CS-9 lanes/ dir | **FIXED** | `coordination/factset_trial/lanes/README.md` committed on main; correctly explains empty/partial dir is normal and non-authoritative. |
+| CS-10 memory private→public | **FIXED (per coordinator's word)** | On-disk observation: the anchors file itself now reads "PUBLIC (since 2026-08-13, user-authorized)"; residue: the MEMORY.md index blurb still says "private repo URL" (see R2-3). |
+| CS-11 pre-fix capture hygiene | **FIXED** | fs_findings F-007 records the re-audit: 200-success body, no error-envelope metadata, no credential material; hygiene note closed. |
+| CS-12 runtime-id liveness | **FIXED (via CS-1)** | Subsumed by §8.0: liveness is judged from commit timestamps + generation fence, not runtime ids — the correct durable signal. |
+| CS-13 LASR charters | **FIXED** | core_lasr_pause_handoff.md now carries condensed durable charters for G030/G031 (specs, CI bindings, grants, owned paths); transcript resume remains the primary path but is no longer the ONLY recovery route. |
+
+## Spot-check of the new state (all re-verified, nothing trusted)
+
+- **FS010 MERGED — CONFIRMED:** PR #84 `merged=true` at 2026-08-17T18:45:15Z, merge
+  commit `8897849` on main (REST, GraphQL 503-proof); CI 8/8 success on the merge
+  commit; branch `agent/fs-implementer/FS010-transport` deleted locally and remotely
+  (REST 404) AFTER merged-state was durably recorded; dual r2 gates on main:
+  verifier r2 PASS (`9d488f0`) + red-team r2 NO_BLOCKING (`7539776`, keeper flips
+  AST-verified, 14 new keepers incl. cross-process flock race 16-procs/limit-4 →
+  exactly 4).
+- **FS011/FS024 write-ahead — CONFIRMED:** TRIAL_STATE records lifecycle IMPLEMENTING
+  with branch/worktree/owned_paths/lane ids/live budgets (FS011 ≤60, FS024 ≤150;
+  trial.yaml family enables EXCLUSIVE to FS024 — a real overlap-prevention rule);
+  durable charters present in fs_goals.md (FS011: typed resolution, CE-7,
+  VF-FS010-9/RT-FS010-2 duties, WP2 7-way accounting; FS024: entitlement matrix,
+  PIT/non-PIT catalogs SEPARATELY, notebook sections 1–4, no red-team required with
+  stated rationale). Branches/worktrees do not exist yet — consistent with
+  write-ahead-before-launch (§7); intent recorded before workers push.
+
+## CS-1 fence adequacy (the coordinator's framing question)
+
+The fence makes takeover **safe in the detect-and-serialize sense, not the
+mutual-exclusion sense — and that is adequate here.** Mechanics: the TAKEOVER.md
+generation row must be committed AND PUSHED before any other write; git's
+non-fast-forward push rejection then serializes any concurrent writer on main —
+two candidates cannot both fence silently; the loser is forced to fetch, sees the
+winner's ACTIVE row, and must stand down. The per-write generation re-verification
+closes the resumed-zombie-orchestrator hole for any agent following the current
+bootstrap. Residual risks, both bounded and detectable: (a) a zombie from a
+generation predating §8.0 will not know to re-verify — but its main pushes get
+rejected once the new generation moves main, converting silent corruption into a
+loud conflict; (b) lane-level: a resumed zombie WORKER and a replacement worker
+share one goal branch with no per-lane fence — push rejection again forces
+reconciliation and single-writer-per-lane checkpoint files confine content
+collisions; worst case matches the stated max-loss bound (one atomic unit).
+The 30-minute observe window is a heuristic, but it is backstopped by the fence
+commit, so misjudging liveness cannot cause silent dual-write. Verdict on CS-1:
+remediation is sound; liveness is now an explicitly modeled state rather than a
+finding.
+
+## New findings from the rerun
+
+- **R2-1 (moderate — register truthfulness):** fs_findings F-007 states
+  "pointer/metadata defects CS-2..CS-9 fixed this revision" but **CS-2 is not fixed
+  in any of its three locations** (bootstrap §4.5, fs_findings header, TRIAL_STATE
+  FS009 evidence line). A durable register claiming a remediation that did not
+  happen is exactly the rot this audit exists to catch. Fix: one-line pointer edit
+  in all three files, or amend F-007 to record CS-2 as open.
+- **R2-2 (moderate — materialized-view staleness):** CURRENT_STATE.md is still
+  state_revision 1 (main at revision 4): it shows FS010 ACTIVE with "fix 7 + gates
+  in flight" while FS010 is MERGED, and still points the FS-VQ register at "FS009
+  report". Bootstrap §4.3's "verify freshness vs git" defuses it, but a 3-revision
+  drift in the human view actively misleads any reader who weighs it.
+- **R2-3 (minor):** MEMORY.md index blurb still says "private repo URL" though the
+  anchors file it links to is corrected — a reader of the index alone still gets
+  the wrong threat model.
+- **R2-4 (minor):** TRIAL_STATE FS010 record internal residue: the `red_team:`
+  field still ends "keeper-flip integrity re-check pending" while the lanes block
+  and lifecycle comment record VERDICT_NO_BLOCKING (7539776) — stale sub-field
+  inside an otherwise-correct record.
+
+## Rerun verdict
+
+**RECOVERABLE.** All blocking r1 findings are remediated: the demonstrated CS-1
+dual-writer hazard is closed by a fence whose failure modes degrade to loud,
+git-serialized conflicts rather than silent corruption; FS010 is genuinely MERGED
+behind dual r2 gates; FS011/FS024 are recoverable from durable charters + write-ahead
+records alone; credentials/cache/budget discipline is unchanged and verified. A fresh
+orchestrator following the bootstrap today would repeat no completed work and invent
+no state. The four residual findings (R2-1..R2-4) are one-line documentation/pointer
+fixes — none impairs reconstruction, because in every case the canonical source is
+correct and the stated precedence rules resolve the conflict; R2-1 and R2-2 should
+nonetheless be fixed in the next control-plane commit, since a findings register that
+overstates its own remediation and a materialized view three revisions stale are the
+two cheapest ways for this verdict to rot back to RECOVERABLE_WITH_GAPS.

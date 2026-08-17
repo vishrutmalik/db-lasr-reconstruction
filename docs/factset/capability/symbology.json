@@ -1,0 +1,230 @@
+{
+  "manifest_version": "FS003-draft-1",
+  "family": "symbology",
+  "goal": "FS003",
+  "generated": "2026-08-17",
+  "note_for_fs009": "Emitted before FS002's manifest schema finalized; structure chosen to be losslessly re-mappable.",
+  "api": {
+    "title": "FactSet Symbology API",
+    "openapi": "3.0.0",
+    "spec_version": "3.5.0",
+    "base_url": "https://api.factset.com/content",
+    "path_prefix": "/symbology/v3",
+    "media_type": "application/json",
+    "evidence": "DOCUMENTED_OPENAPI"
+  },
+  "auth": {
+    "spec_declared": {"scheme": "http-basic", "username": "USERNAME-SERIAL", "password": "API key (IP-range scoped)", "evidence": "DOCUMENTED_OPENAPI"},
+    "sdk_supported": [
+      {"name": "FactSetApiKey", "type": "http-basic", "evidence": "DOCUMENTED_SDK"},
+      {"name": "FactSetOAuth2", "type": "oauth2-confidential-client", "config": "app-config JSON via fds.sdk.utils.authentication.ConfidentialClient", "evidence": "DOCUMENTED_SDK"}
+    ],
+    "demo_uses": {"name": "FactSetOAuth2", "evidence": "DOCUMENTED_SAMPLE"},
+    "fs010_guidance": "Primary = HTTP Basic from env vars (spec authoritative, D-2)."
+  },
+  "limits": {
+    "rate_limit_rps": {"value": 10, "evidence": "DOCUMENTED_OPENAPI"},
+    "rate_limit_concurrent": {"value": 10, "evidence": "DOCUMENTED_OPENAPI"},
+    "rate_limit_exceedance_behavior": {"value": null, "evidence": "UNRESOLVED", "ref": "U-4"},
+    "ids_per_request": {"schema_max": 3000, "prose_max": 100, "conflict": "D-1", "safe_ceiling": 100, "evidence": "DOCUMENTED_OPENAPI", "resolution": "UNRESOLVED (U-3)"},
+    "output_symbol_types_per_request": {"value": 20, "min": 1, "evidence": "DOCUMENTED_OPENAPI", "note": "bounds present on body schemas only; assumed for GET (INFERRED)"},
+    "get_url_bytes": {"value": 8192, "evidence": "DOCUMENTED_OPENAPI"},
+    "server_read_timeout_seconds": {"value": 29, "surfaces_as": "HTTP 400 'The request took too long. Try again with a smaller request.'", "evidence": "DOCUMENTED_OPENAPI"},
+    "pagination": {"value": "none", "evidence": "DOCUMENTED_OPENAPI"},
+    "server_side_async": {"value": "none", "evidence": "DOCUMENTED_OPENAPI"},
+    "client_async": {"value": "SDK *_async variants (client-side threads)", "evidence": "DOCUMENTED_SDK"}
+  },
+  "operations": [
+    {
+      "operation_id": "identifierResolution",
+      "method": "GET",
+      "path": "/symbology/v3/identifier-resolution",
+      "tag": "Identifier Resolution",
+      "purpose": "Current-state translation of one input symbol type to up to 20 output symbol types.",
+      "parameters": [
+        {"name": "ids", "in": "query", "required": true, "type": "array[string]", "explode": false, "min_items": 1, "max_items_schema": 3000, "max_items_prose": 100, "notes": "single type per request; echoed as requestId; 8KB URL cap", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "inputSymbolType", "in": "query", "required": true, "type": "string", "enum_ref": "input_symbol_types_current", "default": "tickerRegion", "notes": "required:true AND default present (D-4)", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "outputSymbolTypes", "in": "query", "required": true, "type": "array[string]", "explode": false, "enum_ref": "output_symbol_types_current", "notes": "no min/max on GET parameter schema; body schema bound is 1..20", "evidence": "DOCUMENTED_OPENAPI"}
+      ],
+      "request_body": null,
+      "responses": {"200": "identifierResolutionResponse", "400": "errorResponse", "401": "errorResponse (401Legacy)", "403": "errorResponse", "415": "errorResponse (415Legacy)", "500": "errorResponse (500Legacy)"},
+      "sdk": {"class": "IdentifierResolutionApi", "method": "identifier_resolution", "evidence": "DOCUMENTED_SDK"},
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "batchIdentifierResolution",
+      "method": "POST",
+      "path": "/symbology/v3/identifier-resolution",
+      "tag": "Identifier Resolution",
+      "purpose": "Same as GET; preferred for large id lists (no 8KB URL cap).",
+      "parameters": [],
+      "request_body": {"schema": "identifierResolutionRequest", "required": true, "shape": "flat", "evidence": "DOCUMENTED_OPENAPI"},
+      "responses": {"200": "identifierResolutionResponse", "400": "errorResponse", "401": "errorResponse (401Legacy)", "403": "errorResponse", "415": "errorResponse (415Legacy)", "500": "errorResponse (500Legacy)"},
+      "sdk": {"class": "IdentifierResolutionApi", "method": "batch_identifier_resolution", "evidence": "DOCUMENTED_SDK"},
+      "demo_coverage": {"file": "symbology.py", "exercises": true, "inputs": "tickerRegion ['IBM-US','FDS-US'] -> ['fsymRegionalId','tickerExchange']", "evidence": "DOCUMENTED_SAMPLE"},
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "historicalIdentifierResolution",
+      "method": "GET",
+      "path": "/symbology/v3/historical-identifier-resolution",
+      "tag": "Historical Identifier Resolution",
+      "purpose": "Historical CUSIP/SEDOL/ISIN/tickerRegion for input ids; full history or as-of-date snapshot.",
+      "parameters": [
+        {"name": "ids", "in": "query", "required": true, "type": "array[string]", "explode": false, "min_items": 1, "max_items_schema": 3000, "max_items_prose": 100, "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "inputSymbolType", "in": "query", "required": true, "type": "string", "enum_ref": "input_symbol_types_historical", "default": null, "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "outputSymbolTypes", "in": "query", "required": true, "type": "array[string]", "explode": false, "enum_ref": "output_symbol_types_historical", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "asOfDate", "in": "query", "required": false, "type": "string(date YYYY-MM-DD)", "omitted_behavior": "full history returned", "future_dates": "rejected with 400", "evidence": "DOCUMENTED_OPENAPI"}
+      ],
+      "request_body": null,
+      "responses": {"200": "identifierResolutionHistoricalResponse", "400": "errorResponseHistorical", "401": "errorResponseHistorical (401)", "403": "errorResponseHistorical", "415": "errorResponseHistorical (415)", "500": "errorResponseHistorical (500)"},
+      "sdk": {"class": "HistoricalIdentifierResolutionApi", "method": "historical_identifier_resolution", "evidence": "DOCUMENTED_SDK"},
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "batchHistoricalIdentifierResolution",
+      "method": "POST",
+      "path": "/symbology/v3/historical-identifier-resolution",
+      "tag": "Historical Identifier Resolution",
+      "purpose": "Same as GET historical; body is data-wrapped (D-9).",
+      "parameters": [],
+      "request_body": {"schema": "identifierResolutionHistoricalRequest", "required": true, "shape": "wrapped-in-data", "evidence": "DOCUMENTED_OPENAPI"},
+      "responses": {"200": "identifierResolutionHistoricalResponse", "400": "errorResponseHistorical", "401": "errorResponseHistorical (401)", "403": "errorResponseHistorical", "415": "errorResponseHistorical (415)", "500": "errorResponseHistorical (500)"},
+      "sdk": {"class": "HistoricalIdentifierResolutionApi", "method": "batch_historical_identifier_resolution", "evidence": "DOCUMENTED_SDK"},
+      "evidence": "DOCUMENTED_OPENAPI"
+    }
+  ],
+  "schemas": {
+    "identifierResolutionRequest": {"kind": "request", "required": ["ids", "inputSymbolType", "outputSymbolTypes"], "fields": {"ids": "getIdsResolution", "inputSymbolType": "getInputSymbolType", "outputSymbolTypes": "getOutputSymbolTypes"}, "evidence": "DOCUMENTED_OPENAPI"},
+    "identifierResolutionResponse": {"kind": "response", "fields": {"data": "array[identifierResolution]"}, "evidence": "DOCUMENTED_OPENAPI"},
+    "identifierResolution": {
+      "kind": "data-row",
+      "fields": {
+        "requestId": {"type": "string", "nullable": false, "meaning": "input identifier echoed (join key)"},
+        "inputSymbolType": {"type": "string", "nullable": false},
+        "name": {"type": "string", "nullable": true},
+        "frefListingExchange": {"type": "string", "nullable": true, "meaning": "3-char fref code, primary exchange"},
+        "currency": {"type": "string", "nullable": true, "meaning": "ISO 3 currency"}
+      },
+      "additional_properties": {"type": "string", "nullable": true, "meaning": "one key per requested outputSymbolType; key casing in examples is lowercased vs enum (D-6/U-5); single value per type (U-6)"},
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    "identifierResolutionHistoricalRequest": {"kind": "request", "required": ["data"], "fields": {"data": "identifierResolutionHistoricalRequestBody"}, "evidence": "DOCUMENTED_OPENAPI"},
+    "identifierResolutionHistoricalRequestBody": {"kind": "request-body", "required": ["ids", "inputSymbolType", "outputSymbolTypes"], "fields": {"ids": "getIdsResolution", "inputSymbolType": "getHistoricalInputSymbolType", "outputSymbolTypes": "getHistoricalOutputSymbolTypes", "asOfDate": "getAsOfDate (optional)"}, "evidence": "DOCUMENTED_OPENAPI"},
+    "identifierResolutionHistoricalResponse": {"kind": "response", "fields": {"data": "array[identifierResolutionHistorical]"}, "evidence": "DOCUMENTED_OPENAPI"},
+    "identifierResolutionHistorical": {
+      "kind": "data-row",
+      "grain": "requestId x outputType x validity interval",
+      "fields": {
+        "requestId": {"type": "string", "nullable": false},
+        "inputSymbolType": {"type": "string", "nullable": false},
+        "name": {"type": "string", "nullable": true},
+        "frefListingExchange": {"type": "string", "nullable": true},
+        "currency": {"type": "string", "nullable": true},
+        "outputType": {"type": "string", "nullable": true, "meaning": "examples echo enum casing (CUSIP)"},
+        "value": {"type": "string", "nullable": true},
+        "startDate": {"type": "date", "nullable": true},
+        "endDate": {"type": "date", "nullable": true, "open_interval_representation": "UNRESOLVED (U-7c)"}
+      },
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    "errorResponse": {"kind": "error", "used_by": "identifier-resolution ops", "shape": "flat", "fields": {"status": "string", "timestamp": "YYYY-MM-DD HH:MM:SS.SSS", "path": "string", "message": "string", "subErrors": {"object": "operation ID", "field": "string", "message": "string", "rejectedValue": "array[string]"}}, "evidence": "DOCUMENTED_OPENAPI"},
+    "errorResponseHistorical": {"kind": "error", "used_by": "historical ops", "shape": "jsonapi-errors-array", "fields": {"errors": "array[errorObject]"}, "evidence": "DOCUMENTED_OPENAPI"},
+    "errorObject": {"kind": "error-item", "fields": {"id": "UUID per occurrence", "code": "string", "links": {"about": "endpoint path"}, "title": "string message"}, "evidence": "DOCUMENTED_OPENAPI"},
+    "getIdsResolution": {"kind": "param-mirror", "type": "array[string]", "min_items": 1, "max_items": 3000, "evidence": "DOCUMENTED_OPENAPI"},
+    "getInputSymbolType": {"kind": "param-mirror", "type": "string", "enum_ref": "input_symbol_types_current", "default": "tickerRegion", "evidence": "DOCUMENTED_OPENAPI"},
+    "getHistoricalInputSymbolType": {"kind": "param-mirror", "type": "string", "enum_ref": "input_symbol_types_historical", "evidence": "DOCUMENTED_OPENAPI"},
+    "getOutputSymbolTypes": {"kind": "param-mirror", "type": "array[string]", "min_items": 1, "max_items": 20, "enum_ref": "output_symbol_types_current", "evidence": "DOCUMENTED_OPENAPI"},
+    "getHistoricalOutputSymbolTypes": {"kind": "param-mirror", "type": "array[string]", "min_items": 1, "max_items": 20, "enum_ref": "output_symbol_types_historical", "evidence": "DOCUMENTED_OPENAPI"},
+    "getAsOfDate": {"kind": "param-mirror", "type": "string(date)", "omitted_behavior": "full history", "evidence": "DOCUMENTED_OPENAPI"}
+  },
+  "enums": {
+    "input_symbol_types_current": {
+      "count": 31,
+      "default": "tickerRegion",
+      "values": ["BIC", "CIK", "CRD", "EIN", "FITCH", "LEI", "MD", "SPR", "VALOREN", "WKN", "UKCH", "RSSD", "SEDOL", "CUSIP", "fsymEntityId", "fsymSecurityId", "fsymRegionalId", "fsymListingId", "ISIN", "tickerExchange", "tickerRegion", "bloombergFigi", "bloombergTicker", "GVKEY", "GVKEY & IID", "JCN", "LoanX", "MarkitRed", "VAT", "crunchBaseId", "creditSafeId"],
+      "subscription_flagged": ["BIC", "FITCH", "MD", "SPR", "WKN", "SEDOL", "CUSIP", "ISIN"],
+      "input_only_per_prose": ["VALOREN", "GVKEY", "GVKEY & IID", "LoanX", "MarkitRed"],
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    "input_symbol_types_historical": {
+      "count": 28,
+      "values": ["BIC", "CIK", "CRD", "EIN", "FITCH", "LEI", "MD", "SPR", "VALOREN", "WKN", "UKCH", "RSSD", "SEDOL", "CUSIP", "fsymEntityId", "fsymSecurityId", "fsymRegionalId", "fsymListingId", "ISIN", "tickerExchange", "tickerRegion", "bloombergFigi", "bloombergTicker", "GVKEY", "GVKEY & IID", "JCN", "LoanX", "MarkitRed"],
+      "delta_vs_current": {"removed": ["VAT", "crunchBaseId", "creditSafeId"]},
+      "note": "all except SEDOL/CUSIP/ISIN/tickerRegion are input-only here, including all fsym flavors",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    "output_symbol_types_current": {
+      "count": 30,
+      "values": ["BIC", "CIK", "CRD", "EIN", "FITCH", "LEI", "MD", "SPR", "WKN", "UKCH", "RSSD", "SEDOL", "CUSIP", "fsymEntityId", "fsymSecurityId", "fsymRegionalId", "fsymListingId", "ISIN", "tickerExchange", "tickerRegion", "JCN", "bloombergListingTicker", "bloombergRegionalTicker", "bloombergSecurityTicker", "bloombergFigiListing", "bloombergFigiRegional", "bloombergFigiSecurity", "VAT", "crunchBaseId", "creditSafeId"],
+      "output_only": ["bloombergListingTicker", "bloombergRegionalTicker", "bloombergSecurityTicker", "bloombergFigiListing", "bloombergFigiRegional", "bloombergFigiSecurity"],
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    "output_symbol_types_historical": {
+      "count": 4,
+      "values": ["SEDOL", "CUSIP", "ISIN", "tickerRegion"],
+      "evidence": "DOCUMENTED_OPENAPI"
+    }
+  },
+  "identity_semantics": {
+    "fsym_flavors": {"values": ["fsymEntityId", "fsymSecurityId", "fsymRegionalId", "fsymListingId"], "hierarchy": "listing < regional < security < entity (INFERRED from naming; not stated)", "evidence": "DOCUMENTED_OPENAPI + INFERRED"},
+    "hub_and_spoke": {"claim": "Symbology is the join hub across FactSet Content APIs", "evidence": "DOCUMENTED_OPENAPI"},
+    "pit_support": {"mechanism": "historical endpoint: startDate/endDate validity intervals; asOfDate snapshot; omitted asOfDate = full history", "outputs_limited_to": ["SEDOL", "CUSIP", "ISIN", "tickerRegion"], "fsym_ids_historical_role": "input-only", "evidence": "DOCUMENTED_OPENAPI"},
+    "pit_asymmetry": {"fact": "no dated market-id -> fsym lookup exists; identity map must be seeded from fsym inputs and hydrated outward", "evidence": "INFERRED"},
+    "delisted_inactive_behavior": {"value": null, "evidence": "UNRESOLVED", "ref": "U-7"},
+    "multiple_match_behavior": {"current_endpoint": "UNRESOLVED (U-6): additionalProperties allows one value per output type per row", "historical_endpoint": "long format supports multiplicity", "evidence": "DOCUMENTED_OPENAPI + UNRESOLVED"},
+    "no_match_behavior": {"value": null, "evidence": "UNRESOLVED", "ref": "U-8"},
+    "per_identifier_entitlement_failure": {"value": "HTTP 403 forbiddenIdentifier", "evidence": "DOCUMENTED_OPENAPI"},
+    "join_key": {"value": "requestId echoes input verbatim, non-nullable", "evidence": "DOCUMENTED_OPENAPI"},
+    "enrichment_fields": {"values": ["name", "frefListingExchange", "currency"], "evidence": "DOCUMENTED_OPENAPI"}
+  },
+  "discrepancies": [
+    {"id": "D-1", "topic": "ids limit 100 (prose) vs 3000 (schema maxItems)", "sources": ["DOCUMENTED_OPENAPI prose", "DOCUMENTED_OPENAPI schema", "DOCUMENTED_SDK repeats prose"], "resolution": "cap 100 until FS010 measures (U-3)"},
+    {"id": "D-2", "topic": "auth: spec BasicAuth-only vs SDK Basic+OAuth2 vs demo OAuth2", "sources": ["DOCUMENTED_OPENAPI", "DOCUMENTED_SDK", "DOCUMENTED_SAMPLE"], "resolution": "spec wins: env-based HTTP Basic primary"},
+    {"id": "D-3", "topic": "demo pins fds.sdk.Symbology==3.0.0; current SDK 5.0.0", "sources": ["DOCUMENTED_SAMPLE", "DOCUMENTED_SDK"], "resolution": "demo stale; pin current major"},
+    {"id": "D-4", "topic": "GET inputSymbolType required:true yet has default; SDK treats optional", "sources": ["DOCUMENTED_OPENAPI", "DOCUMENTED_SDK"], "resolution": "always send explicitly"},
+    {"id": "D-5", "topic": "bloomberg ticker output names: two conflicting prose lists vs enum (enum: bloombergListingTicker/bloombergRegionalTicker/bloombergSecurityTicker)", "sources": ["DOCUMENTED_OPENAPI prose", "DOCUMENTED_OPENAPI enum"], "resolution": "enum is the wire contract"},
+    {"id": "D-6", "topic": "dynamic response keys lowercased in examples (cusip/sedol) vs request enum casing (CUSIP/SEDOL); historical outputType echoes enum casing", "sources": ["DOCUMENTED_OPENAPI examples"], "resolution": "case-normalize; exact rule U-5"},
+    {"id": "D-7", "topic": "spec example data internally inconsistent (MSFT given AAPL's SEDOL; GOOGL CUSIP differs across examples; AAPL exchange NAS vs USA)", "sources": ["DOCUMENTED_OPENAPI examples"], "resolution": "never use spec examples as fixtures"},
+    {"id": "D-8", "topic": "two error envelope shapes: flat errorResponse (current ops) vs errors[] errorResponseHistorical (historical ops)", "sources": ["DOCUMENTED_OPENAPI"], "resolution": "transport parses both"},
+    {"id": "D-9", "topic": "POST body shape asymmetry: flat vs data-wrapped", "sources": ["DOCUMENTED_OPENAPI"], "resolution": "separate request builders"},
+    {"id": "D-10", "topic": "demo otherwise consistent with SDK docs (wrapper classes, to_dict()['data'])", "sources": ["DOCUMENTED_SAMPLE", "DOCUMENTED_SDK"], "resolution": "no action"}
+  ],
+  "unresolved": [
+    {"id": "U-1", "question": "trial entitlement for subscription-flagged symbol types (incl. CUSIP/SEDOL/ISIN)", "tag": "VENDOR_CLARIFICATION_REQUIRED", "also": "FS010 per-type probe"},
+    {"id": "U-2", "question": "historical endpoint entitlement on trial", "tag": "UNRESOLVED"},
+    {"id": "U-3", "question": "effective max ids per POST (100 vs 3000); GET cap", "tag": "UNRESOLVED"},
+    {"id": "U-4", "question": "rate-limit exceedance: status code, body, headers (no 429 documented)", "tag": "UNRESOLVED"},
+    {"id": "U-5", "question": "dynamic output key casing for camelCase types", "tag": "UNRESOLVED"},
+    {"id": "U-6", "question": "one-to-many resolution behavior on current endpoint (security->listings; entity->securities)", "tag": "UNRESOLVED"},
+    {"id": "U-7", "question": "delisted/inactive resolution on both endpoints; open-interval endDate representation", "tag": "UNRESOLVED"},
+    {"id": "U-8", "question": "no-match representation (null keys vs omitted row vs error)", "tag": "UNRESOLVED"},
+    {"id": "U-9", "question": "fsym permanence invariants across corporate actions", "tag": "VENDOR_CLARIFICATION_REQUIRED"},
+    {"id": "U-10", "question": "level handling of level-agnostic bloombergFigi/bloombergTicker inputs", "tag": "UNRESOLVED"},
+    {"id": "U-11", "question": "GET default honored when required inputSymbolType omitted", "tag": "UNRESOLVED", "priority": "low"},
+    {"id": "U-12", "question": "asOfDate effect on enrichment fields (name/frefListingExchange/currency)", "tag": "UNRESOLVED"}
+  ],
+  "completeness": {
+    "extraction_script": "docs/factset/capability/_extract_symbology.py",
+    "spec_lines": 1856,
+    "paths": {"in_spec": 2, "documented": 2},
+    "operations": {"in_spec": 4, "documented": 4},
+    "component_parameters": {"in_spec": 6, "documented": 6},
+    "schemas": {"in_spec": 16, "documented": 16},
+    "component_responses": {"in_spec": 10, "documented": 10, "note": "4 defined-but-unreferenced components (400, 400Legacy, 403, 403Legacy) recorded"},
+    "component_examples": {"in_spec": 32, "documented": 32},
+    "security_schemes": {"in_spec": 1, "documented": 1},
+    "enum_sites": {"in_spec": 8, "documented": 8, "distinct_value_sets": 4},
+    "sdk_operations": {"in_sdk_docs": 4, "documented": 4},
+    "sdk_models": {"in_sdk_docs": 17, "documented": 17, "reconciliation": "16 spec schemas - getAsOfDate (plain date) + generator-split ErrorObjectLinks + ErrorResponseSubErrors = 17"}
+  },
+  "sources": {
+    "openapi_spec": "symbology_api-v3-yaml.yaml (local FactSet resources dir; info.version 3.5.0)",
+    "sdk_docs": [
+      "https://github.com/factset/enterprise-sdk/tree/main/code/python/Symbology/v3 (README.md; SDK 5.0.0)",
+      ".../docs/IdentifierResolutionApi.md",
+      ".../docs/HistoricalIdentifierResolutionApi.md"
+    ],
+    "demo": "symbology.py (local FactSet resources dir)"
+  }
+}

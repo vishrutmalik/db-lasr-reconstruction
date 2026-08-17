@@ -45,8 +45,8 @@ requirements/decisions/findings/dependencies needs user authorization.
 3. `CURRENT_STATE.md` (materialized human view; verify freshness vs git).
 4. `fs_goals.md` (goal graph + durable charters) and `lanes/*.md` on ACTIVE
    BRANCHES (worker-local checkpoints — may be ahead of central state).
-5. `fs_review_adjudication.md` + `fs_findings.md` (+ FS-VQ-01..75 in
-   `docs/verification/FS009.md`). 6. `decisions.md` root: D-018/D-019/D-020.
+5. `fs_review_adjudication.md` + `fs_findings.md` (+ the FS-VQ-01..75 register
+   table in `docs/factset/capability/MANIFEST.md`; FS009's report has context). 6. `decisions.md` root: D-018/D-019/D-020.
 7. `docs/architecture/factset_integration.md` (accepted architecture) and
    `docs/factset/capability/MANIFEST.md` (normative capability manifest +
    rulings N1/N2/N3). 8. Verifier/red-team reports: `docs/verification/FS*.md`,

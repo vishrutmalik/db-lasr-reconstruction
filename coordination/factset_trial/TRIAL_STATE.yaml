@@ -4,9 +4,9 @@
 # Lifecycle + ownership + recovery rules: ORCHESTRATOR_BOOTSTRAP.md.
 meta:
   schema_version: 1
-  state_revision: 4
+  state_revision: 5
   orchestration_generation: 1  # Claude Fable 5 orchestrator, session of 2026-08-13..17
-  last_reconciled_main: 8897849  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
+  last_reconciled_main: e563404-next  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
   last_reconciled_at: 2026-08-17T19:05:00+04:00
   charter_source: fs_goals.md (durable charters) + external_analysis.md (local requirements doc)
 
@@ -19,7 +19,7 @@ goals:
   FS006: {title: Estimates manifest, scope_basis: EA §3.2, lifecycle: MERGED, pr: 79}
   FS007: {title: RBICS manifest, scope_basis: EA §3.2, lifecycle: MERGED, pr: 80}
   FS008: {title: Benchmarks manifest, scope_basis: EA §3.2, lifecycle: MERGED, pr: 82}
-  FS009: {title: Reconciled MANIFEST + verification + rulings N1/N2/N3, scope_basis: EA §3.3, lifecycle: MERGED, pr: 83, evidence: docs/factset/capability/MANIFEST.md + docs/verification/FS009.md (FS-VQ-01..75)}
+  FS009: {title: Reconciled MANIFEST + verification + rulings N1/N2/N3, scope_basis: EA §3.3, lifecycle: MERGED, pr: 83, evidence: docs/factset/capability/MANIFEST.md (incl. FS-VQ-01..75 register + rulings) + docs/verification/FS009.md}
   FS021: {title: Phase-2 PIT-Estimates datafeed spec, scope_basis: EA §19, lifecycle: MERGED, pr: 81, evidence: docs/factset/phase2_pit_estimates_spec.md}
   FS010:
     title: Shared transport + trial configuration
@@ -33,7 +33,7 @@ goals:
     latest_reconciled_sha: d6c3f7e
     implementation: IMPLEMENTED (2d6cba5) + live smoke PASSED (auth ACCEPTED, symbology ENTITLED, F-005)
     verification: FAIL r1 (928f2d5) -> r2 PASS (9d488f0; 0 blocking remaining; all fixes independently re-probed; 2 cosmetic notes)
-    red_team: NO_BLOCKING r1 (fadd2cd; RT-FS010-1..3) -> keeper-flip integrity re-check pending
+    red_team: NO_BLOCKING r1 (fadd2cd) + r2 NO_BLOCKING (7539776; keeper flips AST-verified)
     remediation: COMPLETE d6c3f7e (25ea0e8 sanitize+canary regressions; ba2b25f atomic reserve-before-send w/ flock + per-attempt consumption; 05ec78a exact-"1" consent w/ fail-safe kill; 652b2f0 encoder pin; 0cc90f0 keeper format; PR body refreshed)
     lanes:
       FS010-IMPLEMENT-01: {state: REMEDIATED_IDLE, agent_runtime: ac723078d6a4e2880 (ephemeral), checkpoint: lanes/FS010-IMPLEMENT-01.md on branch}
@@ -75,6 +75,6 @@ goals:
   FS025:
     title: Portability control plane + cold-start recovery gate
     scope_basis: user directive 2026-08-17 (continuous recoverability invariant)
-    lifecycle: REMEDIATING  # audit r1 verdict RECOVERABLE_WITH_GAPS (a669509 on audit/FS025-cold-start; 13 findings, CS-1 dual-writer hazard DEMONSTRATED); control-plane remediation this revision; rerun pending
+    lifecycle: VERIFIED  # rerun verdict RECOVERABLE (1e0e0b0); residuals R2-1..4 + CS-2 fixed at revision 5; invariant ACTIVE
     owned_paths: ["coordination/factset_trial/ORCHESTRATOR_BOOTSTRAP.md", "coordination/factset_trial/TRIAL_STATE.yaml", "coordination/factset_trial/CURRENT_STATE.md", "coordination/factset_trial/TAKEOVER.md", "coordination/factset_trial/lanes/README.md", "audit report: docs/verification/FS025_cold_start_audit.md (auditor-owned, audit branch)"]
-    next_action: rerun cold-start audit against remediated control plane; PASS = RECOVERABLE
+    next_action: merge audit branch to main (docs-only); then ongoing invariant maintenance

@@ -1,8 +1,9 @@
 # FactSet Trial — Findings Register
 
-AUTHORITATIVE consolidated register: FS-VQ-01..75 in docs/verification/FS009.md
-+ the normative rulings N1/N2/N3 in docs/factset/capability/MANIFEST.md (both
-on main since 37ecf1b). F-001..F-004 below are subsumed by that register.
+AUTHORITATIVE consolidated register: the FS-VQ-01..75 table lives in
+docs/factset/capability/MANIFEST.md (with rulings N1/N2/N3);
+docs/verification/FS009.md carries the verification context. On main since
+37ecf1b. F-001..F-004 below are subsumed by that register.
 Classification: PROVEN / PARTIALLY_PROVEN / UNAVAILABLE / DEFERRED /
 VENDOR_CLARIFICATION_REQUIRED. Distinguish documented vs observed-live vs
 inferred. 
@@ -56,9 +57,18 @@ Audit a669509 (audit/FS025-cold-start): content-state fully reconstructable
 from durable state (auditor re-ran gates, matched 2794/23/21; reconstruction
 confirmed by incumbent's live commits). 13 findings — CS-1 dual-writer hazard
 DEMONSTRATED (no liveness fence; fixed in bootstrap §8.0 this revision);
-pointer/metadata defects CS-2..CS-9 fixed this revision; CS-10 orchestrator
+pointer/metadata defects CS-3..CS-9 fixed at e563404; CS-2 (FS-VQ pointer)
+fixed one revision later (rerun finding R2-1 — this register briefly
+overstated CS-2; corrected here); CS-10 orchestrator
 memory said private repo (fixed); CS-11 the single pre-sanitize-fix smoke
 capture was re-audited — 200-success body, no error-envelope metadata, no
 credential material (hygiene note closed); CS-13 LASR resume charters
 condensed into core_lasr_pause_handoff.md. Rerun pending; gate passes only at
 RECOVERABLE.
+
+## F-008 (2026-08-17) — FS025 cold-start gate: RECOVERABLE (PASS)
+Rerun 1e0e0b0 (audit/FS025-cold-start): 12/13 r1 findings verified fixed;
+CS-2 + residuals R2-1..R2-4 fixed in the immediately following control-plane
+commit. Fence adequacy ruled safe (detect-and-serialize; zombie writers
+degrade to loud push conflicts bounded by one atomic unit). The continuous-
+recoverability invariant is ACTIVE from this point.

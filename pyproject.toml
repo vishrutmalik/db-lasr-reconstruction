@@ -16,7 +16,11 @@ classifiers = [
     "Typing :: Typed",
 ]
 # Runtime set per toolchain_proposal.md §4 — keep it this small.
+# httpx: FS010 one-dependency grant (fs_goals.md FS010 charter; decision
+# memo: src/lasr/data/providers/factset/DESIGN.md) — typed (py.typed),
+# used ONLY by lasr.data.providers.factset.http.
 dependencies = [
+    "httpx>=0.27",
     "numpy>=1.26,<3",
     "pandas>=2.2",
     "pyarrow>=16",

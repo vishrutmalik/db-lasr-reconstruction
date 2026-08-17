@@ -28,6 +28,9 @@ EXPECTED_PACKAGES: tuple[str, ...] = (
     "lasr.data.schemas",
     "lasr.data.synthetic",  # G019 generator (providers/ holds its adapter)
     "lasr.data.providers",
+    # FS010: FactSet transport/cache subpackage below the unchanged
+    # Protocol (docs/architecture/factset_integration.md §1.3 A2).
+    "lasr.data.providers.factset",
     "lasr.data.ingestion",
     "lasr.data.canonical",
     "lasr.data.point_in_time",

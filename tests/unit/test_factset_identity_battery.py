@@ -22,6 +22,7 @@ from lasr.data.providers.factset.errors import (
     FactSetCacheMissError,
     FactSetConfigError,
 )
+from lasr.data.providers.factset.http import HttpResponse
 from lasr.data.providers.factset.identity_battery import (
     DEFAULT_BATTERY_SPEC,
     MAX_BATTERY_LIVE_REQUESTS,
@@ -29,7 +30,6 @@ from lasr.data.providers.factset.identity_battery import (
     load_credentials_file,
     run_identity_battery,
 )
-from lasr.data.providers.factset.http import HttpResponse
 from lasr.data.providers.factset.request_norm import NormalizedRequest
 from lasr.data.providers.factset.symbology_adapter import FSYM_OUTPUT_TYPES
 from lasr.data.providers.factset.symbology_models import (

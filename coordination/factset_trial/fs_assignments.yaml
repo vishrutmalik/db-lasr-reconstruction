@@ -24,14 +24,14 @@ active:
     status: IN_PROGRESS
     runtime: LAUNCHED 2026-08-13 (agent aace0f7cf80e5c2ae, live)
     owned_paths: ["docs/factset/capability/estimates.md", "docs/factset/capability/estimates.json", "docs/factset/capability/_extract_estimates.py"]
-  FS004:
+  FS007:
     agent_role: researcher (general-purpose)
-    objective: Exhaustive capability manifest — Fundamentals v2 (PIT semantics focus)
-    branch: agent/fs-researcher/FS004-fundamentals
-    worktree: .worktrees/FS004
+    objective: Exhaustive capability manifest — RBICS v1 (effective dating focus)
+    branch: agent/fs-researcher/FS007-rbics
+    worktree: .worktrees/FS007
     status: IN_PROGRESS
-    runtime: LAUNCHED 2026-08-13 (agent ac0c32d58181c1493, live); precedence addendum sent
-    owned_paths: ["docs/factset/capability/fundamentals.md", "docs/factset/capability/fundamentals.json", "docs/factset/capability/_extract_fundamentals.py"]
+    runtime: LAUNCHED 2026-08-13 (agent a2980d2bcda46427a, live)
+    owned_paths: ["docs/factset/capability/rbics.md", "docs/factset/capability/rbics.json", "docs/factset/capability/_extract_rbics.py"]
   FS005:
     agent_role: researcher (general-purpose)
     objective: Exhaustive capability manifest — Global Prices + Corporate Actions v1
@@ -42,11 +42,15 @@ active:
     owned_paths: ["docs/factset/capability/global_prices.md", "docs/factset/capability/global_prices.json", "docs/factset/capability/_extract_global_prices.py"]
 
 queued:
-  FS007: RBICS v1 review
   FS008: Benchmarks v1 review
   FS021: Phase-2 PIT-Estimates DATAFEED contract (docs-only; the 2 PDFs)
 
 history:
+  - goal_id: FS004
+    objective: Exhaustive capability manifest — Fundamentals v2
+    agent: ac0c32d58181c1493
+    final_commit: 126496d (PR #76, docs-only, OPEN — merges via FS009)
+    result: COMPLETE — 12/12 ops, 54/54 schemas 0 orphans, 23 enum sites; 9 discrepancies (spec authoritative). PIT VERDICT: /point-in-time + /periods document a REAL bitemporal interface (inclusive UTC [pitStart,pitEnd] windows, revision history incl. final-to-final restatement example, knowledge-instant queries pitStart==pitEnd, W/M snapshots, Preliminary/Final flags, active anti-lookahead filter, /periods publication promise); non-PIT arm = latest-vintage view. UNRESOLVED per A-001: recording basis (VC1), immutability (VC2), history depth/delisted coverage (VC6/VC8), entitlement (VC9) -> FS017 live gate. VC1..VC9 vendor list recorded in the manifest
   - goal_id: FS003
     objective: Exhaustive capability manifest — Symbology v3
     agent: aafb4e699aaac66cc

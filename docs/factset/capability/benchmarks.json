@@ -1,0 +1,3291 @@
+{
+  "_provenance": {
+    "source_file": "factset_benchmarks_api-v1-yaml.yaml",
+    "generator": "_extract_benchmarks.py (FS008)",
+    "evidence_tag": "DOCUMENTED_OPENAPI",
+    "note": "All content outside `curated` is mechanically extracted from the vendor OpenAPI spec; see benchmarks.md for SDK/sample evidence and interpretation."
+  },
+  "api": {
+    "title": "FactSet Benchmarks API",
+    "version": "1.11.0",
+    "openapi": "3.0.0",
+    "description": "FactSet Benchmarks API gives access to Index Constituents, Prices, Returns, and Ratios. For a sample list of identifiers, use the /metrics endpoint. Equity Only - Fixed Income Benchmark support coming soon.",
+    "servers": [
+      {
+        "url": "https://api.factset.com/content",
+        "description": "Production"
+      }
+    ],
+    "security_schemes": {
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    },
+    "security": [
+      {
+        "BasicAuth": []
+      }
+    ],
+    "tags_declared_top_level": null,
+    "tags_used_on_operations": [
+      "Benchmark Constituents",
+      "Helper",
+      "Index Level"
+    ]
+  },
+  "counts": {
+    "paths": 7,
+    "operations": 14,
+    "component_schemas": 38,
+    "component_parameters": 18,
+    "component_responses": 5,
+    "component_examples": 25,
+    "schemas_with_enums": 7,
+    "distinct_enum_sites_in_schemas": 7,
+    "parameters_with_inline_enums": 7,
+    "operation_tags": 3,
+    "security_schemes": 1,
+    "unreferenced_components": {
+      "schemas": 1,
+      "parameters": 1
+    }
+  },
+  "operations": [
+    {
+      "path": "/factset-benchmarks/v1/constituents",
+      "method": "GET",
+      "operationId": "getBenchmarkConstituents",
+      "tags": [
+        "Benchmark Constituents"
+      ],
+      "summary": "Returns the requested Benchmark Constituents and respective Weights, Price and Market Value.",
+      "description": "Returns the requested Benchmark Constituents and respective Weights, Price and Market Value. You must be authorized for the `ids` requested. Use the helper endpoint **/id-list** for valid identifiers.",
+      "parameters": [
+        {
+          "component_name": "constituentIds",
+          "name": "ids",
+          "in": "query",
+          "required": true,
+          "description": "Benchmark Identifiers. Reference the helper endpoint **/id-list** to get a sample list of  valid identifiers. You must be authorized for the `ids` requested, otherwise you will receive an error. <p>***ids limit** =  1 per request*</p>",
+          "schema_ref": null,
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "style": null,
+          "explode": false,
+          "example": "SP50"
+        },
+        {
+          "component_name": "requestedDate",
+          "name": "date",
+          "in": "query",
+          "required": false,
+          "description": "Date of holding expressed in YYYY-MM-DD format.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "currency",
+          "name": "currency",
+          "in": "query",
+          "required": false,
+          "description": "Currency for response.  Currency code (ISO 4217). For a list of currency codes, see [OA Page 1470](https://my.apps.factset.com/oa/pages/1470).",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "regionCalendar",
+          "name": "calendar",
+          "in": "query",
+          "required": false,
+          "description": "Calendar of data returned. The default value is FIVEDAY which displays Monday through Friday, regardless of whether there were trading holidays.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "default": "FIVEDAY"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        }
+      ],
+      "request_body_schema": null,
+      "request_body_required": null,
+      "responses": {
+        "200": {
+          "description": "Benchmark data items",
+          "body": {
+            "content_type": "application/json",
+            "schema": "benchmarkConstituentsResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "BenchmarkConstituentsApi.get_benchmark_constituents"
+    },
+    {
+      "path": "/factset-benchmarks/v1/constituents",
+      "method": "POST",
+      "operationId": "getBenchmarkConstituentsForList",
+      "tags": [
+        "Benchmark Constituents"
+      ],
+      "summary": "Returns the requested Benchmark Constituents and respective Weights, Price and Market Value.",
+      "description": "Returns the requested Benchmark Constituents and respective Weights, Price and Market Value. You must be authorized for the `ids` requested. Use the helper endpoint **/id-list** for valid identifiers.",
+      "parameters": [],
+      "request_body_schema": "benchmarkConstituentsRequest",
+      "request_body_required": true,
+      "responses": {
+        "200": {
+          "description": "Benchmark data items",
+          "body": {
+            "content_type": "application/json",
+            "schema": "benchmarkConstituentsResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "BenchmarkConstituentsApi.get_benchmark_constituents_for_list"
+    },
+    {
+      "path": "/factset-benchmarks/v1/fixed-income-constituents",
+      "method": "GET",
+      "operationId": "getFIBenchmarkConstituents",
+      "tags": [
+        "Benchmark Constituents"
+      ],
+      "summary": "Returns the requested Fixed Income Benchmark Constituents and respective Weights, Price and Market Value.",
+      "description": "Returns the requested Fixed Income Benchmark Constituents and respective Weights, Price and Market Value. You must be authorized for the `ids` requested.",
+      "parameters": [
+        {
+          "component_name": "fIConstituentIds",
+          "name": "ids",
+          "in": "query",
+          "required": true,
+          "description": "Fixed Income Benchmark Identifiers. You must be authorized for the `ids` requested, otherwise you will receive an error. <p>***ids limit** =  1 per request*</p>",
+          "schema_ref": null,
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "style": null,
+          "explode": false,
+          "example": "LHMN0001"
+        },
+        {
+          "component_name": "requestedDate",
+          "name": "date",
+          "in": "query",
+          "required": false,
+          "description": "Date of holding expressed in YYYY-MM-DD format.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "currency",
+          "name": "currency",
+          "in": "query",
+          "required": false,
+          "description": "Currency for response.  Currency code (ISO 4217). For a list of currency codes, see [OA Page 1470](https://my.apps.factset.com/oa/pages/1470).",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        }
+      ],
+      "request_body_schema": null,
+      "request_body_required": null,
+      "responses": {
+        "200": {
+          "description": "Fixed Income Constituent data items",
+          "body": {
+            "content_type": "application/json",
+            "schema": "fixedIncomeBenchmarkConstituentsResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "BenchmarkConstituentsApi.get_fi_benchmark_constituents"
+    },
+    {
+      "path": "/factset-benchmarks/v1/fixed-income-constituents",
+      "method": "POST",
+      "operationId": "getFIBenchmarkConstituentsForList",
+      "tags": [
+        "Benchmark Constituents"
+      ],
+      "summary": "Returns the requested Benchmark Constituents and respective Weights, Price and Market Value.",
+      "description": "Returns the requested Fixed Income Benchmark Constituents and respective Weights, Price and Market Value. You must be authorized for the `ids` requested.",
+      "parameters": [],
+      "request_body_schema": "fixedIncomeBenchmarkConstituentsRequest",
+      "request_body_required": true,
+      "responses": {
+        "200": {
+          "description": "Fixed Income Constituent data items",
+          "body": {
+            "content_type": "application/json",
+            "schema": "fixedIncomeBenchmarkConstituentsResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "BenchmarkConstituentsApi.get_fi_benchmark_constituents_for_list"
+    },
+    {
+      "path": "/factset-benchmarks/v1/index-snapshot",
+      "method": "GET",
+      "operationId": "getIndexSnapshot",
+      "tags": [
+        "Index Level"
+      ],
+      "summary": "Index Level Prices, Returns, and related information as of a single date.",
+      "description": "Retrieves Index Level Prices and Returns information as of a specific date. Simply submit a valid Benchmark ID (you can use the /id-list endpoint for a sample list of ids), and date and retrieve Index Level Prices, Returns, and related information.",
+      "parameters": [
+        {
+          "component_name": "indexIds",
+          "name": "ids",
+          "in": "query",
+          "required": true,
+          "description": "Benchmark Identifiers. Reference the helper endpoint **/id-list** to get a sample list of  valid identifiers. <p>***ids limit** =  500 per request*</p> *<p>Make note, GET Method URL request lines are also limited to a total length of 8192 bytes (8KB). In cases where the service allows for thousands of ids, which may lead to exceeding this request line limit of 8KB, its advised for any requests with large request lines to be requested through the respective \"POST\" method.</p>*",
+          "schema_ref": null,
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            }
+          },
+          "style": null,
+          "explode": false,
+          "example": "SP50"
+        },
+        {
+          "component_name": "requestedDate",
+          "name": "date",
+          "in": "query",
+          "required": false,
+          "description": "Date of holding expressed in YYYY-MM-DD format.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "returnType",
+          "name": "returnType",
+          "in": "query",
+          "required": false,
+          "description": "The return type adjustment used in returns response items. Adjustment can be made for GROSS and NET dividends that will be included in the return calculation. The service will default to GROSS.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "GROSS",
+              "NET"
+            ],
+            "default": "GROSS"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "currency",
+          "name": "currency",
+          "in": "query",
+          "required": false,
+          "description": "Currency for response.  Currency code (ISO 4217). For a list of currency codes, see [OA Page 1470](https://my.apps.factset.com/oa/pages/1470).",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "regionCalendar",
+          "name": "calendar",
+          "in": "query",
+          "required": false,
+          "description": "Calendar of data returned. The default value is FIVEDAY which displays Monday through Friday, regardless of whether there were trading holidays.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "default": "FIVEDAY"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        }
+      ],
+      "request_body_schema": null,
+      "request_body_required": null,
+      "responses": {
+        "200": {
+          "description": "An array of Index Level Prices and Returns information as of a single date",
+          "body": {
+            "content_type": "application/json",
+            "schema": "indexSnapshotResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "IndexLevelApi.get_index_snapshot"
+    },
+    {
+      "path": "/factset-benchmarks/v1/index-snapshot",
+      "method": "POST",
+      "operationId": "getIndexSnapshotForList",
+      "tags": [
+        "Index Level"
+      ],
+      "summary": "Retrieves the Index Level Snapshot of Prices and Returns information for a given identifier and single date.",
+      "description": "Retrieves Index Level Prices and Returns information as aligned with FactSet's Benchmark Data Feed solution. Simply submit a valid Benchmark ID (you can use the /id-list endpoint for a sample list of ids), and date and retrieve Index Level Prices, Returns, and related information.",
+      "parameters": [],
+      "request_body_schema": "indexSnapshotRequest",
+      "request_body_required": true,
+      "responses": {
+        "200": {
+          "description": "An array of Index Level Prices and Returns information as of a single date.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "indexSnapshotResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "IndexLevelApi.get_index_snapshot_for_list"
+    },
+    {
+      "path": "/factset-benchmarks/v1/index-history",
+      "method": "GET",
+      "operationId": "getIndexHistory",
+      "tags": [
+        "Index Level"
+      ],
+      "summary": "Retrieves Index Level Prices and Returns information for a list of identifiers and historical date range.",
+      "description": "Retrieves Index Level Prices and Returns information as of a date range requested. Simply submit a valid Benchmark ID (you can use the /id-list endpoint for a sample list of ids), and date range to retrieve Index Level Prices, Returns, and related information.",
+      "parameters": [
+        {
+          "component_name": "indexIds",
+          "name": "ids",
+          "in": "query",
+          "required": true,
+          "description": "Benchmark Identifiers. Reference the helper endpoint **/id-list** to get a sample list of  valid identifiers. <p>***ids limit** =  500 per request*</p> *<p>Make note, GET Method URL request lines are also limited to a total length of 8192 bytes (8KB). In cases where the service allows for thousands of ids, which may lead to exceeding this request line limit of 8KB, its advised for any requests with large request lines to be requested through the respective \"POST\" method.</p>*",
+          "schema_ref": null,
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            }
+          },
+          "style": null,
+          "explode": false,
+          "example": "SP50"
+        },
+        {
+          "component_name": "startDate",
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "description": "Requested start date expressed in YYYY-MM-DD format.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "endDate",
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "description": "Requested End Date for Range expressed in YYYY-MM-DD format.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "frequency",
+          "name": "frequency",
+          "in": "query",
+          "required": false,
+          "description": "Controls the display frequency of the data returned.\n  * **D** = Daily\n  * **W** = Weekly, based on the last day of the week of the start date.\n  * **M** = Monthly, based on the last trading day of the month.\n  * **AM** = Monthly, based on the start date (e.g., if the start date is June 16, data is displayed for June 16, May 16, April 16 etc.).\n  * **CQ** = Quarterly based on the last trading day of the calendar quarter (March, June, September, or December).\n  * **AY** = Actual Annual, based on the start date.\n  * **CY** = Calendar Annual, based on the last trading day of the calendar year.\n",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "D",
+              "W",
+              "M",
+              "AM",
+              "CQ",
+              "AY",
+              "CY"
+            ],
+            "default": "D"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "returnType",
+          "name": "returnType",
+          "in": "query",
+          "required": false,
+          "description": "The return type adjustment used in returns response items. Adjustment can be made for GROSS and NET dividends that will be included in the return calculation. The service will default to GROSS.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "GROSS",
+              "NET"
+            ],
+            "default": "GROSS"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "hedgeType",
+          "name": "hedgeType",
+          "in": "query",
+          "required": false,
+          "description": "The hedge type adjustment used in returns response items. Adjustment can be made for HEDGED and UNHEDGED values that will be included in the return calculation. The service will default to UNHEDGED.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "UNHEDGED",
+              "HEDGED"
+            ],
+            "default": "UNHEDGED"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "currency",
+          "name": "currency",
+          "in": "query",
+          "required": false,
+          "description": "Currency for response.  Currency code (ISO 4217). For a list of currency codes, see [OA Page 1470](https://my.apps.factset.com/oa/pages/1470).",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "regionCalendar",
+          "name": "calendar",
+          "in": "query",
+          "required": false,
+          "description": "Calendar of data returned. The default value is FIVEDAY which displays Monday through Friday, regardless of whether there were trading holidays.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "default": "FIVEDAY"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "impliedDate",
+          "name": "impliedDate",
+          "in": "query",
+          "required": false,
+          "description": "This parameter controls the **date** returned in the date field. The default value is **N**. By default, the date field returns the actual date of the observation. This means it will repeat values for weekends and holidays. If  set to **Y**, the date field will return the implied date of the observation, making all the dates unique.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "Y",
+              "N"
+            ],
+            "default": "N"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        }
+      ],
+      "request_body_schema": null,
+      "request_body_required": null,
+      "responses": {
+        "200": {
+          "description": "An array of Index Level Prices and Returns information for a requested date range.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "indexHistoryResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "IndexLevelApi.get_index_history"
+    },
+    {
+      "path": "/factset-benchmarks/v1/index-history",
+      "method": "POST",
+      "operationId": "getIndexHistoryForList",
+      "tags": [
+        "Index Level"
+      ],
+      "summary": "Retrieves Index Level Prices and Returns information for a list of identifiers and historical date range.",
+      "description": "Retrieves Index Level Prices and Returns information as aligned with FactSet's Benchmark Data Feed solution. Simply submit a valid Benchmark ID (you can use the /id-list endpoint for a sample list of ids), and date and retrieve Index Level Prices, Returns, and related information.",
+      "parameters": [],
+      "request_body_schema": "indexHistoryRequest",
+      "request_body_required": true,
+      "responses": {
+        "200": {
+          "description": "An array of Index Level Prices and Returns information for a requested date range.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "indexHistoryResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "IndexLevelApi.get_index_history_for_list"
+    },
+    {
+      "path": "/factset-benchmarks/v1/index-returns",
+      "method": "GET",
+      "operationId": "getIndexReturns",
+      "tags": [
+        "Index Level"
+      ],
+      "summary": "Retrieves cumulative index returns over a specified date range for a list of benchmark identifiers via query parameters",
+      "description": "Returns aggregated (cumulative) index returns for each requested benchmark across the specified date range. Unlike `/index-history`, which provides full time-series data (prices, levels, constituents, and frequency-based observations), this endpoint is returns-focused and does not return a time series or support frequency parameters. Each benchmark produces a single cumulative return value for the entire date window, rather than a series of observations. The data is aligned with FactSet Benchmark Data Feed. Submit benchmark identifiers and a date range to retrieve cumulative return metrics for the period.",
+      "parameters": [
+        {
+          "component_name": "indexIds",
+          "name": "ids",
+          "in": "query",
+          "required": true,
+          "description": "Benchmark Identifiers. Reference the helper endpoint **/id-list** to get a sample list of  valid identifiers. <p>***ids limit** =  500 per request*</p> *<p>Make note, GET Method URL request lines are also limited to a total length of 8192 bytes (8KB). In cases where the service allows for thousands of ids, which may lead to exceeding this request line limit of 8KB, its advised for any requests with large request lines to be requested through the respective \"POST\" method.</p>*",
+          "schema_ref": null,
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            }
+          },
+          "style": null,
+          "explode": false,
+          "example": "SP50"
+        },
+        {
+          "component_name": "startDateRequired",
+          "name": "startDate",
+          "in": "query",
+          "required": true,
+          "description": "Requested start date expressed in YYYY-MM-DD format.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "format": "date"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "endDateRequired",
+          "name": "endDate",
+          "in": "query",
+          "required": true,
+          "description": "Requested End Date for Range expressed in YYYY-MM-DD format.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "format": "date"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "returnType",
+          "name": "returnType",
+          "in": "query",
+          "required": false,
+          "description": "The return type adjustment used in returns response items. Adjustment can be made for GROSS and NET dividends that will be included in the return calculation. The service will default to GROSS.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "GROSS",
+              "NET"
+            ],
+            "default": "GROSS"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "hedgeType",
+          "name": "hedgeType",
+          "in": "query",
+          "required": false,
+          "description": "The hedge type adjustment used in returns response items. Adjustment can be made for HEDGED and UNHEDGED values that will be included in the return calculation. The service will default to UNHEDGED.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "UNHEDGED",
+              "HEDGED"
+            ],
+            "default": "UNHEDGED"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "currency",
+          "name": "currency",
+          "in": "query",
+          "required": false,
+          "description": "Currency for response.  Currency code (ISO 4217). For a list of currency codes, see [OA Page 1470](https://my.apps.factset.com/oa/pages/1470).",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "regionCalendar",
+          "name": "calendar",
+          "in": "query",
+          "required": false,
+          "description": "Calendar of data returned. The default value is FIVEDAY which displays Monday through Friday, regardless of whether there were trading holidays.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "default": "FIVEDAY"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "impliedDate",
+          "name": "impliedDate",
+          "in": "query",
+          "required": false,
+          "description": "This parameter controls the **date** returned in the date field. The default value is **N**. By default, the date field returns the actual date of the observation. This means it will repeat values for weekends and holidays. If  set to **Y**, the date field will return the implied date of the observation, making all the dates unique.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "Y",
+              "N"
+            ],
+            "default": "N"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        }
+      ],
+      "request_body_schema": null,
+      "request_body_required": null,
+      "responses": {
+        "200": {
+          "description": "An array of Index Returns information for a requested date range.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "indexReturnsResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "IndexLevelApi.get_index_returns"
+    },
+    {
+      "path": "/factset-benchmarks/v1/index-returns",
+      "method": "POST",
+      "operationId": "getIndexReturnsForList",
+      "tags": [
+        "Index Level"
+      ],
+      "summary": "Retrieves cumulative index returns over a specified date range for a list of benchmark identifiers via JSON Request body",
+      "description": "Returns aggregated (cumulative) index returns for each requested benchmark across the specified date range. Unlike `/index-history`, which provides full time-series data (prices, levels, constituents, and frequency-based observations), this endpoint is returns-focused and does not return a time series or support frequency parameters. Each benchmark produces a single cumulative return value for the entire date window, rather than a series of observations. The data is aligned with FactSet Benchmark Data Feed. Submit benchmark identifiers and a date range to retrieve cumulative return metrics for the period.",
+      "parameters": [],
+      "request_body_schema": "indexReturnsRequest",
+      "request_body_required": true,
+      "responses": {
+        "200": {
+          "description": "An array of Index Returns information for a requested date range.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "indexReturnsResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "IndexLevelApi.get_index_returns_for_list"
+    },
+    {
+      "path": "/factset-benchmarks/v1/ratios",
+      "method": "GET",
+      "operationId": "getBenchmarkRatios",
+      "tags": [
+        "Index Level"
+      ],
+      "summary": "Returns the aggregated ratios of a requested benchmark",
+      "description": "Retrieves the index level ratios for a requested benchmark. Ratios supported are expressed through metrics parameter, and include Categories of Profitability, Valuation, Coverage, and Leverage. <p> Using FactSet Market Aggregates, the service combines fundamental, estimates, and pricing content to derive ratios and per share values for global equity market indexes and commercial benchmark vendors. The constituents of the index are fetched on rolling basis over time period requested, and then the metric requested is aggregated up to the index level. To learn more about FMA, visit [OA 15778](https://my.apps.factset.com/oa/pages/15778).</p>",
+      "parameters": [
+        {
+          "component_name": "indexIds",
+          "name": "ids",
+          "in": "query",
+          "required": true,
+          "description": "Benchmark Identifiers. Reference the helper endpoint **/id-list** to get a sample list of  valid identifiers. <p>***ids limit** =  500 per request*</p> *<p>Make note, GET Method URL request lines are also limited to a total length of 8192 bytes (8KB). In cases where the service allows for thousands of ids, which may lead to exceeding this request line limit of 8KB, its advised for any requests with large request lines to be requested through the respective \"POST\" method.</p>*",
+          "schema_ref": null,
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            }
+          },
+          "style": null,
+          "explode": false,
+          "example": "SP50"
+        },
+        {
+          "component_name": "metrics",
+          "name": "metrics",
+          "in": "query",
+          "required": true,
+          "description": "Requested List of  FactSet Market Aggregates (FMA) or ratios. provided the below complete metrics list.\n|metric item|Description|category|periodicity\n|:---|:---|:---|:---|\n|GROSS_MARGIN|Gross Margin|Profitability (%)|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|OPER_INC_SALES|Operating Margin|Profitability (%)|LTM, QTR\n|NET_MGN|Net Margin|Profitability (%)|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|EBIT_MARGIN|EBIT Margin|Profitability (%)| NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|EBITDA_MARGIN|EBITDA Margin|Profitability (%)|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|ROA|Return on Assets|Profitability (%)|LTM\n|ROE|Return on Equity|Profitability (%)|NTMA, LTMA, LTM, 0, 1, 2\n|ROIC|Return on Invested Capital|Profitability (%)| LTM\n|FCF_MGN|Free Cash Flow Margin|Profitability (%)|LTM, QTR\n|PE|Price/Earnings|Valuation|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|PEX|Price/Earnings (excl negatives)|Valuation|LTM\n|PSALES|Price/Sales|Valuation|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|PBK|Price/Book Value|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|PCF|Price/Cash Flow|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|PCFX|Price/Cash Flow (excl negatives)|Valuation|LTM\n|PFCF|Price/Free Cash Flow|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|EVAL_EBIT|Enterprise Value/EBIT|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|EVAL_EBITDA|Enterprise Value/EBITDA|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|EVAL_SALES|Enterprise Value/Sales|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|NDEBT_EBITDA|Net Debt/EBITDA|Coverage|NTMA, LTMA, LTM, 0, 1, 2\n|NDEBT_EBITDA_MIN_CAPEX|Net Debt/(EBITDA-Capex)|Coverage|LTM\n|DEBT_EBITDA|Total Debt/EBITDA|Coverage|LTM\n|DEBT_EBIT|Total Debt/EBIT|Coverage|LTM\n|EBIT_INT_EXP|EBIT/Interest Expense (Int. Coverage)|Coverage|LTM\n|EBITDA_INT_EXP|EBITDA/Interest Expense|Coverage|LTM\n|OPER_CF_INT_EXP|CFO/Interest Expense|Coverage|LTM\n|LTD_EBITDA|LT Debt/EBITDA|Coverage|LTM\n|NDEBT_FFO|Net Debt/FFO|Coverage|LTM\n|LTD_FFO|LT Debt/FFO|Coverage|LTM\n|FCF_DEBT|FCF/Total Debt|Coverage|LTM\n|OPER_CF_DEBT|CFO/Total Debt|Coverage|LTM\n|LTD_EQ|LT Debt/Total Equity|Leverage(%)|LTM\n|LTD_TCAP|LT Debt/Total Capital|Leverage(%)|LTM\n|LTD_ASSETS|LT Debt/Total Assets|Leverage(%)|LTM\n|DEBT_ASSETS|Total Debt/Total Assets|Leverage(%)|LTM\n|DEBT_EQ|Total Debt/Total Equity|Leverage(%)|LTM\n|NDEBT_TCAP|Net Debt/Total Capital|Leverage(%)|LTM\n|DEBT_TCAP|Total Debt/Total Capital|Leverage(%)|LTM\n|<p>***metrics limit** =  38 per request*</p>\n*<p>Make note, GET Method URL request lines are also limited to a total\nlength of 8192 bytes (8KB). In cases where the service allows for thousands\nof ids, which may lead to exceeding this request line limit of 8KB, its\nadvised for any requests with large request lines to be requested through\nthe respective \"POST\" method.</p>*\n",
+          "schema_ref": null,
+          "schema": {
+            "type": "array",
+            "example": [
+              "PEX",
+              "LTD_EQ",
+              "DEBT_EQ"
+            ],
+            "minItems": 1,
+            "maxItems": 38,
+            "items": {
+              "type": "string"
+            }
+          },
+          "style": null,
+          "explode": false,
+          "example": null
+        },
+        {
+          "component_name": "startDate",
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "description": "Requested start date expressed in YYYY-MM-DD format.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "endDate",
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "description": "Requested End Date for Range expressed in YYYY-MM-DD format.",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "frequency",
+          "name": "frequency",
+          "in": "query",
+          "required": false,
+          "description": "Controls the display frequency of the data returned.\n  * **D** = Daily\n  * **W** = Weekly, based on the last day of the week of the start date.\n  * **M** = Monthly, based on the last trading day of the month.\n  * **AM** = Monthly, based on the start date (e.g., if the start date is June 16, data is displayed for June 16, May 16, April 16 etc.).\n  * **CQ** = Quarterly based on the last trading day of the calendar quarter (March, June, September, or December).\n  * **AY** = Actual Annual, based on the start date.\n  * **CY** = Calendar Annual, based on the last trading day of the calendar year.\n",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "D",
+              "W",
+              "M",
+              "AM",
+              "CQ",
+              "AY",
+              "CY"
+            ],
+            "default": "D"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "periodicity",
+          "name": "periodicity",
+          "in": "query",
+          "required": false,
+          "description": "The calculation periodicity for the aggregated period. **Note** - Not all periodicities are supported for each metric, depending on the type of ratio. LTM is set as default and supported for all metrics. See Metrics Parameter for additional detail on which periodicities are available per metric.\n|Periodicity| Description|\n|:---|:---|\n|LTM| Last Twelve Months\n|LTMA| Last Twelve Months using Broker Actuals for Estimated Items\n|STMA| Second Twelve Month Forward\n|NTMA| 12 Month Forward\n|0| Latest Reported Calendar Year\n|1| Current Unreported Year\n|2| Following Year\n|QTR| Quarterly - Reported by companies\n",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "LTM",
+              "LTMA",
+              "STMA",
+              "NTMA",
+              "0",
+              "1",
+              "2",
+              "QTR"
+            ],
+            "default": "LTM"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        },
+        {
+          "component_name": "currency",
+          "name": "currency",
+          "in": "query",
+          "required": false,
+          "description": "Currency for response.  Currency code (ISO 4217). For a list of currency codes, see [OA Page 1470](https://my.apps.factset.com/oa/pages/1470).",
+          "schema_ref": null,
+          "schema": {
+            "type": "string"
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        }
+      ],
+      "request_body_schema": null,
+      "request_body_required": null,
+      "responses": {
+        "200": {
+          "description": "Benchmark Ratio data items",
+          "body": {
+            "content_type": "application/json",
+            "schema": "benchmarkRatiosResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "IndexLevelApi.get_benchmark_ratios"
+    },
+    {
+      "path": "/factset-benchmarks/v1/ratios",
+      "method": "POST",
+      "operationId": "getBenchmarkRatiosForList",
+      "tags": [
+        "Index Level"
+      ],
+      "summary": "Returns the aggregated ratios of a requested benchmark",
+      "description": "Retrieves the index level ratios for a requested benchmark. Ratios supported are expressed through metrics parameter, and include Categories of Profitability, Valuation, Coverage, and Leverage. <p> Using FactSet Market Aggregates, the service combines FactSet Fundamental, FactSet Estimates, and FactSet Pricing content to derive ratios and per share values for global equity market indexes and commercial benchmark vendors. The constituents of the index are fetched on rolling basis over time period requested, and then the metric requested is aggregated up to the index level. To learn more about FMA, visit [OA 15778](https://my.apps.factset.com/oa/pages/15778).</p>",
+      "parameters": [],
+      "request_body_schema": "benchmarkRatiosRequest",
+      "request_body_required": true,
+      "responses": {
+        "200": {
+          "description": "Benchmark Ratio Response Items",
+          "body": {
+            "content_type": "application/json",
+            "schema": "benchmarkRatiosResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "IndexLevelApi.get_benchmark_ratios_for_list"
+    },
+    {
+      "path": "/factset-benchmarks/v1/id-list",
+      "method": "GET",
+      "operationId": "getBenchmarkIds",
+      "tags": [
+        "Helper"
+      ],
+      "summary": "Returns a sample list of Benchmark Identifiers and the benchmark categorization to use in other Benchmark API endpoints.",
+      "description": "Returns a **sample** list of Benchmark Identifiers to use in other Benchmark API endpoints. This is a supporting API to be use alongside the other Benchmark API endpoints. For example, use the fsymID value returned in this response as the input to your `ids` parameter in the /constituents endpoint to return constituents for that id.<p> *This is not the full list of benchmark ids allowed in this service, but rather a representation of the most commonly requested. For complete assistance with ID lookup or concordance services, please reach out to FactSet Support. *</p>",
+      "parameters": [
+        {
+          "component_name": "familyFilter",
+          "name": "familyFilter",
+          "in": "query",
+          "required": false,
+          "description": "Highest Level Filter to search by common Benchmark Families, such as S&P, MSCI, or Russell. This will retrieve all related benchmark ids. For further filtering, use the response items such as the categoryDescription field. Leave blank if you wish to see a full sample list of ids. requested-\n* **CHINA & HK INDICES** - Major Hong Kong and China Indices, such as Hang Seng Index (HSI-HKX)\n* **DOW JONES** - Dow Jones Global, Regions, Countries, Titans\n* **FACTSET MARKET INDICES** - Regional and Country Indices defined by FactSet\n* **FTSE** - FTSE Global, UK, Global All Cap, World, Xinhua, European, GWA, JSE, Multinationals, and Style indices\n* **GLOBAL INDICES** - A mix of major indices across the globe\n* **MSCI** - MSCI All Country, Asia Pacific, Thematic & Strategy, Emerging, Developed, US\n* **RUSSELL** - US, Global, and Nomura\n* **S&P** - US, ASX, Select Industry, BMI, Global, Thematic, Emerging, TSX\n* **STOXX** - Total Market, Europe, and Nordic\n* **TOPIX** - Topix Indices, such as TOPIX 500 (182301)\n* **MORNINGSTAR** - Global, Regional, Country, and Sector indicies\n* **BLOOMBERG** - Global, Regional, US, Europe, Maturity, Ratings\n",
+          "schema_ref": null,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "CHINA_HK_INDICES",
+              "DOW_JONES",
+              "FACTSET_MARKET_INDICES",
+              "FTSE",
+              "GLOBAL_INDICES",
+              "MSCI",
+              "RUSSELL",
+              "SP",
+              "STOXX",
+              "TOPIX",
+              "MORNINGSTAR",
+              "BLOOMBERG"
+            ]
+          },
+          "style": null,
+          "explode": null,
+          "example": null
+        }
+      ],
+      "request_body_schema": null,
+      "request_body_required": null,
+      "responses": {
+        "200": {
+          "description": "List of sample Benchmark Ids",
+          "body": {
+            "content_type": "application/json",
+            "schema": "benchmarkIdListResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "HelperApi.get_benchmark_ids"
+    },
+    {
+      "path": "/factset-benchmarks/v1/id-list",
+      "method": "POST",
+      "operationId": "getBenchmarkIdsForList",
+      "tags": [
+        "Helper"
+      ],
+      "summary": "Returns a sample list of Benchmark Identifiers and the benchmark categorization to use in other Benchmark API endpoints.",
+      "description": "Returns a **sample** list of Benchmark Identifiers to use in other Benchmark API endpoints. This is a supporting API to be use alongside the other Benchmark API endpoints. For example, use the fsymID value returned in this response as the input to your `ids` parameter in the /constituents endpoint to return constituents for that id.<p> *This is not the full list of benchmark ids allowed in this service, but rather a representation of the most commonly requested. For complete assistance with ID lookup or concordance services, please reach out to FactSet Support.*</p>",
+      "parameters": [],
+      "request_body_schema": "benchmarkIdListRequest",
+      "request_body_required": true,
+      "responses": {
+        "200": {
+          "description": "List of sample Benchmark Ids",
+          "body": {
+            "content_type": "application/json",
+            "schema": "benchmarkIdListResponse"
+          }
+        },
+        "400": {
+          "description": "Bad Request. This can occur for several reasons. Please review the \"message\" for more details.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "401": {
+          "description": "Unauthenticated USERNAME-SERIAL. Ensure you are logged in and have successfully generated an API KEY for the IP range you are connecting from. For more help, select the **Report Issue** in the top right corner of this Developer Portal specification card and choose Connectivity 401 or 403 Responses.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "403": {
+          "description": "The USERNAME-SERIAL attempted to request the endpoint is not authorized to access. The request was a legal request, but the server is refusing to respond. Please reach out to FactSet Account Team for assistance with authorization.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "415": {
+          "description": "Unsupported Media Type. This error may be returned when the caller sends a resource in a format that is not accepted by the server. This can be fixed by ensuring that Content-Type header is set to the correct value. In this instance, \"application/json\" would be the appropriate value.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        },
+        "500": {
+          "description": "Internal Server Error.",
+          "body": {
+            "content_type": "application/json",
+            "schema": "errorResponse"
+          }
+        }
+      },
+      "sdk_method": "HelperApi.get_benchmark_ids_for_list"
+    }
+  ],
+  "component_parameters": {
+    "constituentIds": {
+      "component_name": "constituentIds",
+      "name": "ids",
+      "in": "query",
+      "required": true,
+      "description": "Benchmark Identifiers. Reference the helper endpoint **/id-list** to get a sample list of  valid identifiers. You must be authorized for the `ids` requested, otherwise you will receive an error. <p>***ids limit** =  1 per request*</p>",
+      "schema_ref": null,
+      "schema": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 1,
+        "items": {
+          "type": "string"
+        }
+      },
+      "style": null,
+      "explode": false,
+      "example": "SP50"
+    },
+    "fIConstituentIds": {
+      "component_name": "fIConstituentIds",
+      "name": "ids",
+      "in": "query",
+      "required": true,
+      "description": "Fixed Income Benchmark Identifiers. You must be authorized for the `ids` requested, otherwise you will receive an error. <p>***ids limit** =  1 per request*</p>",
+      "schema_ref": null,
+      "schema": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 1,
+        "items": {
+          "type": "string"
+        }
+      },
+      "style": null,
+      "explode": false,
+      "example": "LHMN0001"
+    },
+    "indexIds": {
+      "component_name": "indexIds",
+      "name": "ids",
+      "in": "query",
+      "required": true,
+      "description": "Benchmark Identifiers. Reference the helper endpoint **/id-list** to get a sample list of  valid identifiers. <p>***ids limit** =  500 per request*</p> *<p>Make note, GET Method URL request lines are also limited to a total length of 8192 bytes (8KB). In cases where the service allows for thousands of ids, which may lead to exceeding this request line limit of 8KB, its advised for any requests with large request lines to be requested through the respective \"POST\" method.</p>*",
+      "schema_ref": null,
+      "schema": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 500,
+        "items": {
+          "type": "string"
+        }
+      },
+      "style": null,
+      "explode": false,
+      "example": "SP50"
+    },
+    "requestedDate": {
+      "component_name": "requestedDate",
+      "name": "date",
+      "in": "query",
+      "required": false,
+      "description": "Date of holding expressed in YYYY-MM-DD format.",
+      "schema_ref": null,
+      "schema": {
+        "type": "string"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "startDate": {
+      "component_name": "startDate",
+      "name": "startDate",
+      "in": "query",
+      "required": false,
+      "description": "Requested start date expressed in YYYY-MM-DD format.",
+      "schema_ref": null,
+      "schema": {
+        "type": "string"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "endDate": {
+      "component_name": "endDate",
+      "name": "endDate",
+      "in": "query",
+      "required": false,
+      "description": "Requested End Date for Range expressed in YYYY-MM-DD format.",
+      "schema_ref": null,
+      "schema": {
+        "type": "string"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "startDateRequired": {
+      "component_name": "startDateRequired",
+      "name": "startDate",
+      "in": "query",
+      "required": true,
+      "description": "Requested start date expressed in YYYY-MM-DD format.",
+      "schema_ref": null,
+      "schema": {
+        "type": "string",
+        "format": "date"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "endDateRequired": {
+      "component_name": "endDateRequired",
+      "name": "endDate",
+      "in": "query",
+      "required": true,
+      "description": "Requested End Date for Range expressed in YYYY-MM-DD format.",
+      "schema_ref": null,
+      "schema": {
+        "type": "string",
+        "format": "date"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "returnType": {
+      "component_name": "returnType",
+      "name": "returnType",
+      "in": "query",
+      "required": false,
+      "description": "The return type adjustment used in returns response items. Adjustment can be made for GROSS and NET dividends that will be included in the return calculation. The service will default to GROSS.",
+      "schema_ref": null,
+      "schema": {
+        "type": "string",
+        "enum": [
+          "GROSS",
+          "NET"
+        ],
+        "default": "GROSS"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "hedgeType": {
+      "component_name": "hedgeType",
+      "name": "hedgeType",
+      "in": "query",
+      "required": false,
+      "description": "The hedge type adjustment used in returns response items. Adjustment can be made for HEDGED and UNHEDGED values that will be included in the return calculation. The service will default to UNHEDGED.",
+      "schema_ref": null,
+      "schema": {
+        "type": "string",
+        "enum": [
+          "UNHEDGED",
+          "HEDGED"
+        ],
+        "default": "UNHEDGED"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "impliedDate": {
+      "component_name": "impliedDate",
+      "name": "impliedDate",
+      "in": "query",
+      "required": false,
+      "description": "This parameter controls the **date** returned in the date field. The default value is **N**. By default, the date field returns the actual date of the observation. This means it will repeat values for weekends and holidays. If  set to **Y**, the date field will return the implied date of the observation, making all the dates unique.",
+      "schema_ref": null,
+      "schema": {
+        "type": "string",
+        "enum": [
+          "Y",
+          "N"
+        ],
+        "default": "N"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "calendar": {
+      "component_name": "calendar",
+      "name": "calendar",
+      "in": "query",
+      "required": false,
+      "description": "Calendar of data returned. SEVENDAY includes weekends.",
+      "schema_ref": null,
+      "schema": {
+        "type": "string",
+        "enum": [
+          "FIVEDAY",
+          "SEVENDAY"
+        ],
+        "default": "FIVEDAY"
+      },
+      "style": null,
+      "explode": null,
+      "example": "FIVEDAY"
+    },
+    "regionCalendar": {
+      "component_name": "regionCalendar",
+      "name": "calendar",
+      "in": "query",
+      "required": false,
+      "description": "Calendar of data returned. The default value is FIVEDAY which displays Monday through Friday, regardless of whether there were trading holidays.",
+      "schema_ref": null,
+      "schema": {
+        "type": "string",
+        "default": "FIVEDAY"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "currency": {
+      "component_name": "currency",
+      "name": "currency",
+      "in": "query",
+      "required": false,
+      "description": "Currency for response.  Currency code (ISO 4217). For a list of currency codes, see [OA Page 1470](https://my.apps.factset.com/oa/pages/1470).",
+      "schema_ref": null,
+      "schema": {
+        "type": "string"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "frequency": {
+      "component_name": "frequency",
+      "name": "frequency",
+      "in": "query",
+      "required": false,
+      "description": "Controls the display frequency of the data returned.\n  * **D** = Daily\n  * **W** = Weekly, based on the last day of the week of the start date.\n  * **M** = Monthly, based on the last trading day of the month.\n  * **AM** = Monthly, based on the start date (e.g., if the start date is June 16, data is displayed for June 16, May 16, April 16 etc.).\n  * **CQ** = Quarterly based on the last trading day of the calendar quarter (March, June, September, or December).\n  * **AY** = Actual Annual, based on the start date.\n  * **CY** = Calendar Annual, based on the last trading day of the calendar year.\n",
+      "schema_ref": null,
+      "schema": {
+        "type": "string",
+        "enum": [
+          "D",
+          "W",
+          "M",
+          "AM",
+          "CQ",
+          "AY",
+          "CY"
+        ],
+        "default": "D"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "periodicity": {
+      "component_name": "periodicity",
+      "name": "periodicity",
+      "in": "query",
+      "required": false,
+      "description": "The calculation periodicity for the aggregated period. **Note** - Not all periodicities are supported for each metric, depending on the type of ratio. LTM is set as default and supported for all metrics. See Metrics Parameter for additional detail on which periodicities are available per metric.\n|Periodicity| Description|\n|:---|:---|\n|LTM| Last Twelve Months\n|LTMA| Last Twelve Months using Broker Actuals for Estimated Items\n|STMA| Second Twelve Month Forward\n|NTMA| 12 Month Forward\n|0| Latest Reported Calendar Year\n|1| Current Unreported Year\n|2| Following Year\n|QTR| Quarterly - Reported by companies\n",
+      "schema_ref": null,
+      "schema": {
+        "type": "string",
+        "enum": [
+          "LTM",
+          "LTMA",
+          "STMA",
+          "NTMA",
+          "0",
+          "1",
+          "2",
+          "QTR"
+        ],
+        "default": "LTM"
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    },
+    "metrics": {
+      "component_name": "metrics",
+      "name": "metrics",
+      "in": "query",
+      "required": true,
+      "description": "Requested List of  FactSet Market Aggregates (FMA) or ratios. provided the below complete metrics list.\n|metric item|Description|category|periodicity\n|:---|:---|:---|:---|\n|GROSS_MARGIN|Gross Margin|Profitability (%)|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|OPER_INC_SALES|Operating Margin|Profitability (%)|LTM, QTR\n|NET_MGN|Net Margin|Profitability (%)|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|EBIT_MARGIN|EBIT Margin|Profitability (%)| NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|EBITDA_MARGIN|EBITDA Margin|Profitability (%)|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|ROA|Return on Assets|Profitability (%)|LTM\n|ROE|Return on Equity|Profitability (%)|NTMA, LTMA, LTM, 0, 1, 2\n|ROIC|Return on Invested Capital|Profitability (%)| LTM\n|FCF_MGN|Free Cash Flow Margin|Profitability (%)|LTM, QTR\n|PE|Price/Earnings|Valuation|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|PEX|Price/Earnings (excl negatives)|Valuation|LTM\n|PSALES|Price/Sales|Valuation|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|PBK|Price/Book Value|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|PCF|Price/Cash Flow|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|PCFX|Price/Cash Flow (excl negatives)|Valuation|LTM\n|PFCF|Price/Free Cash Flow|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|EVAL_EBIT|Enterprise Value/EBIT|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|EVAL_EBITDA|Enterprise Value/EBITDA|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|EVAL_SALES|Enterprise Value/Sales|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|NDEBT_EBITDA|Net Debt/EBITDA|Coverage|NTMA, LTMA, LTM, 0, 1, 2\n|NDEBT_EBITDA_MIN_CAPEX|Net Debt/(EBITDA-Capex)|Coverage|LTM\n|DEBT_EBITDA|Total Debt/EBITDA|Coverage|LTM\n|DEBT_EBIT|Total Debt/EBIT|Coverage|LTM\n|EBIT_INT_EXP|EBIT/Interest Expense (Int. Coverage)|Coverage|LTM\n|EBITDA_INT_EXP|EBITDA/Interest Expense|Coverage|LTM\n|OPER_CF_INT_EXP|CFO/Interest Expense|Coverage|LTM\n|LTD_EBITDA|LT Debt/EBITDA|Coverage|LTM\n|NDEBT_FFO|Net Debt/FFO|Coverage|LTM\n|LTD_FFO|LT Debt/FFO|Coverage|LTM\n|FCF_DEBT|FCF/Total Debt|Coverage|LTM\n|OPER_CF_DEBT|CFO/Total Debt|Coverage|LTM\n|LTD_EQ|LT Debt/Total Equity|Leverage(%)|LTM\n|LTD_TCAP|LT Debt/Total Capital|Leverage(%)|LTM\n|LTD_ASSETS|LT Debt/Total Assets|Leverage(%)|LTM\n|DEBT_ASSETS|Total Debt/Total Assets|Leverage(%)|LTM\n|DEBT_EQ|Total Debt/Total Equity|Leverage(%)|LTM\n|NDEBT_TCAP|Net Debt/Total Capital|Leverage(%)|LTM\n|DEBT_TCAP|Total Debt/Total Capital|Leverage(%)|LTM\n|<p>***metrics limit** =  38 per request*</p>\n*<p>Make note, GET Method URL request lines are also limited to a total\nlength of 8192 bytes (8KB). In cases where the service allows for thousands\nof ids, which may lead to exceeding this request line limit of 8KB, its\nadvised for any requests with large request lines to be requested through\nthe respective \"POST\" method.</p>*\n",
+      "schema_ref": null,
+      "schema": {
+        "type": "array",
+        "example": [
+          "PEX",
+          "LTD_EQ",
+          "DEBT_EQ"
+        ],
+        "minItems": 1,
+        "maxItems": 38,
+        "items": {
+          "type": "string"
+        }
+      },
+      "style": null,
+      "explode": false,
+      "example": null
+    },
+    "familyFilter": {
+      "component_name": "familyFilter",
+      "name": "familyFilter",
+      "in": "query",
+      "required": false,
+      "description": "Highest Level Filter to search by common Benchmark Families, such as S&P, MSCI, or Russell. This will retrieve all related benchmark ids. For further filtering, use the response items such as the categoryDescription field. Leave blank if you wish to see a full sample list of ids. requested-\n* **CHINA & HK INDICES** - Major Hong Kong and China Indices, such as Hang Seng Index (HSI-HKX)\n* **DOW JONES** - Dow Jones Global, Regions, Countries, Titans\n* **FACTSET MARKET INDICES** - Regional and Country Indices defined by FactSet\n* **FTSE** - FTSE Global, UK, Global All Cap, World, Xinhua, European, GWA, JSE, Multinationals, and Style indices\n* **GLOBAL INDICES** - A mix of major indices across the globe\n* **MSCI** - MSCI All Country, Asia Pacific, Thematic & Strategy, Emerging, Developed, US\n* **RUSSELL** - US, Global, and Nomura\n* **S&P** - US, ASX, Select Industry, BMI, Global, Thematic, Emerging, TSX\n* **STOXX** - Total Market, Europe, and Nordic\n* **TOPIX** - Topix Indices, such as TOPIX 500 (182301)\n* **MORNINGSTAR** - Global, Regional, Country, and Sector indicies\n* **BLOOMBERG** - Global, Regional, US, Europe, Maturity, Ratings\n",
+      "schema_ref": null,
+      "schema": {
+        "type": "string",
+        "enum": [
+          "CHINA_HK_INDICES",
+          "DOW_JONES",
+          "FACTSET_MARKET_INDICES",
+          "FTSE",
+          "GLOBAL_INDICES",
+          "MSCI",
+          "RUSSELL",
+          "SP",
+          "STOXX",
+          "TOPIX",
+          "MORNINGSTAR",
+          "BLOOMBERG"
+        ]
+      },
+      "style": null,
+      "explode": null,
+      "example": null
+    }
+  },
+  "schemas": {
+    "benchmarkConstituentsRequest": {
+      "type": "object",
+      "title": "Benchmark Constituents Request",
+      "properties": {
+        "ids": {
+          "$ref": "constituentIds"
+        },
+        "date": {
+          "$ref": "requestedDate"
+        },
+        "currency": {
+          "$ref": "currency"
+        },
+        "calendar": {
+          "$ref": "regionCalendar"
+        }
+      },
+      "required": [
+        "ids"
+      ]
+    },
+    "benchmarkConstituentsResponse": {
+      "type": "object",
+      "title": "Benchmark Constituents Response",
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "Array of metric objects representing the metrics that can be requested\nfrom the estimates APIs.\n",
+          "items": {
+            "$ref": "benchmarkConstituent"
+          }
+        }
+      }
+    },
+    "benchmarkConstituent": {
+      "type": "object",
+      "title": "Benchmark Constituent",
+      "properties": {
+        "fsymId": {
+          "type": "string",
+          "description": "Benchmark Id",
+          "example": "SPY-US",
+          "nullable": true
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of weight and shares.",
+          "example": "2020-07-01",
+          "nullable": true
+        },
+        "fsymSecurityId": {
+          "type": "string",
+          "description": "FactSet Security Identifier (-S). If Cash or Generic Id holding, response will just pass through generic id (e.g. CASH_USD).",
+          "example": "TKPJVY-S",
+          "nullable": true
+        },
+        "fsymRegionalId": {
+          "type": "string",
+          "description": "FactSet Regional Identifier (-R). If Cash or Generic Id holding, response will just pass through generic id (e.g. CASH_USD).",
+          "example": "F07Q7W-R",
+          "nullable": true
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code for prices.",
+          "example": "USD",
+          "nullable": true
+        },
+        "weightClose": {
+          "type": "number",
+          "format": "double",
+          "description": "Weight of Security in benchmark (percent).",
+          "example": 0.085717610340781,
+          "nullable": true
+        },
+        "adjHolding": {
+          "type": "number",
+          "format": "double",
+          "description": "Shares held adjusted. Units in Millions.",
+          "example": 0.884722,
+          "nullable": true
+        },
+        "unadjHolding": {
+          "type": "number",
+          "format": "double",
+          "description": "Shares held unadjusted. Units in Millions.",
+          "example": 0.884722,
+          "nullable": true
+        },
+        "price": {
+          "type": "number",
+          "format": "double",
+          "description": "Price of shares held.",
+          "example": 267.97,
+          "nullable": true
+        },
+        "adjMarketValue": {
+          "type": "number",
+          "format": "double",
+          "description": "Market value adjusted. Market Value represented in Millions.",
+          "example": 237.07895434,
+          "nullable": true
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Identifier specified in the request",
+          "example": "SPY-US"
+        }
+      }
+    },
+    "fixedIncomeBenchmarkConstituentsRequest": {
+      "type": "object",
+      "title": "Fixed Income Benchmark Constituents Request",
+      "properties": {
+        "ids": {
+          "$ref": "fIConstituentIds"
+        },
+        "date": {
+          "$ref": "requestedDate"
+        },
+        "currency": {
+          "$ref": "currency"
+        }
+      },
+      "required": [
+        "ids"
+      ]
+    },
+    "fixedIncomeBenchmarkConstituentsResponse": {
+      "type": "object",
+      "title": "Fixed Income Benchmark Constituents Response",
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "Array of metric objects representing the metrics that can be requested\nfrom the estimates APIs.\n",
+          "items": {
+            "$ref": "fixedIncomeBenchmarkConstituent"
+          }
+        }
+      }
+    },
+    "fixedIncomeBenchmarkConstituent": {
+      "type": "object",
+      "title": "Benchmark Constituent",
+      "properties": {
+        "fsymId": {
+          "type": "string",
+          "description": "Benchmark Id",
+          "example": "LHMN0001",
+          "nullable": true
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of weight and shares.",
+          "example": "2021-04-12",
+          "nullable": true
+        },
+        "fsymSecurityId": {
+          "type": "string",
+          "description": "FactSet Security Identifier (-S).",
+          "example": "FV4SC0-S",
+          "nullable": true
+        },
+        "weightClose": {
+          "type": "number",
+          "format": "double",
+          "description": "Weight of Security in benchmark (percent).",
+          "example": 0.00303380596473456,
+          "nullable": true
+        },
+        "amountOutstanding": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount Outstanding for the Fixed Income Security.",
+          "example": 700000,
+          "nullable": true
+        },
+        "price": {
+          "type": "number",
+          "format": "double",
+          "description": "Fixed Income Price of security held.",
+          "example": 106.976,
+          "nullable": true
+        },
+        "adjMarketValue": {
+          "type": "number",
+          "format": "double",
+          "description": "Market value adjusted. Market Value represented in Millions.",
+          "example": 757.233375,
+          "nullable": true
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Identifier specified in the request",
+          "example": "LHMN0001"
+        }
+      }
+    },
+    "indexSnapshotRequest": {
+      "type": "object",
+      "title": "Index Snapshot Request",
+      "properties": {
+        "ids": {
+          "$ref": "indexIds"
+        },
+        "date": {
+          "$ref": "requestedDate"
+        },
+        "returnType": {
+          "$ref": "returnType"
+        },
+        "currency": {
+          "$ref": "currency"
+        },
+        "calendar": {
+          "$ref": "regionCalendar"
+        }
+      },
+      "required": [
+        "ids"
+      ]
+    },
+    "indexSnapshotResponse": {
+      "type": "object",
+      "title": "Index Snapshot Response",
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "Array of index snapshot response objects.\n",
+          "items": {
+            "$ref": "indexSnapshot"
+          }
+        }
+      }
+    },
+    "indexSnapshot": {
+      "type": "object",
+      "title": "Index Snapshot Object",
+      "properties": {
+        "fsymId": {
+          "type": "string",
+          "description": "Requested Identifier. Must be a valid Benchmark Identifier recognized by FactSet.",
+          "example": "SP50",
+          "nullable": true
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "The respective date for values as of the date requested in YYYY-MM-DD format.",
+          "example": "2020-07-01",
+          "nullable": true
+        },
+        "inceptionDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The inception date of the requested index in YYYY-MM-DD format.",
+          "example": "1988-01-04",
+          "nullable": true
+        },
+        "name": {
+          "type": "string",
+          "description": "Proper Name of Index.",
+          "example": "S&P 500",
+          "nullable": true
+        },
+        "constituentNumber": {
+          "type": "integer",
+          "description": "The total number of constituents as of the date requested.",
+          "example": 502,
+          "nullable": true
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency Code used in adjustments. If no Currency was requested, the service will default to the local Calendar.",
+          "example": "USD",
+          "nullable": true
+        },
+        "marketValue": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Market Capitalization as of the date requested expressed in millions.",
+          "example": 27696158.012077,
+          "nullable": true
+        },
+        "price": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Price",
+          "example": 3349.15600690205,
+          "nullable": true
+        },
+        "priceReturnPercent1D": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Price - 1 Day percent change",
+          "example": 0.642620385795123,
+          "nullable": true
+        },
+        "priceReturnPercentQTD": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Price - Quarter-to-Date percent change",
+          "example": 8.02735451465131,
+          "nullable": true
+        },
+        "priceReturnPercentYTD": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Price - Year-to-Date percent change",
+          "example": 3.66394447660916,
+          "nullable": true
+        },
+        "totalReturnLevel": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Total Return Amount. (Gross or Net depends on requested returnType)",
+          "example": 6870.86168040129,
+          "nullable": true
+        },
+        "totalReturnPercent1D": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Total Return - 1 Day percent change. (Gross or Net depends on requested returnType)",
+          "example": 0.653957589855003,
+          "nullable": true
+        },
+        "totalReturnPercentQTD": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Total Return - Quarter-to-Date percent change. (Gross or Net depends on requested returnType)",
+          "example": 8.17415047623613,
+          "nullable": true
+        },
+        "totalReturnPercentYTD": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Total Return - Year-to-Date percent change. (Gross or Net depends on requested returnType)",
+          "example": 4.84152796547426,
+          "nullable": true
+        },
+        "returnType": {
+          "type": "string",
+          "description": "The requested Return Type - GROSS or NET",
+          "example": "GROSS",
+          "nullable": true
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Benchmark Identifier specified in the request",
+          "example": "SP50"
+        }
+      }
+    },
+    "indexHistoryRequest": {
+      "type": "object",
+      "title": "Index History Request",
+      "properties": {
+        "ids": {
+          "$ref": "indexIds"
+        },
+        "startDate": {
+          "$ref": "startDate"
+        },
+        "endDate": {
+          "$ref": "endDate"
+        },
+        "frequency": {
+          "$ref": "frequency"
+        },
+        "returnType": {
+          "$ref": "returnType"
+        },
+        "hedgeType": {
+          "$ref": "hedgeType"
+        },
+        "currency": {
+          "$ref": "currency"
+        },
+        "calendar": {
+          "$ref": "regionCalendar"
+        },
+        "impliedDate": {
+          "$ref": "impliedDate"
+        }
+      },
+      "required": [
+        "ids"
+      ]
+    },
+    "indexReturnsRequest": {
+      "type": "object",
+      "title": "Index Returns Request",
+      "properties": {
+        "ids": {
+          "$ref": "indexIds"
+        },
+        "startDate": {
+          "$ref": "startDate"
+        },
+        "endDate": {
+          "$ref": "endDate"
+        },
+        "returnType": {
+          "$ref": "returnType"
+        },
+        "hedgeType": {
+          "$ref": "hedgeType"
+        },
+        "currency": {
+          "$ref": "currency"
+        },
+        "calendar": {
+          "$ref": "regionCalendar"
+        },
+        "impliedDate": {
+          "$ref": "impliedDate"
+        }
+      },
+      "required": [
+        "ids",
+        "startDate",
+        "endDate"
+      ]
+    },
+    "indexHistoryResponse": {
+      "type": "object",
+      "title": "Index History Response",
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "Array of Index History response objects.\n",
+          "items": {
+            "$ref": "indexHistory"
+          }
+        }
+      }
+    },
+    "indexHistory": {
+      "type": "object",
+      "title": "Index History Object",
+      "properties": {
+        "fsymId": {
+          "type": "string",
+          "description": "Requested Identifier. Must be a valid Benchmark Identifier recognized by FactSet.",
+          "example": "SP50",
+          "nullable": true
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "The respective date for values as of the date requested in YYYY-MM-DD format.",
+          "example": "2020-07-01",
+          "nullable": true
+        },
+        "inceptionDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The inception date of the requested index in YYYY-MM-DD format.",
+          "example": "1988-01-04",
+          "nullable": true
+        },
+        "name": {
+          "type": "string",
+          "description": "Proper Name of Index.",
+          "example": "S&P 500",
+          "nullable": true
+        },
+        "constituentNumber": {
+          "type": "integer",
+          "description": "The total number of constituents as of the date requested.",
+          "example": 502,
+          "nullable": true
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency Code used in adjustments. If no Currency was requested, the service will default to LOCAL ('LOC').",
+          "example": "USD",
+          "nullable": true
+        },
+        "marketValue": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Market Capitalization as of the date requested expressed in millions.",
+          "example": 27696158.012077,
+          "nullable": true
+        },
+        "price": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Price",
+          "example": 3349.15600690205,
+          "nullable": true
+        },
+        "priceReturnPercent": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Price Percent Change",
+          "example": 0.642620385795123,
+          "nullable": true
+        },
+        "totalReturnLevel": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Total Return Amount",
+          "example": 6870.86168040129,
+          "nullable": true
+        },
+        "totalReturnPercent": {
+          "type": "number",
+          "format": "double",
+          "description": "Index Level Total Return Percent Change",
+          "example": 0.653957589855003,
+          "nullable": true
+        },
+        "returnType": {
+          "type": "string",
+          "description": "The requested Return Type - GROSS or NET",
+          "example": "GROSS",
+          "nullable": true
+        },
+        "hedgeType": {
+          "type": "string",
+          "description": "The requested Hedge Type - HEDGED or UNHEDGED",
+          "example": "UNHEDGED",
+          "nullable": true
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Benchmark Identifier specified in the request",
+          "example": "SP50"
+        },
+        "observationDate": {
+          "type": "string",
+          "description": "This field will always return the date of the data that was actually returned.",
+          "example": "2020-07-21",
+          "nullable": true
+        }
+      }
+    },
+    "indexReturnsResponse": {
+      "type": "object",
+      "title": "Index Returns Response",
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "Array of Index Returns response objects.\n",
+          "items": {
+            "$ref": "indexReturns"
+          }
+        }
+      }
+    },
+    "indexReturns": {
+      "type": "object",
+      "title": "Index Returns Object",
+      "properties": {
+        "fsymId": {
+          "type": "string",
+          "description": "Requested Identifier. Must be a valid Benchmark Identifier recognized by FactSet.",
+          "example": "SP50"
+        },
+        "inceptionDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The inception date of the requested index in YYYY-MM-DD format.",
+          "example": "1988-01-04",
+          "nullable": true
+        },
+        "name": {
+          "type": "string",
+          "description": "Proper Name of Index.",
+          "example": "S&P 500",
+          "nullable": true
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency Code used in adjustments. If no Currency was requested, the service will default to LOCAL ('LOC'). Currency code (ISO 4217). For a list of currency codes, see [OA Page 1470](https://my.apps.factset.com/oa/pages/1470).",
+          "example": "USD",
+          "nullable": true
+        },
+        "totalReturnPercent": {
+          "type": "number",
+          "format": "double",
+          "description": "Cumulative total return (%) for the index over the specified date range, calculated as ((startDate level / endDate level) - 1) * 100 using total return index levels. Returns a single aggregated value per benchmark. Dates are inclusive and based on closing levels; non-trading days use the nearest available trading date.",
+          "example": 0.653957589855003,
+          "nullable": true
+        },
+        "returnType": {
+          "type": "string",
+          "description": "The requested Return Type - GROSS or NET",
+          "example": "GROSS",
+          "nullable": true
+        },
+        "hedgeType": {
+          "type": "string",
+          "description": "The requested Hedge Type - HEDGED or UNHEDGED",
+          "example": "UNHEDGED",
+          "nullable": true
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Benchmark Identifier specified in the request",
+          "example": "SP50"
+        }
+      }
+    },
+    "benchmarkRatiosRequest": {
+      "type": "object",
+      "title": "Benchamrk Ratios Request",
+      "properties": {
+        "ids": {
+          "$ref": "indexIds"
+        },
+        "startDate": {
+          "$ref": "startDate"
+        },
+        "endDate": {
+          "$ref": "endDate"
+        },
+        "periodicity": {
+          "$ref": "periodicity"
+        },
+        "metrics": {
+          "$ref": "metrics"
+        },
+        "frequency": {
+          "$ref": "frequency"
+        },
+        "currency": {
+          "$ref": "currency"
+        }
+      },
+      "required": [
+        "ids",
+        "metrics"
+      ]
+    },
+    "benchmarkRatiosResponse": {
+      "type": "object",
+      "title": "Benchmark Ratios Response",
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "Array of Index History response objects.\n",
+          "items": {
+            "$ref": "benchmarkRatios"
+          }
+        }
+      }
+    },
+    "benchmarkRatios": {
+      "type": "object",
+      "title": "Benchmark Ratios Object",
+      "properties": {
+        "fsymId": {
+          "type": "string",
+          "description": "Requested Identifier. Must be a valid Benchmark Identifier recognized by FactSet.",
+          "example": "SP50",
+          "nullable": true
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "The respective date for values as of the date requested in YYYY-MM-DD format.",
+          "example": "2020-12-31",
+          "nullable": true
+        },
+        "name": {
+          "type": "string",
+          "description": "Proper Name of Index.",
+          "example": "S&P 500",
+          "nullable": true
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Benchmark Identifier specified in the request.",
+          "example": "SP50"
+        },
+        "metric": {
+          "type": "string",
+          "description": "Metric requested",
+          "example": "GROSS_MARGIN",
+          "nullable": true
+        },
+        "periodicity": {
+          "type": "string",
+          "description": "The periodicity submitted in the request.",
+          "example": "LTM",
+          "nullable": true
+        },
+        "currency": {
+          "type": "string",
+          "description": "The currency submitted in the request.",
+          "example": "USD",
+          "nullable": true
+        },
+        "value": {
+          "type": "number",
+          "format": "double",
+          "description": "Ratio value based on the metric requested.",
+          "example": 35.4094680290153,
+          "nullable": true
+        }
+      }
+    },
+    "benchmarkIdListRequest": {
+      "type": "object",
+      "title": "Benchmark Id List Request",
+      "properties": {
+        "familyFilter": {
+          "$ref": "familyFilter"
+        }
+      }
+    },
+    "benchmarkIdListResponse": {
+      "type": "object",
+      "title": "Benchmark Id List Response",
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "Array of Benchmark Ids and their respective categorizations.\n",
+          "items": {
+            "$ref": "benchmarkIdList"
+          }
+        }
+      }
+    },
+    "benchmarkIdList": {
+      "type": "object",
+      "title": "Benchmark Id List Object",
+      "properties": {
+        "fsymId": {
+          "type": "string",
+          "description": "Benchmark Id",
+          "example": "990100",
+          "nullable": true
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the Benchmark ID",
+          "example": "MSCI World Index",
+          "nullable": true
+        },
+        "familyName": {
+          "type": "string",
+          "description": "Name of the Benchmarks Family",
+          "example": "MSCI",
+          "nullable": true
+        },
+        "market": {
+          "type": "string",
+          "description": "Market grouping related to the Benchmark Family",
+          "example": "Developed",
+          "nullable": true
+        },
+        "categoryDescription": {
+          "type": "string",
+          "description": "Extended name or description of Benchmark Family & Market",
+          "example": "International Indices",
+          "nullable": true
+        }
+      }
+    },
+    "constituentIds": {
+      "type": "array",
+      "title": "Constituent Ids",
+      "description": "Benchmark Identifiers. Reference the helper endpoint **/id-list** to get a sample list of  valid identifiers. You must be authorized for the `ids` requested, otherwise you will receive an error.",
+      "example": [
+        "SP50"
+      ],
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "fIConstituentIds": {
+      "type": "array",
+      "title": "Fixed Income Constituent Ids",
+      "description": "Fixed Income Benchmark Identifiers. Reference the helper endpoint **/id-list** to get a sample list of  valid identifiers. You must be authorized for the `ids` requested, otherwise you will receive an error.",
+      "example": [
+        "LHMN0001"
+      ],
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "indexIds": {
+      "type": "array",
+      "title": "Index Ids",
+      "description": "Benchmark Identifiers. Reference the helper endpoint **/id-list** to get a sample list of  valid identifiers.",
+      "example": [
+        "SP50"
+      ],
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {
+        "type": "string"
+      }
+    },
+    "requestedDate": {
+      "type": "string",
+      "title": "Date",
+      "description": "Date of holding expressed in YYYY-MM-DD format.",
+      "example": "2020-08-06"
+    },
+    "startDate": {
+      "type": "string",
+      "title": "Start Date",
+      "description": "Requested start date expressed in YYYY-MM-DD format.",
+      "example": "2018-12-31"
+    },
+    "endDate": {
+      "type": "string",
+      "title": "End Date",
+      "description": "Requested end date for Range expressed in YYYY-MM-DD format.",
+      "example": "2019-12-31"
+    },
+    "returnType": {
+      "type": "string",
+      "title": "Return Type",
+      "description": "The return type adjustment used in returns response items. Adjustment can be made for GROSS and NET dividends that will be included in the return calculation. The service will default to GROSS.",
+      "enum": [
+        "GROSS",
+        "NET"
+      ],
+      "default": "GROSS",
+      "example": "GROSS"
+    },
+    "hedgeType": {
+      "type": "string",
+      "title": "Hedge Type",
+      "description": "The hedge type adjustment used in returns response items. Adjustment can be made for HEDGED and UNHEDGED values that will be included in the return calculation. The service will default to UNHEDGED.",
+      "enum": [
+        "UNHEDGED",
+        "HEDGED"
+      ],
+      "default": "UNHEDGED",
+      "example": "UNHEDGED"
+    },
+    "impliedDate": {
+      "type": "string",
+      "title": "Implied Date",
+      "description": "This parameter controls the **date** returned in the date field. The default value is **N**. By default, the date field returns the actual date of the observation. This means it will repeat values for weekends and holidays. If  set to **Y**, the date field will return the implied date of the observation, making all the dates unique.",
+      "enum": [
+        "Y",
+        "N"
+      ],
+      "default": "N"
+    },
+    "calendar": {
+      "type": "string",
+      "title": "Calendar",
+      "description": "Calendar of data returned. SEVENDAY includes weekends.",
+      "enum": [
+        "FIVEDAY",
+        "SEVENDAY"
+      ],
+      "default": "FIVEDAY",
+      "example": "FIVEDAY"
+    },
+    "regionCalendar": {
+      "type": "string",
+      "title": "Calendar",
+      "description": "Calendar of data returned. The default value is FIVEDAY which displays Monday through Friday, regardless of whether there were trading holidays.",
+      "default": "FIVEDAY",
+      "example": "FIVEDAY"
+    },
+    "currency": {
+      "type": "string",
+      "title": "Currency",
+      "description": "Currency for response. Currency code (ISO 4217). For a list of currency codes, see [OA Page 1470](https://my.apps.factset.com/oa/pages/1470).",
+      "example": "USD"
+    },
+    "frequency": {
+      "type": "string",
+      "title": "Frequency",
+      "description": "Controls the display frequency of the data returned.\n  * **D** = Daily\n  * **W** = Weekly, based on the last day of the week of the start date.\n  * **M** = Monthly, based on the last trading day of the month.\n  * **AM** = Monthly, based on the start date (e.g., if the start date is June 16, data is displayed for June 16, May 16, April 16 etc.). \n  * **CQ** = Quarterly based on the last trading day of the calendar quarter (March, June, September, or December).\n  * **AY** = Actual Annual, based on the start date.\n  * **CY** = Calendar Annual, based on the last trading day of the calendar year.\n",
+      "enum": [
+        "D",
+        "W",
+        "M",
+        "AM",
+        "CQ",
+        "AY",
+        "CY"
+      ],
+      "default": "CY",
+      "example": "CY"
+    },
+    "metrics": {
+      "type": "array",
+      "title": "Metrics",
+      "description": "Requested List of FactSet Market Aggregates (FMA) or ratios. provided the below complete metrics list.\n|metric item|Description|category|periodicity\n|:---|:---|:---|:---|\n|GROSS_MARGIN|Gross Margin|Profitability (%)|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|OPER_INC_SALES|Operating Margin|Profitability (%)|LTM, QTR\n|NET_MGN|Net Margin|Profitability (%)|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|EBIT_MARGIN|EBIT Margin|Profitability (%)| NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|EBITDA_MARGIN|EBITDA Margin|Profitability (%)|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|ROA|Return on Assets|Profitability (%)|LTM\n|ROE|Return on Equity|Profitability (%)|NTMA, LTMA, LTM, 0, 1, 2\n|ROIC|Return on Invested Capital|Profitability (%)| LTM\n|FCF_MGN|Free Cash Flow Margin|Profitability (%)|LTM, QTR\n|PE|Price/Earnings|Valuation|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|PEX|Price/Earnings (excl negatives)|Valuation|LTM\n|PSALES|Price/Sales|Valuation|NTMA, LTMA, STMA, LTM, QTR, 0, 1, 2\n|PBK|Price/Book Value|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|PCF|Price/Cash Flow|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|PCFX|Price/Cash Flow (excl negatives)|Valuation|LTM\n|PFCF|Price/Free Cash Flow|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|EVAL_EBIT|Enterprise Value/EBIT|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|EVAL_EBITDA|Enterprise Value/EBITDA|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|EVAL_SALES|Enterprise Value/Sales|Valuation|NTMA, LTMA, LTM, 0, 1, 2\n|NDEBT_EBITDA|Net Debt/EBITDA|Coverage|NTMA, LTMA, LTM, 0, 1, 2\n|NDEBT_EBITDA_MIN_CAPEX|Net Debt/(EBITDA-Capex)|Coverage|LTM\n|DEBT_EBITDA|Total Debt/EBITDA|Coverage|LTM\n|DEBT_EBIT|Total Debt/EBIT|Coverage|LTM\n|EBIT_INT_EXP|EBIT/Interest Expense (Int. Coverage)|Coverage|LTM\n|EBITDA_INT_EXP|EBITDA/Interest Expense|Coverage|LTM\n|OPER_CF_INT_EXP|CFO/Interest Expense|Coverage|LTM\n|LTD_EBITDA|LT Debt/EBITDA|Coverage|LTM\n|NDEBT_FFO|Net Debt/FFO|Coverage|LTM\n|LTD_FFO|LT Debt/FFO|Coverage|LTM\n|FCF_DEBT|FCF/Total Debt|Coverage|LTM\n|OPER_CF_DEBT|CFO/Total Debt|Coverage|LTM\n|LTD_EQ|LT Debt/Total Equity|Leverage(%)|LTM\n|LTD_TCAP|LT Debt/Total Capital|Leverage(%)|LTM\n|LTD_ASSETS|LT Debt/Total Assets|Leverage(%)|LTM\n|DEBT_ASSETS|Total Debt/Total Assets|Leverage(%)|LTM\n|DEBT_EQ|Total Debt/Total Equity|Leverage(%)|LTM\n|NDEBT_TCAP|Net Debt/Total Capital|Leverage(%)|LTM\n|DEBT_TCAP|Total Debt/Total Capital|Leverage(%)|LTM\n",
+      "example": [
+        "PE"
+      ],
+      "minItems": 1,
+      "maxItems": 38,
+      "items": {
+        "type": "string"
+      }
+    },
+    "periodicity": {
+      "type": "string",
+      "title": "Periodicity",
+      "description": "The calculation periodicity for the aggregated period. **Note** - Not all periodicities are supported for each metric, depending on the type of ratio. LTM is set as default and supported for all metrics. See Metrics Parameter for additional detail on which periodicities are available per metric.\n|Periodicity|Description|\n|:---|:---|\n|LTM|Last Twelve Months\n|LTMA|Last Twelve Months using Broker Actuals for Estimated Items\n|STMA| Second Twelve Month Forward\n|NTMA| 12 Month Forward\n|0| Latest Reported Calendar Year\n|1| Current Unreported Year\n|2| Following Year\n|QTR| Quarterly - Reported by companies\n",
+      "enum": [
+        "LTM",
+        "LTMA",
+        "STMA",
+        "NTMA",
+        "0",
+        "1",
+        "2",
+        "QTR"
+      ],
+      "default": "LTM",
+      "example": "LTM"
+    },
+    "familyFilter": {
+      "type": "string",
+      "title": "Family Filter",
+      "description": "Highest Level Filter to search by common Benchmark Families, such as S&P, MSCI, or Russell. This will retrieve all related benchmark ids. For further filtering, use the response items such as the categoryDescription field. Leave blank if you wish to see a full sample list of ids. requested-\n* **CHINA & HK INDICES** - Major Hong Kong and China Indices, such as Hang Seng Index (HSI-HKX)\n* **DOW JONES** - Dow Jones Global, Regions, Countries, Titans\n* **FACTSET MARKET INDICES** - Regional and Country Indices defined by FactSet\n* **FTSE** - FTSE Global, UK, Global All Cap, World, Xinhua, European, GWA, JSE, Multinationals, and Style indices\n* **GLOBAL INDICES** - A mix of major indices across the globe\n* **MSCI** - MSCI All Country, Asia Pacific, Thematic & Strategy, Emerging, Developed, US\n* **RUSSELL** - US, Global, and Nomura\n* **S&P** - US, ASX, Select Industry, BMI, Global, Thematic, Emerging, TSX\n* **STOXX** - Total Market, Europe, and Nordic\n* **TOPIX** - Topix Indices, such as TOPIX 500 (182301)\n* **MORNINGSTAR** - Global, Regional, Country, and Sector indicies\n* **BLOOMBERG** - Global, Regional, US, Europe, Maturity, Ratings\n",
+      "enum": [
+        "CHINA_HK_INDICES",
+        "DOW_JONES",
+        "FACTSET_MARKET_INDICES",
+        "FTSE",
+        "GLOBAL_INDICES",
+        "MSCI",
+        "RUSSELL",
+        "SP",
+        "STOXX",
+        "TOPIX",
+        "MORNINGSTAR",
+        "BLOOMBERG"
+      ],
+      "example": "MSCI"
+    },
+    "errorResponse": {
+      "type": "object",
+      "title": "Error Response",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "status",
+          "example": "Bad Request"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "timestamp in YYYY-MM-DD HH:MM:SS.SSS",
+          "example": "2019-11-01 11:09:41.918"
+        },
+        "path": {
+          "type": "string",
+          "description": "The Endpoint path {package}/version/{endpoint}",
+          "example": "/factset-benchmarks/v1/{endpoint}"
+        },
+        "message": {
+          "type": "string",
+          "description": "The plain text error message",
+          "example": "Validation Error"
+        },
+        "subErrors": {
+          "type": "object",
+          "description": "subErrors related to the error message. Null if not applicable.",
+          "properties": {
+            "object": {
+              "type": "string",
+              "description": "the operation ID"
+            },
+            "field": {
+              "type": "string",
+              "description": "Parameter Field Name"
+            },
+            "message": {
+              "type": "string",
+              "description": "Error message"
+            },
+            "rejectedValue": {
+              "type": "array",
+              "description": "Rejected Values in an Array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "enums_in_schemas": {
+    "returnType": [
+      {
+        "at": "(root)",
+        "type": "string",
+        "values": [
+          "GROSS",
+          "NET"
+        ],
+        "default": "GROSS",
+        "description": "The return type adjustment used in returns response items. Adjustment can be made for GROSS and NET dividends that will be included in the return calculation. The service will default to GROSS."
+      }
+    ],
+    "hedgeType": [
+      {
+        "at": "(root)",
+        "type": "string",
+        "values": [
+          "UNHEDGED",
+          "HEDGED"
+        ],
+        "default": "UNHEDGED",
+        "description": "The hedge type adjustment used in returns response items. Adjustment can be made for HEDGED and UNHEDGED values that will be included in the return calculation. The service will default to UNHEDGED."
+      }
+    ],
+    "impliedDate": [
+      {
+        "at": "(root)",
+        "type": "string",
+        "values": [
+          "Y",
+          "N"
+        ],
+        "default": "N",
+        "description": "This parameter controls the **date** returned in the date field. The default value is **N**. By default, the date field returns the actual date of the observation. This means it will repeat values for weekends and holidays. If  set to **Y**, the date field will return the implied date of the observation, making all the dates unique."
+      }
+    ],
+    "calendar": [
+      {
+        "at": "(root)",
+        "type": "string",
+        "values": [
+          "FIVEDAY",
+          "SEVENDAY"
+        ],
+        "default": "FIVEDAY",
+        "description": "Calendar of data returned. SEVENDAY includes weekends."
+      }
+    ],
+    "frequency": [
+      {
+        "at": "(root)",
+        "type": "string",
+        "values": [
+          "D",
+          "W",
+          "M",
+          "AM",
+          "CQ",
+          "AY",
+          "CY"
+        ],
+        "default": "CY",
+        "description": "Controls the display frequency of the data returned.\n  * **D** = Daily\n  * **W** = Weekly, based on the last day of the week of the start date.\n  * **M** = Monthly, based on the last trading day of the month.\n  * **AM** = Monthly, based on the start date (e.g., if the start date is June 16, data is displayed for June 16, May 16, April 16 etc.). \n  * **CQ** = Quarterly based on the last trading day of the calendar quarter (March, June, September, or December).\n  * **AY** = Actual Annual, based on the start date.\n  * **CY** = Calendar Annual, based on the last trading day of the calendar year.\n"
+      }
+    ],
+    "periodicity": [
+      {
+        "at": "(root)",
+        "type": "string",
+        "values": [
+          "LTM",
+          "LTMA",
+          "STMA",
+          "NTMA",
+          "0",
+          "1",
+          "2",
+          "QTR"
+        ],
+        "default": "LTM",
+        "description": "The calculation periodicity for the aggregated period. **Note** - Not all periodicities are supported for each metric, depending on the type of ratio. LTM is set as default and supported for all metrics. See Metrics Parameter for additional detail on which periodicities are available per metric.\n|Periodicity|Description|\n|:---|:---|\n|LTM|Last Twelve Months\n|LTMA|Last Twelve Months using Broker Actuals for Estimated Items\n|STMA| Second Twelve Month Forward\n|NTMA| 12 Month Forward\n|0| Latest Reported Calendar Year\n|1| Current Unreported Year\n|2| Following Year\n|QTR| Quarterly - Reported by companies\n"
+      }
+    ],
+    "familyFilter": [
+      {
+        "at": "(root)",
+        "type": "string",
+        "values": [
+          "CHINA_HK_INDICES",
+          "DOW_JONES",
+          "FACTSET_MARKET_INDICES",
+          "FTSE",
+          "GLOBAL_INDICES",
+          "MSCI",
+          "RUSSELL",
+          "SP",
+          "STOXX",
+          "TOPIX",
+          "MORNINGSTAR",
+          "BLOOMBERG"
+        ],
+        "default": null,
+        "description": "Highest Level Filter to search by common Benchmark Families, such as S&P, MSCI, or Russell. This will retrieve all related benchmark ids. For further filtering, use the response items such as the categoryDescription field. Leave blank if you wish to see a full sample list of ids. requested-\n* **CHINA & HK INDICES** - Major Hong Kong and China Indices, such as Hang Seng Index (HSI-HKX)\n* **DOW JONES** - Dow Jones Global, Regions, Countries, Titans\n* **FACTSET MARKET INDICES** - Regional and Country Indices defined by FactSet\n* **FTSE** - FTSE Global, UK, Global All Cap, World, Xinhua, European, GWA, JSE, Multinationals, and Style indices\n* **GLOBAL INDICES** - A mix of major indices across the globe\n* **MSCI** - MSCI All Country, Asia Pacific, Thematic & Strategy, Emerging, Developed, US\n* **RUSSELL** - US, Global, and Nomura\n* **S&P** - US, ASX, Select Industry, BMI, Global, Thematic, Emerging, TSX\n* **STOXX** - Total Market, Europe, and Nordic\n* **TOPIX** - Topix Indices, such as TOPIX 500 (182301)\n* **MORNINGSTAR** - Global, Regional, Country, and Sector indicies\n* **BLOOMBERG** - Global, Regional, US, Europe, Maturity, Ratings\n"
+      }
+    ]
+  },
+  "enums_in_parameters": {
+    "returnType": {
+      "values": [
+        "GROSS",
+        "NET"
+      ],
+      "default": "GROSS",
+      "in": "query",
+      "param_name": "returnType"
+    },
+    "hedgeType": {
+      "values": [
+        "UNHEDGED",
+        "HEDGED"
+      ],
+      "default": "UNHEDGED",
+      "in": "query",
+      "param_name": "hedgeType"
+    },
+    "impliedDate": {
+      "values": [
+        "Y",
+        "N"
+      ],
+      "default": "N",
+      "in": "query",
+      "param_name": "impliedDate"
+    },
+    "calendar": {
+      "values": [
+        "FIVEDAY",
+        "SEVENDAY"
+      ],
+      "default": "FIVEDAY",
+      "in": "query",
+      "param_name": "calendar"
+    },
+    "frequency": {
+      "values": [
+        "D",
+        "W",
+        "M",
+        "AM",
+        "CQ",
+        "AY",
+        "CY"
+      ],
+      "default": "D",
+      "in": "query",
+      "param_name": "frequency"
+    },
+    "periodicity": {
+      "values": [
+        "LTM",
+        "LTMA",
+        "STMA",
+        "NTMA",
+        "0",
+        "1",
+        "2",
+        "QTR"
+      ],
+      "default": "LTM",
+      "in": "query",
+      "param_name": "periodicity"
+    },
+    "familyFilter": {
+      "values": [
+        "CHINA_HK_INDICES",
+        "DOW_JONES",
+        "FACTSET_MARKET_INDICES",
+        "FTSE",
+        "GLOBAL_INDICES",
+        "MSCI",
+        "RUSSELL",
+        "SP",
+        "STOXX",
+        "TOPIX",
+        "MORNINGSTAR",
+        "BLOOMBERG"
+      ],
+      "default": null,
+      "in": "query",
+      "param_name": "familyFilter"
+    }
+  },
+  "unreferenced_components": {
+    "schemas": [
+      "calendar"
+    ],
+    "parameters": [
+      "calendar"
+    ]
+  },
+  "curated": {
+    "_note": "FS008-authored interpretation layer; every item evidence-tagged. Full prose: docs/factset/capability/benchmarks.md",
+    "checklist_constants": {
+      "entitlement_status": {
+        "value": "UNRESOLVED",
+        "evidence": "UNRESOLVED",
+        "note": "offline doc phase; per-endpoint AND per-benchmark-id 403 documented (BM-UNRES-01); FS010 smoke + FS016 entitlement table resolve"
+      },
+      "rate_and_concurrency_limits": {
+        "value": "undocumented in spec and SDK",
+        "evidence": "UNRESOLVED",
+        "id": "BM-UNRES-07"
+      },
+      "pit_as_of_parameters": {
+        "value": "no as-of/PIT parameters; /constituents and /index-snapshot `date` is the membership/level as-of lever (single date, past only \u2014 future dates 400); whether historical snapshots are frozen-as-published or restated/backfilled is undocumented (BM-UNRES-02)",
+        "evidence": "DOCUMENTED_OPENAPI (parameter inventory) + UNRESOLVED (restatement)"
+      },
+      "pagination": {
+        "value": "NONE on any endpoint; a 200 is the complete result set (full membership snapshot in one response)",
+        "evidence": "DOCUMENTED_OPENAPI (by exhaustion of parameter inventory)"
+      },
+      "async_batch": {
+        "value": "NONE: no batch parameter, no 202 arm, no batch-status/-result endpoints in this family (unlike Global Prices)",
+        "evidence": "DOCUMENTED_OPENAPI (by exhaustion)"
+      },
+      "observed_live_discrepancies": {
+        "value": "N/A (no live calls in doc phase)",
+        "evidence": "UNRESOLVED"
+      },
+      "implementation_status": "NOT_STARTED (adapter=FS016, transport=FS010)",
+      "test_status": "NOT_TESTED"
+    },
+    "sdk_method_map": {
+      "getBenchmarkConstituents": "BenchmarkConstituentsApi.get_benchmark_constituents",
+      "getBenchmarkConstituentsForList": "BenchmarkConstituentsApi.get_benchmark_constituents_for_list",
+      "getFIBenchmarkConstituents": "BenchmarkConstituentsApi.get_fi_benchmark_constituents",
+      "getFIBenchmarkConstituentsForList": "BenchmarkConstituentsApi.get_fi_benchmark_constituents_for_list",
+      "getIndexSnapshot": "IndexLevelApi.get_index_snapshot",
+      "getIndexSnapshotForList": "IndexLevelApi.get_index_snapshot_for_list",
+      "getIndexHistory": "IndexLevelApi.get_index_history",
+      "getIndexHistoryForList": "IndexLevelApi.get_index_history_for_list",
+      "getIndexReturns": "IndexLevelApi.get_index_returns",
+      "getIndexReturnsForList": "IndexLevelApi.get_index_returns_for_list",
+      "getBenchmarkRatios": "IndexLevelApi.get_benchmark_ratios",
+      "getBenchmarkRatiosForList": "IndexLevelApi.get_benchmark_ratios_for_list",
+      "getBenchmarkIds": "HelperApi.get_benchmark_ids",
+      "getBenchmarkIdsForList": "HelperApi.get_benchmark_ids_for_list"
+    },
+    "sdk_transport": {
+      "evidence": "DOCUMENTED_SDK",
+      "package": "fds.sdk.FactSetBenchmarks==2.0.0 (wraps API 1.11.0 = local spec); python>=3.7; fds.sdk.utils for OAuth",
+      "auth": [
+        "Configuration(fds_oauth_client=ConfidentialClient(<app-config.json>))",
+        "Configuration(username='USERNAME-SERIAL', password='API-KEY')"
+      ],
+      "api_classes": [
+        "BenchmarkConstituentsApi",
+        "IndexLevelApi",
+        "HelperApi"
+      ],
+      "async": "*_async and *_with_http_info_async -> async_result.get()",
+      "exceptions": "single fds.sdk.FactSetBenchmarks.ApiException (dispatch on .status + errorResponse body)",
+      "retries": "opt-in urllib3 Retry via configuration.retries; no built-in rate-limit handling",
+      "pagination_helpers": "none needed (API has no pagination)",
+      "recursion_note": "README: sys.setrecursionlimit(1500) may be needed before import"
+    },
+    "membership_reconstruction_verdict": {
+      "evidence": "DOCUMENTED_OPENAPI (by exhaustion of the operation inventory)",
+      "verdict": "RECONSTRUCTION REQUIRED. /constituents accepts exactly ONE benchmark id and ONE optional date per request and returns the full membership snapshot for that single date in one unpaginated 200. There is no date-range parameter, no membership-interval endpoint, no add/drop or delta endpoint, and no reconstitution-calendar endpoint anywhere in the spec. Historical membership therefore MUST be reconstructed from repeated single-date snapshots, exactly as WP9 anticipated.",
+      "pull_cost_model": "one request per (benchmark, date): monthly 2010-2025 principal ~192 snapshots; quarterly secondary ~64 each; Russell 3000 snapshot ~3,000 rows, S&P Global BMI ~14,000 rows (29s read timeout is the size risk \u2014 no way to split a snapshot)",
+      "count_series_trick": "constituentNumber is served time-serially by /index-history (frequency=D): daily count changes locate membership-change dates cheaply and target extra snapshots (INFERRED strategy from documented fields)",
+      "reconstitution_dates": "NOT servable from this API; must come from an external calendar source (BM-UNRES-09)"
+    },
+    "constituent_fields": {
+      "evidence": "DOCUMENTED_OPENAPI",
+      "fields": {
+        "fsymId": "Benchmark Id (echo of the benchmark, e.g. SPY-US)",
+        "date": "Date of weight and shares",
+        "fsymSecurityId": "FactSet Security Identifier (-S); cash/generic holdings pass through a generic id (e.g. CASH_USD)",
+        "fsymRegionalId": "FactSet Regional Identifier (-R); same cash passthrough",
+        "currency": "Currency code for prices",
+        "weightClose": "Weight of Security in benchmark (percent) \u2014 close weight only",
+        "adjHolding": "Shares held adjusted. Units in Millions",
+        "unadjHolding": "Shares held unadjusted. Units in Millions",
+        "price": "Price of shares held (adjustment basis unstated, BM-UNRES-06)",
+        "adjMarketValue": "Market value adjusted, in Millions (no unadjusted arm)",
+        "requestId": "Identifier specified in the request"
+      },
+      "identifier_types_absent": "NO CUSIP, SEDOL, ISIN, or ticker in the constituent payload \u2014 fsym -S/-R only",
+      "symbology_join": "fsymSecurityId/fsymRegionalId are valid Symbology input types (FS003 \u00a73.1/\u00a73.2 enums) -> historical CUSIP/SEDOL/ISIN/tickerRegion with validity intervals; also directly valid ids for Global Prices/Fundamentals. Cash/generic rows must be filtered before joining. (DOCUMENTED_OPENAPI x FS003 manifest)"
+    },
+    "index_level_semantics": {
+      "evidence": "DOCUMENTED_OPENAPI",
+      "price_vs_total_return": "distinct fields: price (index price level) + priceReturnPercent* vs totalReturnLevel + totalReturnPercent*",
+      "returnType": {
+        "GROSS": "gross dividends in return calc (DEFAULT)",
+        "NET": "net dividends in return calc",
+        "note": "one arm per request; both arms need two requests; NET withholding methodology undocumented (BM-UNRES-11)"
+      },
+      "hedgeType": {
+        "UNHEDGED": "DEFAULT",
+        "HEDGED": "hedged variant",
+        "note": "index-history and index-returns only; /index-snapshot has no hedgeType lever (asymmetry); hedging methodology undocumented"
+      },
+      "frequency": "D/W/M/AM/CQ/AY/CY (GET default D; POST-body schema default CY \u2014 BM-DISC-04; always pass explicitly)",
+      "impliedDate": "N (default): date field repeats actual observation dates on weekends/holidays; Y: implied unique dates",
+      "calendar": "regionCalendar free string, default FIVEDAY (Mon-Fri regardless of trading holidays); SEVENDAY; region codes per OA 16610 (e.g. NAY=US)",
+      "percent_change_units": "documented 'percent change'; examples consistent with percent units (e.g. 28.878 for CY2019 S&P 500)",
+      "snapshot_windows": "1D/QTD/YTD percent fields on /index-snapshot only",
+      "cumulative": "/index-returns: single cumulative totalReturnPercent per window; documented formula is inverted and example inconsistent (BM-DISC-05)"
+    },
+    "benchmark_id_conventions": {
+      "evidence": "DOCUMENTED_OPENAPI (examples) unless tagged",
+      "documented_examples": {
+        "SP50": "S&P 500",
+        "R.3000": "Russell 3000",
+        "990100": "MSCI World Index",
+        "180460": "TOPIX (numeric TOPIX family ids)",
+        "HSI-HKX": "Hang Seng Index",
+        "SPY-US": "SPDR S&P 500 ETF used as S&P 500 proxy in constituents example",
+        "LHMN0001": "fixed-income benchmark id example"
+      },
+      "wp9_probe_list_status": {
+        "Russell 3000": "R.3000 \u2014 DOCUMENTED_OPENAPI (index-snapshot example)",
+        "Russell 1000": "R.1000 \u2014 INFERRED from R.3000 convention; confirm via /id-list",
+        "MSCI World": "990100 \u2014 DOCUMENTED_OPENAPI (id-list schema example)",
+        "S&P/TSX Composite": "UNRESOLVED \u2014 family SP covers TSX per familyFilter description; id via live /id-list?familyFilter=SP",
+        "S&P Global BMI": "UNRESOLVED \u2014 family SP covers BMI; ids via live /id-list"
+      },
+      "discovery": "/id-list is explicitly a SAMPLE of most-commonly-requested ids (12 family filters); NOT the full universe \u2014 full concordance requires FactSet Support (documented in operation description)",
+      "family_filters": [
+        "CHINA_HK_INDICES",
+        "DOW_JONES",
+        "FACTSET_MARKET_INDICES",
+        "FTSE",
+        "GLOBAL_INDICES",
+        "MSCI",
+        "RUSSELL",
+        "SP",
+        "STOXX",
+        "TOPIX",
+        "MORNINGSTAR",
+        "BLOOMBERG"
+      ]
+    },
+    "entitlement_mechanics": {
+      "evidence": "DOCUMENTED_OPENAPI",
+      "per_id": "constituents/FI descriptions: \"You must be authorized for the `ids` requested, otherwise you will receive an error\"",
+      "http_403": "{status: \"Forbidden\", message: \"User is not authorized for the id requested, please reach out to FactSet for support\"}",
+      "http_401": "User Authentication Failed (bad USERNAME-SERIAL/API key/IP range)",
+      "ambiguity": "the 400-example for an INVALID benchmark id carries the same Forbidden body as the 403 unentitled case (BM-DISC-06) \u2014 invalid vs unentitled ids are not distinguishable from documented error bodies; FS016's entitlement table must cross-check /id-list membership and probe empirically",
+      "entitlement_table_owner": "FS016 (WP9 deliverable); this manifest documents mechanics only"
+    },
+    "discrepancies": {
+      "BM-DISC-01": "spec declares ONLY BasicAuth security scheme; SDK docs list FactSetApiKey + FactSetOAuth2 and demo authenticates via OAuth2 ConfidentialClient \u2014 spec omits the OAuth2 scheme other family specs declare (OPENAPI vs SDK vs SAMPLE)",
+      "BM-DISC-02": "demo pins fds.sdk.FactSetBenchmarks==1.2.2; current SDK is 2.0.0 (wrapping API 1.11.0); pin 2.0.0 in FS010",
+      "BM-DISC-03": "info.description says 'use the /metrics endpoint' \u2014 no /metrics endpoint exists (helper is /id-list; metrics is a /ratios parameter); and 'Equity Only - Fixed Income Benchmark support coming soon' contradicts the two /fixed-income-constituents operations defined in the same spec",
+      "BM-DISC-04": "frequency default divergence: GET parameter component default 'D' vs schema component (used by POST bodies) default 'CY' \u2014 same resource, different default by method (index-history, ratios); SDK GET docs say 'D'; adapter must always pass frequency explicitly",
+      "BM-DISC-05": "indexReturns.totalReturnPercent documented formula '((startDate level / endDate level) - 1) * 100' is inverted (start/end); the example value (-4.384 for 2018-12-31 -> 2019-12-31) matches neither the documented formula (-23.9) nor the corrected one (+31.5) \u2014 it equals the 2018-12-31 single-point history observation; formula AND example unreliable, pin live",
+      "BM-DISC-06": "400-example 'badRequestInvalidParameters' (invalid benchmark id) carries body status 'Forbidden' with the 403 not-authorized message \u2014 invalid id and unentitled id share one documented shape",
+      "BM-DISC-07": "constituents + FI response 'data' descriptions are a copy-paste from the Estimates API ('metrics that can be requested from the estimates APIs')",
+      "BM-DISC-08": "examples internally inconsistent: constituents example mixes request date 2020-08-06, summary 'as of 2020-07-01', row dates 2021-03-08; FI example uses equity benchmark SP50 with amountOutstanding null; allRatiosSP50 example is a bare array missing the documented {data:[...]} envelope \u2014 examples must never be used as fixtures",
+      "BM-DISC-09": "components.parameters.calendar and components.schemas.calendar (FIVEDAY/SEVENDAY enum) are orphaned \u2014 no operation references them; every operation uses regionCalendar (free string, no enum), which is what admits region codes (OA 16610)",
+      "BM-DISC-10": "indexSnapshot.currency description says service defaults 'to the local Calendar' (wording bug); indexHistory/indexReturns versions say defaults to LOCAL ('LOC')",
+      "BM-DISC-11": "demo covers only GET /constituents (1 of 14 operations, 3 of 3 API classes imported but 1 exercised); no sample evidence for the other 13 operations",
+      "BM-DISC-12": "impliedDate is offered on /index-returns whose response has no date field (single cumulative value) \u2014 parameter is inert as documented; also GET date params are plain strings without format:date except index-returns' startDate/endDate"
+    },
+    "unresolved": {
+      "BM-UNRES-01": {
+        "item": "trial entitlements per endpoint AND per benchmark id (both 403 modes documented); which WP9 benchmarks are accessible",
+        "tag": "UNRESOLVED (FS010 smoke + FS016 entitlement table)"
+      },
+      "BM-UNRES-02": {
+        "item": "whether /constituents at a past date returns membership as it stood then (frozen) or a restated/backfilled current view \u2014 the survivorship-honesty linchpin; zero vendor statements",
+        "tag": "VENDOR_CLARIFICATION_REQUIRED (+ WP9 live probes: delisted securities present in old snapshots; current members not backfilled)"
+      },
+      "BM-UNRES-03": {
+        "item": "constituent-history depth per benchmark (does membership reach 2010?); inceptionDate is index inception, not data depth",
+        "tag": "UNRESOLVED (live probe; entitlement-table column)"
+      },
+      "BM-UNRES-04": {
+        "item": "behavior when `date` omitted on /constituents//index-snapshot (latest? prior close?) and on non-trading dates (nearest prior?)",
+        "tag": "UNRESOLVED (live pin)"
+      },
+      "BM-UNRES-05": {
+        "item": "weightClose units: documented 'percent' but example magnitudes are inconsistent with a real top-10 weight distribution; whether weights sum to ~100 or ~1 must be pinned before tolerance checks",
+        "tag": "UNRESOLVED (live pin; WP9 weight-reconciliation prerequisite)"
+      },
+      "BM-UNRES-06": {
+        "item": "adjHolding 'adjusted' basis (splits? restated-to-current vs as-of-date?) and constituent `price` adjustment basis (matches Global Prices UNSPLIT or SPLIT arm?); no unadjMarketValue arm",
+        "tag": "VENDOR_CLARIFICATION_REQUIRED (needed for weight ~= price x holding / sum reconciliation)"
+      },
+      "BM-UNRES-07": {
+        "item": "rate/concurrency limits \u2014 undocumented in spec and SDK",
+        "tag": "UNRESOLVED (FS010 conservative client-side limits)"
+      },
+      "BM-UNRES-08": {
+        "item": "benchmark ids for Russell 1000 (R.1000 INFERRED), S&P/TSX Composite, S&P Global BMI \u2014 not documented offline; /id-list is explicitly a sample",
+        "tag": "UNRESOLVED (live /id-list probe; FactSet Support concordance if absent)"
+      },
+      "BM-UNRES-09": {
+        "item": "reconstitution/rebalance dates are not servable from this API (no calendar endpoint); WP9's 'snapshots around reconstitution dates' needs an external date source",
+        "tag": "UNRESOLVED (external input to FS016 pull plan)"
+      },
+      "BM-UNRES-10": {
+        "item": "index-history percent fields: per-observation change at the chosen frequency (CY example consistent) vs some other basis \u2014 period basis not stated",
+        "tag": "UNRESOLVED (live pin; INFERRED per-period)"
+      },
+      "BM-UNRES-11": {
+        "item": "NET returnType withholding-tax methodology and HEDGED hedge methodology (tenor/roll) \u2014 no vendor reference in spec or SDK",
+        "tag": "UNRESOLVED (WP9 requires gross/net methodology clarity; escalate to VENDOR_CLARIFICATION_REQUIRED if validation blocked)"
+      },
+      "BM-UNRES-12": {
+        "item": "totalReturnLevel base date/base value (levels since inception?); price-level vs TR-level base alignment unstated",
+        "tag": "UNRESOLVED"
+      },
+      "BM-UNRES-13": {
+        "item": "whether constituent snapshots are servable for every trading date or only rebalance/month-end dates (date param + FIVEDAY calendar suggest daily; unstated)",
+        "tag": "UNRESOLVED (live pin; INFERRED daily)"
+      },
+      "BM-UNRES-14": {
+        "item": "ratios (FMA) as-of/vintage behavior: mixes fundamentals + estimates + pricing with NTMA/STMA forward periodicities; no PIT statements \u2014 treat as NON-PIT convenience, never a model input without PIT grading",
+        "tag": "UNRESOLVED (posture: NON-PIT labeled, per project law)"
+      },
+      "BM-UNRES-15": {
+        "item": "29s read-timeout risk for very large snapshots (S&P Global BMI ~14k rows) \u2014 whether single-snapshot responses of that size are reliably servable",
+        "tag": "UNRESOLVED (FS010/FS016 live sizing)"
+      }
+    },
+    "wp9_notes": {
+      "snapshot_pull_strategy_inputs": "monthly principal + quarterly secondary + reconstitution extras (external dates, BM-UNRES-09); daily constituentNumber series from /index-history as change detector; one request per (benchmark, date); no batching",
+      "tr_pr_distinct": "documented: price/priceReturnPercent* vs totalReturnLevel/totalReturnPercent* with GROSS|NET arms",
+      "fields_absent_vs_wp9": "no open weights; no unadjusted market value; no constituent-level identifiers beyond fsym -S/-R; no reconstitution calendar; no membership intervals",
+      "entitlement_table": "FS016 deliverable; mechanics documented here (per-id 403, invalid-id ambiguity BM-DISC-06)"
+    }
+  }
+}

@@ -21,7 +21,9 @@ and no live call is ever made. Deterministic seed: TEST_SEED=1729.
 from __future__ import annotations
 
 import json
+import multiprocessing as mp
 import os
+import threading
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -44,6 +46,8 @@ from lasr.data.providers.factset.errors import (
     FactSetIntegrityError,
     FactSetKillSwitchError,
     FactSetRequestTooLargeError,
+    FactSetRetryExhaustedError,
+    FactSetServerError,
 )
 from lasr.data.providers.factset.http import HttpResponse, HttpSender, HttpTimeout
 from lasr.data.providers.factset.ledger import LiveCallLedger
@@ -1001,3 +1005,376 @@ def test_unresolved_batch_resumes_not_reissues(tmp_path: Path) -> None:
         batch_status="done",
     )
     assert ledger.unresolved_batch("rh1") is None
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# ROUND 2 — re-attack the remediation (d6c3f7e): reserve-before-send,
+# capture-metadata sanitize, consent-gate normalization.
+# ══════════════════════════════════════════════════════════════════════════
+
+
+# ── surface 4bis: reserve-before-send under adversarial concurrency ──────
+
+
+def _reserve_once_worker(args: tuple[str, int]) -> bool:
+    """Top-level (picklable) worker: a distinct PROCESS attempts exactly one
+    budget reservation against the shared ledger. True on success, False on
+    the typed hard stop. Proves cross-process atomicity via the flock path."""
+    root_str, limit = args
+    from datetime import UTC as _UTC
+    from datetime import datetime as _dt
+
+    from lasr.data.providers.factset.errors import (
+        FactSetBudgetExceededError as _Budget,
+    )
+    from lasr.data.providers.factset.ledger import LiveCallLedger as _Ledger
+
+    ledger = _Ledger(Path(root_str), now=lambda: _dt(2026, 1, 5, 10, 0, tzinfo=_UTC))
+    try:
+        ledger.reserve_live_call(
+            api_family="symbology",
+            endpoint="/identifier-resolution",
+            request_hash="rh-shared",
+            max_live_calls_per_day=limit,
+            max_endpoint_requests=limit,
+        )
+        return True
+    except _Budget:
+        return False
+
+
+def test_reserve_before_send_cross_process_flock_never_overruns(
+    tmp_path: Path,
+) -> None:
+    """16 independent PROCESSES race to reserve against a shared limit of 4;
+    the cross-process flock must let EXACTLY 4 succeed — never 5+ — otherwise
+    parallel FS011-16 agents could overrun the shared trial quota."""
+    root = tmp_path / "raw"
+    root.mkdir(parents=True)
+    limit = 4
+    n = 16
+    ctx = mp.get_context("spawn")
+    with ctx.Pool(processes=8) as pool:
+        results = pool.map(_reserve_once_worker, [(str(root), limit)] * n)
+    granted = sum(1 for r in results if r)
+    assert granted == limit, (
+        f"cross-process budget overrun: {granted} reservations granted for a "
+        f"shared limit of {limit}"
+    )
+    # The ledger itself must agree: open reservations == the granted count.
+    ledger = LiveCallLedger(root, now=lambda: _T0)
+    assert ledger.consumed_for_endpoint("symbology", "/identifier-resolution") == limit
+
+
+def test_reserve_before_send_thread_race_never_overruns(tmp_path: Path) -> None:
+    """12 threads hit one transport simultaneously (barrier-synchronized)
+    against a per-endpoint limit of 1. Exactly one may reach the wire; the
+    other 11 get the typed hard stop AT RESERVE, before any send."""
+    root = tmp_path / "raw"
+    config = FactSetTrialConfig.model_validate(
+        {
+            **json.loads(_config(max_live_calls_per_day=1).model_dump_json()),
+            "families": {
+                "symbology": {
+                    "api_version": "v3",
+                    "path_prefix": "/symbology/v3",
+                    "enabled": True,
+                    "limits": {
+                        "requests_per_second": 100,
+                        "concurrent_requests": 12,
+                        "max_ids_per_request": 100,
+                        "documented": True,
+                        "evidence": "DOCUMENTED_OPENAPI",
+                    },
+                    "endpoints": [
+                        {
+                            "endpoint": "/identifier-resolution",
+                            "verb": "POST",
+                            "max_live_requests": 1,
+                        }
+                    ],
+                }
+            },
+        }
+    )
+
+    class ThreadSafeSender:
+        def __init__(self) -> None:
+            self.n = 0
+            self._lk = threading.Lock()
+
+        def send(self, **kw: Any) -> HttpResponse:
+            with self._lk:
+                self.n += 1
+            return _ok({"data": []})
+
+    sender = ThreadSafeSender()
+    # real wall-clock limiter here (threads), not the fake clock
+    transport = _transport(root, live=True, sender=sender, config=config)
+    n_threads = 12
+    barrier = threading.Barrier(n_threads)
+    granted = []
+    refused = []
+    lk = threading.Lock()
+
+    def worker(i: int) -> None:
+        barrier.wait()
+        try:
+            transport.execute(_request([f"ID{i}-US"]), force_refresh=True)
+            with lk:
+                granted.append(i)
+        except FactSetBudgetExceededError:
+            with lk:
+                refused.append(i)
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(n_threads)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert len(granted) == 1, f"budget overrun under threads: {len(granted)} granted"
+    assert len(refused) == n_threads - 1
+    assert sender.n == 1, f"the wire saw {sender.n} calls for a limit of 1"
+
+
+def test_failed_reservation_before_send_is_released_no_leak(tmp_path: Path) -> None:
+    """A send that fails BEFORE any bytes go out (non-timeout) must RELEASE
+    its reservation — otherwise repeated pre-send failures would silently
+    drain the budget (a denial-of-budget leak). 5 failures against a limit of
+    2 must leave the budget fully available for a subsequent real call."""
+    root = tmp_path / "raw"
+    config = _config(max_live_calls_per_day=2)
+
+    class ExplodingSender:
+        def __init__(self) -> None:
+            self.n = 0
+
+        def send(self, **kw: Any) -> HttpResponse:
+            self.n += 1
+            raise RuntimeError("connection setup blew up before the wire")
+
+    sender = ExplodingSender()
+    transport = _transport(root, live=True, sender=sender, config=config)
+    for i in range(5):
+        with pytest.raises(RuntimeError):
+            transport.execute(_request([f"X{i}-US"]), force_refresh=True)
+    ledger = LiveCallLedger(root, now=lambda: _T0)
+    consumed = ledger.consumed_for_endpoint("symbology", "/identifier-resolution")
+    assert consumed == 0, f"reservation leak: {consumed} units held after releases"
+    # Budget is intact: a real call still succeeds.
+    good = ScriptedSender([_ok({"data": []})])
+    transport2 = _transport(root, live=True, sender=good, config=config)
+    transport2.execute(_request(["OK-US"]), force_refresh=True)
+    assert (
+        LiveCallLedger(root, now=lambda: _T0).consumed_for_endpoint(
+            "symbology", "/identifier-resolution"
+        )
+        == 1
+    )
+
+
+def test_timeout_reservation_stays_consumed_conservatively(tmp_path: Path) -> None:
+    """A timeout may have reached the wire, so its reservation must NOT be
+    released — every timed-out attempt conservatively consumes one unit."""
+    root = tmp_path / "raw"
+    config = _config(max_live_calls_per_day=10)
+    clock = FakeClock()
+    sender = ScriptedSender(
+        [HttpTimeout("t"), HttpTimeout("t"), HttpTimeout("t")]  # == max_attempts
+    )
+    transport = _transport(root, live=True, sender=sender, config=config, clock=clock)
+    with pytest.raises(FactSetServerError):
+        transport.execute(_request(), force_refresh=True)
+    ledger = LiveCallLedger(root, now=lambda: _T0)
+    consumed = ledger.consumed_for_endpoint("symbology", "/identifier-resolution")
+    assert consumed == 3, (
+        f"expected 3 conservatively-consumed units for 3 timed-out attempts, "
+        f"got {consumed}"
+    )
+
+
+# ── surface 1bis: sanitizer bypass hunt on metadata routes ───────────────
+
+
+def test_retryable_error_evidence_meta_is_sanitized(tmp_path: Path) -> None:
+    """The RETRYABLE store path (a 503 kept as evidence) must sanitize its
+    parsed error body in meta.json — a route round-1 did not exercise."""
+    root = tmp_path / "raw"
+    sender = ScriptedSender(
+        [
+            _err(503, {"message": f"upstream said {SENTINEL_KEY}"}),
+            _err(503, {"message": f"upstream said {SENTINEL_KEY}"}),
+            _err(503, {"message": f"upstream said {SENTINEL_KEY}"}),
+        ]
+    )
+    transport = _transport(root, live=True, sender=sender)
+    with pytest.raises(FactSetRetryExhaustedError):
+        transport.execute(_request(), force_refresh=True)
+    meta_blob = b"".join(p.read_bytes() for p in root.rglob("meta.json"))
+    assert SENTINEL_KEY.encode() not in meta_blob
+
+
+@pytest.mark.parametrize(
+    "header", ["x-factset-user", "x-ratelimit-owner", "retry-after"]
+)
+def test_all_retained_quota_headers_are_sanitized(tmp_path: Path, header: str) -> None:
+    """Every retained vendor header prefix (x-factset*, x-ratelimit*,
+    retry-after) must be sanitized in meta.json, not just x-factset-user."""
+    root = tmp_path / "raw"
+    sender = ScriptedSender(
+        [HttpResponse(status=200, body=b'{"data":[]}', headers={header: SENTINEL_USER})]
+    )
+    transport = _transport(root, live=True, sender=sender)
+    transport.execute(_request(), force_refresh=True)
+    meta_blob = b"".join(p.read_bytes() for p in root.rglob("meta.json"))
+    assert SENTINEL_USER.encode() not in meta_blob
+
+
+def test_pagination_capture_metadata_is_sanitized(tmp_path: Path) -> None:
+    """Paginated page captures route through the same guard: a vendor header
+    echoing a sentinel on page 2 must not survive into meta.json."""
+    from lasr.data.providers.factset.request_norm import PageKey
+
+    root = tmp_path / "raw"
+    page0 = HttpResponse(status=200, body=b'{"data":[1],"next":"c1"}', headers={})
+    page1 = HttpResponse(
+        status=200,
+        body=b'{"data":[2]}',
+        headers={"x-factset-quota-user": SENTINEL_USER},
+    )
+    sender = ScriptedSender([page0, page1])
+    transport = _transport(root, live=True, sender=sender)
+
+    def _next(body: bytes) -> str | None:
+        nxt = json.loads(body).get("next")
+        return nxt if isinstance(nxt, str) else None
+
+    base = _request().with_page(PageKey(index=0, cursor=None))
+    pages = transport.paginate(base, next_cursor=_next, max_pages=5)
+    assert len(pages) == 2
+    meta_blob = b"".join(p.read_bytes() for p in root.rglob("meta.json"))
+    assert SENTINEL_USER.encode() not in meta_blob
+
+
+def test_async_batch_result_metadata_is_sanitized(tmp_path: Path) -> None:
+    """The async batch RESULT capture must sanitize a vendor-echoed sentinel
+    header exactly like a direct request."""
+    root = tmp_path / "raw"
+    config = _config()
+    submit = HttpResponse(status=200, body=b'{"batchId":"VB-1"}', headers={})
+    status_done = HttpResponse(status=200, body=b'{"status":"done"}', headers={})
+    result = HttpResponse(
+        status=200,
+        body=b'{"data":[{"requestId":"AAA-US"}]}',
+        headers={"x-factset-user": SENTINEL_USER},
+    )
+    sender = ScriptedSender([submit, status_done, result])
+    transport = _transport(root, live=True, sender=sender, config=config)
+    outcome = transport.run_batch(
+        _request(),
+        status_endpoint="/status",
+        result_endpoint="/result",
+        extract_batch_id=lambda b: json.loads(b)["batchId"],
+        extract_batch_status=lambda b: json.loads(b)["status"],
+    )
+    assert outcome.resumed is False
+    meta_blob = b"".join(p.read_bytes() for p in root.rglob("meta.json"))
+    assert SENTINEL_USER.encode() not in meta_blob
+
+
+# ── surface 4ter: consent-gate mutation sweep (beyond the 7 tokens) ──────
+
+
+@pytest.mark.parametrize(
+    "token",
+    [
+        "01",
+        "1 ",
+        " 1",
+        " 1 ",
+        "1\n",
+        "1\t",
+        "\t1",
+        "1\r",
+        "1\x00",
+        "true",
+        "True",
+        "TRUE",
+        "yes",
+        "on",
+        "1.0",
+        "+1",
+        "10",
+        "\uff11",
+        "1;",
+        "'1'",
+    ],
+)
+def test_consent_gate_opens_only_on_exact_1(token: str) -> None:
+    """FACTSET_LIVE consent must open ONLY on the exact ASCII string '1'; no
+    normalization (strip/case/coerce) may turn a near-miss into a GO."""
+    config = _config(live=True, kill_switch=False)
+    is_open, reason = live_gate_open(config, {ENV_LIVE: token})
+    assert is_open is False, f"BLOCKING: consent gate opened on non-'1' token {token!r}"
+    assert reason
+
+
+def test_consent_gate_exact_1_opens() -> None:
+    config = _config(live=True, kill_switch=False)
+    is_open, _ = live_gate_open(config, {ENV_LIVE: "1"})
+    assert is_open is True
+
+
+@pytest.mark.parametrize("kill", ["1", " 1 ", "1\n", "\t1\t"])
+def test_kill_switch_is_whitespace_lenient_failsafe(kill: str) -> None:
+    """The STOP signal stays whitespace-lenient (a padded kill still stops):
+    lenient consent is unsafe, lenient refusal is fail-safe."""
+    config = _config(live=True, kill_switch=False)
+    is_open, reason = live_gate_open(config, {ENV_LIVE: "1", ENV_KILL_SWITCH: kill})
+    assert is_open is False
+    assert "kill switch" in reason
+
+
+# ── surface 4quater: batch poll/result probes bypass the budget reservation
+# (confirmed residual, already tracked as VF-FS010-3 → FS012) ────────────────
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="RT-FS010-4 (non-blocking, tracked): the reserve-before-send fix "
+    "covers execute()/paginate(), but the async-batch poll/result probes "
+    "(FactSetTransport._probe) still send live calls that are ledger-RECORDED "
+    "yet never RESERVED/gated — a long-polling batch spends quota the budget "
+    "cannot stop. Not exercised in FS010 (async batch family disabled; the "
+    "symbology smoke is a direct POST). Routed to FS012 as VF-FS010-3; this "
+    "ratchet flips to XPASS the moment probe budget enforcement lands.",
+)
+def test_batch_poll_probes_are_budget_gated(tmp_path: Path) -> None:
+    """With the daily budget consumed by the submission, the batch's status
+    probes must be refused by the budget (DESIRED). Currently they poll to the
+    deadline unchecked and raise a timeout instead."""
+    root = tmp_path / "raw"
+    config = _config(max_live_calls_per_day=2)
+    clock = FakeClock()
+
+    class InfiniteStatusSender:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def send(self, *, method: str, **kw: Any) -> HttpResponse:
+            self.calls += 1
+            if method == "POST":
+                return HttpResponse(status=200, body=b'{"batchId":"VB-1"}', headers={})
+            return HttpResponse(status=202, body=b'{"status":"executing"}', headers={})
+
+    sender = InfiniteStatusSender()
+    transport = _transport(root, live=True, sender=sender, config=config, clock=clock)
+    with pytest.raises(FactSetBudgetExceededError):
+        transport.run_batch(
+            _request(),
+            status_endpoint="/status",
+            result_endpoint="/result",
+            extract_batch_id=lambda b: json.loads(b)["batchId"],
+            extract_batch_status=lambda b: json.loads(b).get("status", "executing"),
+        )

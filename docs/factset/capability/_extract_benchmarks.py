@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""FS008 provenance script: machine inventory of the FactSet Benchmarks API v1 OpenAPI spec.
+"""FS008 provenance script: machine inventory of the Benchmarks v1 OpenAPI spec.
 
 Reads the local spec YAML (path passed as argv[1]; NOT committed to git) and emits
 docs/factset/capability/benchmarks.json — the machine-readable capability inventory
@@ -77,7 +77,9 @@ def schema_summary(spec: dict, schema: Any, depth: int = 0) -> Any:
 
 def param_summary(spec: dict, p: Any) -> dict:
     ref_name = (
-        p.get("$ref", "").split("/")[-1] if isinstance(p, dict) and "$ref" in p else None
+        p.get("$ref", "").split("/")[-1]
+        if isinstance(p, dict) and "$ref" in p
+        else None
     )
     p = deref(spec, p)
     sch = p.get("schema", {})
@@ -159,9 +161,15 @@ def find_unreferenced_components(spec: dict, raw_text: str) -> dict:
 # --------------------------------------------------------------------------
 SDK_METHOD_MAP = {  # DOCUMENTED_SDK (enterprise-sdk FactSetBenchmarks v1, SDK 2.0.0)
     "getBenchmarkConstituents": "BenchmarkConstituentsApi.get_benchmark_constituents",
-    "getBenchmarkConstituentsForList": "BenchmarkConstituentsApi.get_benchmark_constituents_for_list",
-    "getFIBenchmarkConstituents": "BenchmarkConstituentsApi.get_fi_benchmark_constituents",
-    "getFIBenchmarkConstituentsForList": "BenchmarkConstituentsApi.get_fi_benchmark_constituents_for_list",
+    "getBenchmarkConstituentsForList": (
+        "BenchmarkConstituentsApi.get_benchmark_constituents_for_list"
+    ),
+    "getFIBenchmarkConstituents": (
+        "BenchmarkConstituentsApi.get_fi_benchmark_constituents"
+    ),
+    "getFIBenchmarkConstituentsForList": (
+        "BenchmarkConstituentsApi.get_fi_benchmark_constituents_for_list"
+    ),
     "getIndexSnapshot": "IndexLevelApi.get_index_snapshot",
     "getIndexSnapshotForList": "IndexLevelApi.get_index_snapshot_for_list",
     "getIndexHistory": "IndexLevelApi.get_index_history",
@@ -177,12 +185,13 @@ SDK_METHOD_MAP = {  # DOCUMENTED_SDK (enterprise-sdk FactSetBenchmarks v1, SDK 2
 CURATED = {
     "_note": "FS008-authored interpretation layer; every item evidence-tagged. "
     "Full prose: docs/factset/capability/benchmarks.md",
-    "checklist_constants": {  # external_analysis.md §3.3 items uniform across all 14 operations
+    "checklist_constants": {  # external_analysis.md §3.3 uniform items (14 ops)
         "entitlement_status": {
             "value": "UNRESOLVED",
             "evidence": "UNRESOLVED",
-            "note": "offline doc phase; per-endpoint AND per-benchmark-id 403 documented "
-            "(BM-UNRES-01); FS010 smoke + FS016 entitlement table resolve",
+            "note": "offline doc phase; per-endpoint AND per-benchmark-id 403 "
+            "documented (BM-UNRES-01); FS010 smoke + FS016 entitlement table "
+            "resolve",
         },
         "rate_and_concurrency_limits": {
             "value": "undocumented in spec and SDK",
@@ -190,11 +199,13 @@ CURATED = {
             "id": "BM-UNRES-07",
         },
         "pit_as_of_parameters": {
-            "value": "no as-of/PIT parameters; /constituents and /index-snapshot `date` "
-            "is the membership/level as-of lever (single date, past only — future "
+            "value": "no as-of/PIT parameters; /constituents and /index-snapshot "
+            "`date` is the membership/level as-of lever (single date, past only "
+            "— future "
             "dates 400); whether historical snapshots are frozen-as-published or "
             "restated/backfilled is undocumented (BM-UNRES-02)",
-            "evidence": "DOCUMENTED_OPENAPI (parameter inventory) + UNRESOLVED (restatement)",
+            "evidence": "DOCUMENTED_OPENAPI (parameter inventory) + UNRESOLVED "
+            "(restatement)",
         },
         "pagination": {
             "value": "NONE on any endpoint; a 200 is the complete result set "
@@ -229,27 +240,31 @@ CURATED = {
         "retries": "opt-in urllib3 Retry via configuration.retries; "
         "no built-in rate-limit handling",
         "pagination_helpers": "none needed (API has no pagination)",
-        "recursion_note": "README: sys.setrecursionlimit(1500) may be needed before import",
+        "recursion_note": "README: sys.setrecursionlimit(1500) may be needed "
+        "before import",
     },
     "membership_reconstruction_verdict": {  # md §4 — WP9 special-depth item 1
         "evidence": "DOCUMENTED_OPENAPI (by exhaustion of the operation inventory)",
-        "verdict": "RECONSTRUCTION REQUIRED. /constituents accepts exactly ONE benchmark "
+        "verdict": "RECONSTRUCTION REQUIRED. /constituents accepts exactly ONE "
+        "benchmark "
         "id and ONE optional date per request and returns the full membership "
         "snapshot for that single date in one unpaginated 200. There is no "
         "date-range parameter, no membership-interval endpoint, no add/drop or "
         "delta endpoint, and no reconstitution-calendar endpoint anywhere in "
         "the spec. Historical membership therefore MUST be reconstructed from "
         "repeated single-date snapshots, exactly as WP9 anticipated.",
-        "pull_cost_model": "one request per (benchmark, date): monthly 2010-2025 principal "
+        "pull_cost_model": "one request per (benchmark, date): monthly 2010-2025 "
+        "principal "
         "~192 snapshots; quarterly secondary ~64 each; Russell 3000 "
         "snapshot ~3,000 rows, S&P Global BMI ~14,000 rows (29s read "
         "timeout is the size risk — no way to split a snapshot)",
-        "count_series_trick": "constituentNumber is served time-serially by /index-history "
+        "count_series_trick": "constituentNumber is served time-serially by "
+        "/index-history "
         "(frequency=D): daily count changes locate membership-change "
         "dates cheaply and target extra snapshots (INFERRED strategy "
         "from documented fields)",
-        "reconstitution_dates": "NOT servable from this API; must come from an external "
-        "calendar source (BM-UNRES-09)",
+        "reconstitution_dates": "NOT servable from this API; must come from an "
+        "external calendar source (BM-UNRES-09)",
     },
     "constituent_fields": {  # md §3 — WP9 special-depth item 2
         "evidence": "DOCUMENTED_OPENAPI",
@@ -260,16 +275,18 @@ CURATED = {
             "pass through a generic id (e.g. CASH_USD)",
             "fsymRegionalId": "FactSet Regional Identifier (-R); same cash passthrough",
             "currency": "Currency code for prices",
-            "weightClose": "Weight of Security in benchmark (percent) — close weight only",
+            "weightClose": "Weight of Security in benchmark (percent) — close "
+            "weight only",
             "adjHolding": "Shares held adjusted. Units in Millions",
             "unadjHolding": "Shares held unadjusted. Units in Millions",
             "price": "Price of shares held (adjustment basis unstated, BM-UNRES-06)",
             "adjMarketValue": "Market value adjusted, in Millions (no unadjusted arm)",
             "requestId": "Identifier specified in the request",
         },
-        "identifier_types_absent": "NO CUSIP, SEDOL, ISIN, or ticker in the constituent "
-        "payload — fsym -S/-R only",
-        "symbology_join": "fsymSecurityId/fsymRegionalId are valid Symbology input types "
+        "identifier_types_absent": "NO CUSIP, SEDOL, ISIN, or ticker in the "
+        "constituent payload — fsym -S/-R only",
+        "symbology_join": "fsymSecurityId/fsymRegionalId are valid Symbology "
+        "input types "
         "(FS003 §3.1/§3.2 enums) -> historical CUSIP/SEDOL/ISIN/"
         "tickerRegion with validity intervals; also directly valid ids "
         "for Global Prices/Fundamentals. Cash/generic rows must be "
@@ -295,13 +312,15 @@ CURATED = {
         "BM-DISC-04; always pass explicitly)",
         "impliedDate": "N (default): date field repeats actual observation dates on "
         "weekends/holidays; Y: implied unique dates",
-        "calendar": "regionCalendar free string, default FIVEDAY (Mon-Fri regardless of "
-        "trading holidays); SEVENDAY; region codes per OA 16610 (e.g. NAY=US)",
+        "calendar": "regionCalendar free string, default FIVEDAY (Mon-Fri "
+        "regardless of trading holidays); SEVENDAY; region codes per OA 16610 "
+        "(e.g. NAY=US)",
         "percent_change_units": "documented 'percent change'; examples consistent with "
         "percent units (e.g. 28.878 for CY2019 S&P 500)",
         "snapshot_windows": "1D/QTD/YTD percent fields on /index-snapshot only",
-        "cumulative": "/index-returns: single cumulative totalReturnPercent per window; "
-        "documented formula is inverted and example inconsistent (BM-DISC-05)",
+        "cumulative": "/index-returns: single cumulative totalReturnPercent per "
+        "window; documented formula is inverted and example inconsistent "
+        "(BM-DISC-05)",
     },
     "benchmark_id_conventions": {  # md §6 — WP9 special-depth item 4
         "evidence": "DOCUMENTED_OPENAPI (examples) unless tagged",
@@ -316,11 +335,13 @@ CURATED = {
         },
         "wp9_probe_list_status": {
             "Russell 3000": "R.3000 — DOCUMENTED_OPENAPI (index-snapshot example)",
-            "Russell 1000": "R.1000 — INFERRED from R.3000 convention; confirm via /id-list",
+            "Russell 1000": "R.1000 — INFERRED from R.3000 convention; confirm "
+            "via /id-list",
             "MSCI World": "990100 — DOCUMENTED_OPENAPI (id-list schema example)",
             "S&P/TSX Composite": "UNRESOLVED — family SP covers TSX per familyFilter "
             "description; id via live /id-list?familyFilter=SP",
-            "S&P Global BMI": "UNRESOLVED — family SP covers BMI; ids via live /id-list",
+            "S&P Global BMI": "UNRESOLVED — family SP covers BMI; ids via live "
+            "/id-list",
         },
         "discovery": "/id-list is explicitly a SAMPLE of most-commonly-requested ids "
         "(12 family filters); NOT the full universe — full concordance "
@@ -360,14 +381,15 @@ CURATED = {
         "FactSetApiKey + FactSetOAuth2 and demo authenticates via OAuth2 "
         "ConfidentialClient — spec omits the OAuth2 scheme other family "
         "specs declare (OPENAPI vs SDK vs SAMPLE)",
-        "BM-DISC-02": "demo pins fds.sdk.FactSetBenchmarks==1.2.2; current SDK is 2.0.0 "
-        "(wrapping API 1.11.0); pin 2.0.0 in FS010",
+        "BM-DISC-02": "demo pins fds.sdk.FactSetBenchmarks==1.2.2; current SDK "
+        "is 2.0.0 (wrapping API 1.11.0); pin 2.0.0 in FS010",
         "BM-DISC-03": "info.description says 'use the /metrics endpoint' — no /metrics "
         "endpoint exists (helper is /id-list; metrics is a /ratios "
         "parameter); and 'Equity Only - Fixed Income Benchmark support "
         "coming soon' contradicts the two /fixed-income-constituents "
         "operations defined in the same spec",
-        "BM-DISC-04": "frequency default divergence: GET parameter component default 'D' "
+        "BM-DISC-04": "frequency default divergence: GET parameter component "
+        "default 'D' "
         "vs schema component (used by POST bodies) default 'CY' — same "
         "resource, different default by method (index-history, ratios); "
         "SDK GET docs say 'D'; adapter must always pass frequency explicitly",
@@ -377,7 +399,8 @@ CURATED = {
         "2019-12-31) matches neither the documented formula (-23.9) nor "
         "the corrected one (+31.5) — it equals the 2018-12-31 single-point "
         "history observation; formula AND example unreliable, pin live",
-        "BM-DISC-06": "400-example 'badRequestInvalidParameters' (invalid benchmark id) "
+        "BM-DISC-06": "400-example 'badRequestInvalidParameters' (invalid "
+        "benchmark id) "
         "carries body status 'Forbidden' with the 403 not-authorized "
         "message — invalid id and unentitled id share one documented shape",
         "BM-DISC-07": "constituents + FI response 'data' descriptions are a copy-paste "
@@ -393,7 +416,8 @@ CURATED = {
         "(FIVEDAY/SEVENDAY enum) are orphaned — no operation references "
         "them; every operation uses regionCalendar (free string, no enum), "
         "which is what admits region codes (OA 16610)",
-        "BM-DISC-10": "indexSnapshot.currency description says service defaults 'to the "
+        "BM-DISC-10": "indexSnapshot.currency description says service defaults "
+        "'to the "
         "local Calendar' (wording bug); indexHistory/indexReturns versions "
         "say defaults to LOCAL ('LOC')",
         "BM-DISC-11": "demo covers only GET /constituents (1 of 14 operations, 3 of 3 "
@@ -557,7 +581,9 @@ def main() -> None:
                     "tags": op.get("tags"),
                     "summary": (op.get("summary") or "").strip(),
                     "description": (op.get("description") or "").strip(),
-                    "parameters": [param_summary(spec, p) for p in op.get("parameters", [])],
+                    "parameters": [
+                        param_summary(spec, p) for p in op.get("parameters", [])
+                    ],
                     "request_body_schema": body_schema,
                     "request_body_required": body_required,
                     "responses": responses,

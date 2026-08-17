@@ -8,13 +8,14 @@
 # exceptions/models/methods for FS010.
 
 active:
-  FS008:
-    agent_role: researcher (general-purpose)
-    objective: Capability manifest — Benchmarks v1
-    branch: agent/fs-researcher/FS008-benchmarks
-    worktree: .worktrees/FS008
-    status: RESUMED 2026-08-17 (agent a390cc30e8429c3c1, live) — spend-limit killed at final step; inventory pushed 2432195; uncommitted benchmarks.md preserved; checkpoint-first ordered
-    owned_paths: ["docs/factset/capability/benchmarks.md", "docs/factset/capability/benchmarks.json", "docs/factset/capability/_extract_benchmarks.py"]
+  FS009:
+    agent_role: verifier (reconciler)
+    objective: Reconciled shared capability manifest + independent verification of FS002-8/FS021 + binding design rulings (PIT mode map, canonical Estimates)
+    branch: agent/fs-verifier/FS009-reconciliation
+    worktree: .worktrees/FS009
+    status: IN_PROGRESS
+    runtime: LAUNCHED 2026-08-17 (agent a3500bd94afbcdebe, live) — PASS gates the merge of PRs #75-#82
+    owned_paths: ["docs/factset/capability/MANIFEST.md", "docs/factset/capability/manifest.json", "docs/verification/FS009.md"]
   FS010:
     agent_role: implementer
     objective: Shared FactSet transport + trial configuration (durable charter in fs_goals.md)
@@ -38,6 +39,11 @@ queued:
   FS021: Phase-2 PIT-Estimates DATAFEED contract (docs-only; the 2 PDFs)
 
 history:
+  - goal_id: FS008
+    objective: Capability manifest — Benchmarks v1
+    agent: a390cc30e8429c3c1
+    final_commit: 7b1e0fa (PR #82, docs-only, OPEN — merges via FS009)
+    result: COMPLETE (spend-limit interrupted at final step; resumed checkpoint-first, zero loss) — 14/14 ops, 38/38 schemas. MEMBERSHIP VERDICT: single-date snapshot retrieval only (no ranges/intervals/deltas/recon calendar); panel membership = reconstruction from repeated snapshots; inferred intervals ontologically separate from vendor rows; frozen-vs-restated UNDOCUMENTED (BM-UNRES-02 = survivorship linchpin) -> knowledge_time=retrieval until answered. 12 discrepancies incl. INVERTED /index-returns formula in spec + shared error body for invalid-vs-unentitled ids. 12 UNRESOLVED + 3 VENDOR
   - goal_id: FS021
     objective: Phase-2 PIT-Estimates DATAFEED specification
     agent: a16186e670b1d8d11

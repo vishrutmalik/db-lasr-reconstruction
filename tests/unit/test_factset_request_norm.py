@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+import typing
 from datetime import UTC, date, datetime
 
 import pytest
@@ -121,6 +122,61 @@ class TestRequestHash:
     def test_negative_page_index_refused(self) -> None:
         with pytest.raises(FactSetConfigError, match="page index"):
             PageKey(index=-1)
+
+
+class TestEncoderEquivalencePin:
+    """VF-FS010-5: the repo carries a canonical-JSON encoder in
+    ``lasr.artifacts.serialization`` and a structurally-forced duplicate in
+    ``factset.request_norm`` (the import-rule table forbids a
+    providers→artifacts edge). Silent drift between them would silently
+    change cache identities — this pin makes drift loud. Tests may import
+    both layers; the lift-into-a-shared-layer decision is FS009/architect's
+    (DESIGN.md note), this test is only the drift alarm.
+    """
+
+    #: Nested fixture spanning the common value surface of both encoders.
+    _FIXTURE: typing.ClassVar[dict[str, object]] = {
+        "zeta": 1,
+        "alpha": {
+            "nested": [1, 2.5, True, None, "text"],
+            "date": date(2020, 3, 2),
+            "datetime": datetime(2020, 3, 2, 15, 30, 45, 123456, tzinfo=UTC),
+            "tuple": (1, "two", 3.0),
+        },
+        "floats": [0.1, 1e-9, 1.5995592731596646e-159, -0.0, 12345678.9],
+        "unicode": "münchen — 東京 ✓",
+        "empty": {},
+        "list_of_maps": [{"b": 2, "a": 1}, {"d": [None, False]}],
+    }
+
+    def test_byte_equality_on_nested_fixture(self) -> None:
+        from lasr.artifacts.serialization import (
+            canonical_json as artifacts_canonical_json,
+        )
+
+        ours = canonical_param_json(self._FIXTURE)
+        theirs = artifacts_canonical_json(self._FIXTURE)
+        assert ours.encode("utf-8") == theirs.encode("utf-8")
+
+    def test_both_encoders_reject_nan(self) -> None:
+        from lasr.artifacts.serialization import (
+            canonical_json as artifacts_canonical_json,
+        )
+
+        payload = {"x": float("nan")}
+        with pytest.raises(ValueError, match=r"NaN|not JSON compliant"):
+            canonical_param_json(payload)
+        with pytest.raises(ValueError, match=r"NaN|not JSON compliant"):
+            artifacts_canonical_json(payload)
+
+    def test_key_sorting_parity_regardless_of_insertion(self) -> None:
+        from lasr.artifacts.serialization import (
+            canonical_json as artifacts_canonical_json,
+        )
+
+        a = {"z": 1, "a": 2, "m": {"y": 1, "b": 2}}
+        b = {"m": {"b": 2, "y": 1}, "a": 2, "z": 1}
+        assert canonical_param_json(a) == artifacts_canonical_json(b)
 
 
 class TestIdNormalization:

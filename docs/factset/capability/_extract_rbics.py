@@ -15,7 +15,9 @@ from pathlib import Path
 
 import yaml
 
-SPEC = Path("/Users/admin/Documents/factset_api_resources/factset_rbics_api-v1-yaml.yaml")
+SPEC = Path(
+    "/Users/admin/Documents/factset_api_resources/factset_rbics_api-v1-yaml.yaml"
+)
 
 HTTP_VERBS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
 
@@ -125,7 +127,8 @@ def main() -> None:
     for name, s in schemas.items():
         for pn, ps in (s.get("properties") or {}).items():
             if isinstance(ps, dict) and ps.get("format") in ("date", "date-time"):
-                print(f"  {name}.{pn}: format={ps['format']} nullable={ps.get('nullable')}")
+                nullable = ps.get("nullable")
+                print(f"  {name}.{pn}: format={ps['format']} nullable={nullable}")
 
     # ---- enum census (every enum anywhere in the document) ---------------
     enums = []
@@ -135,10 +138,10 @@ def main() -> None:
             if "enum" in node and isinstance(node["enum"], list):
                 enums.append((".".join(trail), len(node["enum"]), node["enum"]))
             for k, v in node.items():
-                walk(v, trail + [str(k)])
+                walk(v, [*trail, str(k)])
         elif isinstance(node, list):
             for i, v in enumerate(node):
-                walk(v, trail + [str(i)])
+                walk(v, [*trail, str(i)])
 
     walk(spec, [])
     print(f"\n== ENUM SITES (anywhere in spec): {len(enums)} ==")
@@ -148,9 +151,24 @@ def main() -> None:
     # ---- pagination / async / rate-limit keyword sweep --------------------
     text = SPEC.read_text().lower()
     print("\n== KEYWORD SWEEP (pagination/async/limits) ==")
-    for kw in ("pagination", "paging", "cursor", "offset", "next", "poll",
-               "async", "job", "batch", "rate limit", "requests per second",
-               "concurrent", "8192", "2500", "500", "timeout"):
+    for kw in (
+        "pagination",
+        "paging",
+        "cursor",
+        "offset",
+        "next",
+        "poll",
+        "async",
+        "job",
+        "batch",
+        "rate limit",
+        "requests per second",
+        "concurrent",
+        "8192",
+        "2500",
+        "500",
+        "timeout",
+    ):
         print(f"  {kw!r}: {text.count(kw)} occurrence(s)")
 
     # ---- reusable responses & examples ------------------------------------
@@ -159,8 +177,11 @@ def main() -> None:
     sec = comp.get("securitySchemes", {})
     print(f"\n== COMPONENT RESPONSES: {len(responses)} == {sorted(responses)}")
     print(f"== COMPONENT EXAMPLES:  {len(examples)} == {sorted(examples)}")
-    print(f"== SECURITY SCHEMES:    {len(sec)} == "
-          f"{ {k: (v.get('type'), v.get('scheme') or v.get('flows', {}).keys()) for k, v in sec.items()} }")
+    sec_summary = {
+        k: (v.get("type"), v.get("scheme") or sorted(v.get("flows", {})))
+        for k, v in sec.items()
+    }
+    print(f"== SECURITY SCHEMES:    {len(sec)} == {sec_summary}")
 
     # ---- machine-readable summary (mirrors rbics.json counts) -------------
     summary = {

@@ -1,0 +1,389 @@
+{
+  "manifest_version": "FS007-draft-1",
+  "family": "rbics",
+  "taxonomy_label": "RBICS",
+  "labelling_rule": "All data from this API is RBICS (FactSet Revere Business Industry Classification System). Never silently stored or relabelled as GICS (WP8).",
+  "goal": "FS007",
+  "generated": "2026-08-17",
+  "note_for_fs009": "Emitted before FS002's manifest schema finalized; structure mirrors FS003 symbology.json for lossless re-mapping.",
+  "api": {
+    "title": "FactSet RBICS",
+    "openapi": "3.0.0",
+    "spec_version": "1.4.0",
+    "base_url": "https://api.factset.com/content",
+    "path_prefix": "/factset-rbics/v1",
+    "media_type": "application/json",
+    "content_refresh": "monthly (RBICS Focus)",
+    "focus_universe": "~48,000 most liquid publicly-traded companies; RBICS Extended Universe NOT available via this API",
+    "evidence": "DOCUMENTED_OPENAPI"
+  },
+  "auth": {
+    "spec_declared": [
+      {"name": "FactSetApiKey", "type": "http-basic", "username": "USERNAME-SERIAL", "password": "API key (IP-range scoped)", "evidence": "DOCUMENTED_OPENAPI"},
+      {"name": "FactSetOAuth2", "type": "oauth2-client-credentials", "token_url": "https://auth.factset.com/as/token.oauth2", "scopes": [], "evidence": "DOCUMENTED_OPENAPI"}
+    ],
+    "demo_uses": {"name": "FactSetOAuth2", "via": "fds.sdk.utils.authentication.ConfidentialClient", "evidence": "DOCUMENTED_SAMPLE"},
+    "fs010_guidance": "Primary = HTTP Basic from env vars (consistent with FS003 D-2)."
+  },
+  "limits": {
+    "rate_limit_rps": {"value": 10, "evidence": "DOCUMENTED_OPENAPI"},
+    "rate_limit_concurrent": {"value": null, "note": "not documented (Symbology documents 10; RBICS spec silent)", "evidence": "UNRESOLVED", "ref": "U-7"},
+    "rate_limit_exceedance_behavior": {"value": null, "evidence": "UNRESOLVED", "ref": "U-7"},
+    "ids_per_request": {"value": 2500, "prose_and_schema_agree": true, "evidence": "DOCUMENTED_OPENAPI"},
+    "trade_names_ids_per_request": {"value": 500, "evidence": "DOCUMENTED_OPENAPI"},
+    "rbics_ids_per_request": {"value": 2500, "evidence": "DOCUMENTED_OPENAPI"},
+    "get_url_bytes": {"value": 8192, "evidence": "DOCUMENTED_OPENAPI"},
+    "server_read_timeout_seconds": {"value": 29, "surfaces_as": "HTTP 400 'The request took too long. Try again with a smaller request.'", "evidence": "DOCUMENTED_OPENAPI"},
+    "entity_revenue_history_advice": {"value": "1 id per request; responses can exceed 20+ seconds for >1 year of data", "evidence": "DOCUMENTED_OPENAPI"},
+    "pagination": {"value": "none", "evidence": "DOCUMENTED_OPENAPI"},
+    "server_side_async": {"value": "none", "evidence": "DOCUMENTED_OPENAPI"},
+    "client_async": {"value": "SDK *_async variants (client-side threads)", "evidence": "DOCUMENTED_SDK"}
+  },
+  "hierarchy": {
+    "levels": [
+      {"level": 1, "name": "Economy", "groups": 14, "code_width": 2},
+      {"level": 2, "name": "Sector", "groups": 37, "code_width": 4},
+      {"level": 3, "name": "Sub-Sector", "groups": 109, "code_width": 6},
+      {"level": 4, "name": "Industry Group", "groups": 366, "code_width": 8},
+      {"level": 5, "name": "Industry", "groups": 901, "code_width": 10},
+      {"level": 6, "name": "Sub-Industry", "groups": 1629, "code_width": 12}
+    ],
+    "code_scheme": "hierarchical prefix: child code = parent code + 2 digits (code_width INFERRED from examples; group counts indicative, taxonomy is effective-dated)",
+    "matrix": "fourteen-by-six (twelve economies + two specialty sectors)",
+    "count_discrepancy": "info says '1,400+ sector groups'; structure endpoint says 'over 1,600' (D-5)",
+    "level_addressing": {
+      "entity_focus.levels": "pick-list array, e.g. [1,3,6]; omitted = all levels",
+      "entity_revenue.level": "depth cutoff 1..N; omitted = all 6",
+      "structure.level": "depth cutoff 1..N; DEFAULT = 1 (L1 only)"
+    },
+    "evidence": "DOCUMENTED_OPENAPI"
+  },
+  "historical_semantics": {
+    "entity_focus": {
+      "mode": "effective-dated interval rows",
+      "fields": {"firstDate": "date-time, nullable", "lastDate": "date-time, nullable; null = current"},
+      "as_of": "single `date` (YYYY-MM-DD) snapshot; omitted = full history",
+      "range_form": "none (window client-side over full history)",
+      "intra_day_timestamps": "examples show 14:00:00Z effective stamps; boundary convention UNRESOLVED (U-3/U-4, VC-3)",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    "structure": {
+      "mode": "taxonomy nodes effective-dated (firstDate/lastDate per rbicsId)",
+      "as_of": "single `date`; omitted = full taxonomy history (wording defect D-13)",
+      "field_name_conflict": "schema firstDate/lastDate vs example startDate/endDate/name (D-3, U-5, VC-4)",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    "revenue_endpoints": {
+      "mode": "report-event dated (asOfDate = filing/report date, periodEndDate = fiscal period end) windowed by startDate/endDate",
+      "date_range_matrix": {
+        "both_set": "data within [startDate, endDate]",
+        "start_omitted": "earliest record to endDate",
+        "end_omitted": "startDate to most recent",
+        "both_omitted": "latest available data only",
+        "future_dates": "T+1 rejected"
+      },
+      "history_row_shape": "UNRESOLVED (U-12)",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    "trade_names": {
+      "mode": "interval rows (startDate first published, endDate terminated/null=active)",
+      "as_of": "asOfDate filter: startDate <= asOfDate <= endDate; omitted = latest active",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    "bitemporality": "NONE: no publication/knowledge-time axis; restatement policy UNRESOLVED (U-14). Effective-dated, not publication-PIT — label downstream accordingly.",
+    "entity_vs_security": "Classification is ENTITY-level (fsymId -E / factsetEntityId); security ids accepted as input and resolved to issuer. Requires FS011 security->entity spine."
+  },
+  "interval_integrity": {
+    "spec_promises": ["lastDate/endDate null means still valid"],
+    "not_promised": ["non-overlap", "gap-freeness", "history row ordering", "uniqueness of current row", "half-open vs closed intervals"],
+    "example_pattern": "AAPL history contiguous, firstDate[n+1] == lastDate[n], suggesting half-open [firstDate, lastDate) — INFERRED only",
+    "fs023_checks_required": [
+      "per-entity overlap detection on [firstDate,lastDate)",
+      "gap detection vs listing life",
+      "exactly-one-current-row",
+      "boundary convention empirical probe around a known intra-day change",
+      "same battery on /structure taxonomy intervals",
+      "level lineage prefix consistency"
+    ],
+    "ct16_note": "CT-16 interval-table PIT policing precedent remains fully necessary; vendor contract does not supersede it.",
+    "evidence": "DOCUMENTED_OPENAPI + INFERRED"
+  },
+  "operations": [
+    {
+      "operation_id": "getRbicsEntityFocus",
+      "method": "GET",
+      "path": "/factset-rbics/v1/entity-focus",
+      "tag": "Entity",
+      "purpose": "RBICS Focus classification; full effective-dated history when date omitted.",
+      "parameters": [
+        {"name": "ids", "in": "query", "required": true, "type": "array[string]", "explode": false, "min_items": 1, "max_items": 2500, "notes": "ticker/CUSIP/ISIN/SEDOL/-R/-L/-E; 8KB URL cap", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "date", "in": "query", "required": false, "type": "string (YYYY-MM-DD; no format:date on GET, D-6)", "omitted_behavior": "full history", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "levels", "in": "query", "required": false, "type": "array[int 1..6] max 6 unique", "omitted_behavior": "all levels", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "includeNames", "in": "query", "required": false, "type": "boolean", "default": true, "evidence": "DOCUMENTED_OPENAPI"}
+      ],
+      "request_body": null,
+      "responses": {"200": "EntityFocusResponse", "400": "ErrorResponse", "401": "ErrorResponse", "403": "ErrorResponse", "415": "ErrorResponse", "500": "ErrorResponse"},
+      "sdk": {"class": "EntityApi", "method": "get_rbics_entity_focus", "evidence": "DOCUMENTED_SDK"},
+      "entitlement": "UNRESOLVED",
+      "implementation_status": "NOT_IMPLEMENTED (FS015)",
+      "test_status": "NOT_TESTED",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "getRbicsEntityFocusForList",
+      "method": "POST",
+      "path": "/factset-rbics/v1/entity-focus",
+      "tag": "Entity",
+      "purpose": "Same as GET; preferred for long id lists.",
+      "parameters": [],
+      "request_body": {"schema": "EntityFocusRequest", "required": true, "shape": "flat", "schema_required_fields": [], "note": "ids requiredness enforced server-side (D-10)", "evidence": "DOCUMENTED_OPENAPI"},
+      "responses": {"200": "EntityFocusResponse", "400": "ErrorResponse", "401": "ErrorResponse", "403": "ErrorResponse", "415": "ErrorResponse", "500": "ErrorResponse"},
+      "sdk": {"class": "EntityApi", "method": "get_rbics_entity_focus_for_list", "evidence": "DOCUMENTED_SDK"},
+      "demo_coverage": {"file": "RBICS.py", "exercises": true, "inputs": "ids=[FDS-US,0FPWZZ-E,TSLA-US], date=2020-09-30, levels=[1,3,6], include_names=True", "sdk_pin": "0.21.8 (stale, D-1)", "evidence": "DOCUMENTED_SAMPLE"},
+      "entitlement": "UNRESOLVED",
+      "implementation_status": "NOT_IMPLEMENTED (FS015)",
+      "test_status": "NOT_TESTED",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "getRbicsEntityRevenue",
+      "method": "GET",
+      "path": "/factset-rbics/v1/entity/revenue",
+      "tag": "Entity",
+      "purpose": "Hierarchical revenue breakdown of a company across RBICS industries (percent of total revenue per node).",
+      "parameters": [
+        {"name": "ids", "in": "query", "required": true, "type": "array[string]", "min_items": 1, "max_items": 2500, "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "startDate", "in": "query", "required": false, "type": "string(date)", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "endDate", "in": "query", "required": false, "type": "string(date)", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "level", "in": "query", "required": false, "type": "int 1..6", "omitted_behavior": "all 6 levels (depth cutoff)", "evidence": "DOCUMENTED_OPENAPI"}
+      ],
+      "request_body": null,
+      "responses": {"200": "EntityResponse", "400": "ErrorsResponse", "401": "ErrorsResponse", "403": "ErrorsResponse", "415": "ErrorsResponse", "500": "ErrorsResponse"},
+      "sdk": {"class": "EntityApi", "method": "get_rbics_entity_revenue", "evidence": "DOCUMENTED_SDK"},
+      "entitlement": "UNRESOLVED; Mutual Funds/ETFs L1-L4 only and 'requires additional access' (VC-1)",
+      "operational_warnings": ["20+ second responses for >1 year of data", "vendor advises 1 id per request for history", "29s read timeout -> HTTP 400"],
+      "response_defect": "revenue tree carries names only, NO RBICS codes (D-8a)",
+      "implementation_status": "NOT_IMPLEMENTED (FS015)",
+      "test_status": "NOT_TESTED",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "getRbicsEntityRevenueForList",
+      "method": "POST",
+      "path": "/factset-rbics/v1/entity/revenue",
+      "tag": "Entity",
+      "purpose": "Same as GET entity/revenue.",
+      "parameters": [],
+      "request_body": {"schema": "EntityRequest", "required": true, "shape": "flat", "schema_required_fields": ["ids"], "evidence": "DOCUMENTED_OPENAPI"},
+      "responses": {"200": "EntityResponse", "400": "ErrorsResponse", "401": "ErrorsResponse", "403": "ErrorsResponse", "415": "ErrorsResponse", "500": "ErrorsResponse"},
+      "sdk": {"class": "EntityApi", "method": "get_rbics_entity_revenue_for_list", "evidence": "DOCUMENTED_SDK"},
+      "entitlement": "UNRESOLVED (VC-1)",
+      "implementation_status": "NOT_IMPLEMENTED (FS015)",
+      "test_status": "NOT_TESTED",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "getRbicsIndustryFocus",
+      "method": "GET",
+      "path": "/factset-rbics/v1/industry/focus",
+      "tag": "Industry",
+      "purpose": "Universe screen: companies whose Focus classification falls under given RBICS ids (any level), optionally within a historical window.",
+      "parameters": [
+        {"name": "rbicsIds", "in": "query", "required": true, "type": "array[string len 2..12]", "max_items": 2500, "component": "rbicsIndustryIds", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "startDate", "in": "query", "required": false, "type": "string(date)", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "endDate", "in": "query", "required": false, "type": "string(date)", "evidence": "DOCUMENTED_OPENAPI"}
+      ],
+      "request_body": null,
+      "responses": {"200": "IndustryFocusResponse", "400": "ErrorsResponse", "401": "ErrorsResponse", "403": "ErrorsResponse", "415": "ErrorsResponse", "500": "ErrorsResponse"},
+      "sdk": {"class": "IndustryApi", "method": "get_rbics_industry_focus", "evidence": "DOCUMENTED_SDK"},
+      "entitlement": "UNRESOLVED",
+      "operational_warnings": ["no pagination; broad screens have uncontrolled response size (U-9)"],
+      "implementation_status": "NOT_IMPLEMENTED (FS015)",
+      "test_status": "NOT_TESTED",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "getRbicsIndustryFocusForList",
+      "method": "POST",
+      "path": "/factset-rbics/v1/industry/focus",
+      "tag": "Industry",
+      "purpose": "Same as GET industry/focus.",
+      "parameters": [],
+      "request_body": {"schema": "IndustryRequest", "required": true, "shape": "flat", "schema_required_fields": ["rbicsIds"], "evidence": "DOCUMENTED_OPENAPI"},
+      "responses": {"200": "IndustryFocusResponse", "400": "ErrorsResponse", "401": "ErrorsResponse", "403": "ErrorsResponse", "415": "ErrorsResponse", "500": "ErrorsResponse"},
+      "sdk": {"class": "IndustryApi", "method": "get_rbics_industry_focus_for_list", "evidence": "DOCUMENTED_SDK"},
+      "entitlement": "UNRESOLVED",
+      "implementation_status": "NOT_IMPLEMENTED (FS015)",
+      "test_status": "NOT_TESTED",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "getRbicsIndustryRevenue",
+      "method": "GET",
+      "path": "/factset-rbics/v1/industry/revenue",
+      "tag": "Industry",
+      "purpose": "Screen companies by revenue exposure to a specific RBICS L6 sub-industry; returns totalPercent per company.",
+      "parameters": [
+        {"name": "rbicsIds", "in": "query", "required": true, "type": "array[string len exactly 12]", "max_items": 2500, "component": "rbicsL6Ids", "constraint": "L6 ids ONLY", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "startDate", "in": "query", "required": false, "type": "string(date)", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "endDate", "in": "query", "required": false, "type": "string(date)", "evidence": "DOCUMENTED_OPENAPI"}
+      ],
+      "request_body": null,
+      "responses": {"200": "IndustryRevenueResponse", "400": "ErrorsResponse", "401": "ErrorsResponse", "403": "ErrorsResponse", "415": "ErrorsResponse", "500": "ErrorsResponse"},
+      "sdk": {"class": "IndustryApi", "method": "get_rbics_industry_revenue", "evidence": "DOCUMENTED_SDK"},
+      "entitlement": "UNRESOLVED",
+      "implementation_status": "NOT_IMPLEMENTED (FS015)",
+      "test_status": "NOT_TESTED",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "getRbicsIndustryRevenueForList",
+      "method": "POST",
+      "path": "/factset-rbics/v1/industry/revenue",
+      "tag": "Industry",
+      "purpose": "Same as GET industry/revenue.",
+      "parameters": [],
+      "request_body": {"schema": "IndustryRevenueRequest", "required": true, "shape": "flat", "schema_required_fields": ["rbicsIds"], "evidence": "DOCUMENTED_OPENAPI"},
+      "responses": {"200": "IndustryRevenueResponse", "400": "ErrorsResponse", "401": "ErrorsResponse", "403": "ErrorsResponse", "415": "ErrorsResponse", "500": "ErrorsResponse"},
+      "sdk": {"class": "IndustryApi", "method": "get_rbics_industry_revenue_for_list", "evidence": "DOCUMENTED_SDK"},
+      "entitlement": "UNRESOLVED",
+      "implementation_status": "NOT_IMPLEMENTED (FS015)",
+      "test_status": "NOT_TESTED",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "getRbicsStructure",
+      "method": "GET",
+      "path": "/factset-rbics/v1/structure",
+      "tag": "Structure",
+      "purpose": "Full RBICS taxonomy ids, names, effective periods — taxonomy structure through time.",
+      "parameters": [
+        {"name": "rbicsIds", "in": "query", "required": false, "type": "array[string len 2..12]", "max_items": 2500, "omitted_behavior": "whole taxonomy", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "level", "in": "query", "required": false, "type": "int 1..6", "default_behavior": "Level 1 ONLY; pass 6 for full tree", "component": "levelStructure", "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "includeNames", "in": "query", "required": false, "type": "boolean", "default": true, "evidence": "DOCUMENTED_OPENAPI"},
+        {"name": "date", "in": "query", "required": false, "type": "string (YYYY-MM-DD)", "omitted_behavior": "full history (wording defect D-13)", "evidence": "DOCUMENTED_OPENAPI"}
+      ],
+      "request_body": null,
+      "responses": {"200": "StructureResponse", "400": "ErrorResponse", "401": "ErrorResponse", "403": "ErrorResponse", "415": "ErrorResponse", "500": "ErrorResponse"},
+      "sdk": {"class": "StructureApi", "method": "get_rbics_structure", "evidence": "DOCUMENTED_SDK"},
+      "entitlement": "UNRESOLVED",
+      "response_defect": "schema firstDate/lastDate vs example startDate/endDate/name (D-3, U-5, VC-4)",
+      "implementation_status": "NOT_IMPLEMENTED (FS015)",
+      "test_status": "NOT_TESTED",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "getRbicsStructureForList",
+      "method": "POST",
+      "path": "/factset-rbics/v1/structure",
+      "tag": "Structure",
+      "purpose": "Same as GET structure; optimal for long rbicsIds lists.",
+      "parameters": [],
+      "request_body": {"schema": "StructureRequest", "required": true, "shape": "flat", "schema_required_fields": [], "evidence": "DOCUMENTED_OPENAPI"},
+      "responses": {"200": "StructureResponse", "400": "ErrorResponse", "401": "ErrorResponse", "403": "ErrorResponse", "415": "ErrorResponse", "500": "ErrorResponse"},
+      "sdk": {"class": "StructureApi", "method": "get_rbics_structure_for_list", "evidence": "DOCUMENTED_SDK"},
+      "entitlement": "UNRESOLVED",
+      "implementation_status": "NOT_IMPLEMENTED (FS015)",
+      "test_status": "NOT_TESTED",
+      "evidence": "DOCUMENTED_OPENAPI"
+    },
+    {
+      "operation_id": "getTradeNamesForList",
+      "method": "POST",
+      "path": "/factset-rbics/v1/trade-names",
+      "tag": "TradeNames",
+      "purpose": "Products/services/brands (260,000+) mapped to RBICS L6 — multi-sector participation map. POST only (no GET twin).",
+      "parameters": [],
+      "request_body": {"schema": "TradeNamesRequest", "required": true, "shape": "wrapped-in-data (D-9)", "schema_required_fields": ["data", "data.ids"], "ids_max": 500, "evidence": "DOCUMENTED_OPENAPI"},
+      "responses": {"200": "TradeNamesResponse", "400": "ErrorsResponse", "401": "ErrorsResponse", "403": "ErrorsResponse", "415": "ErrorsResponse", "500": "ErrorsResponse"},
+      "sdk": {"class": "TradeNamesApi", "method": "get_trade_names_for_list", "evidence": "DOCUMENTED_SDK"},
+      "entitlement": "UNRESOLVED (VC-5: possibly separate content package)",
+      "implementation_status": "NOT_IMPLEMENTED (FS015; likely out of trial-critical path)",
+      "test_status": "NOT_TESTED",
+      "evidence": "DOCUMENTED_OPENAPI"
+    }
+  ],
+  "schemas": {
+    "EntityFocus": {"kind": "response-row", "required": ["requestId", "fsymId", "firstDate", "lastDate"], "declared_fields": {"requestId": "string", "fsymId": "string|null (-E entity)", "firstDate": "date-time|null", "lastDate": "date-time|null (null=current)"}, "additional_properties": true, "undeclared_payload": "l1Id..l6Id, l1Name..l6Name, l6Description flow via additionalProperties ONLY (D-2); ids are strings in examples", "evidence": "DOCUMENTED_OPENAPI"},
+    "Structure": {"kind": "response-row", "declared_fields": {"rbicsId": "string|null", "firstDate": "date-time|null", "lastDate": "date-time|null (null=still valid)"}, "additional_properties": true, "example_conflict": "example returns startDate/endDate/name instead (D-3)", "evidence": "DOCUMENTED_OPENAPI"},
+    "Industries": {"kind": "response-row", "fields": {"fsymId": "string|null", "requestId": "string (RBICS id requested)", "companyName": "string|null", "date": "date|null", "ticker": "string", "l1Id..l6Id": "number|null (D-4)", "l1Name..l6Name": "string|null", "error": "ErrorObjectResponse|null"}, "evidence": "DOCUMENTED_OPENAPI"},
+    "IndustriesRevenue": {"kind": "response-row", "fields": {"fsymId": "string|null", "requestId": "string (L6 id)", "companyName": "string|null", "asOfDate": "date|null (report/filing date)", "periodEndDate": "date|null (fiscal period end)", "totalPercent": "number", "l6Id": "number|null (D-4)", "l6Name": "string|null", "error": "ErrorObjectResponse|null"}, "evidence": "DOCUMENTED_OPENAPI"},
+    "Entities": {"kind": "response-row", "fields": {"fsymId": "string|null", "requestId": "string", "date": "date|null", "l1": "Economy[] (nested tree l1->l6: {lXName, revenuePercent, lX+1[]}; NAMES ONLY, no codes — D-8a)", "error": "ErrorObjectResponse|null"}, "evidence": "DOCUMENTED_OPENAPI"},
+    "TradeName": {"kind": "response-row", "fields": {"asOfDate": "date|null", "factsetEntityId": "string|null", "requestId": "string|null", "tradeNames": "TradeNames[]|null", "error": "ErrorObjectResponse|null"}, "additional_properties": true, "evidence": "DOCUMENTED_OPENAPI"},
+    "TradeNames": {"kind": "nested-row", "required_yet_nullable": ["tradeId", "productId", "productName", "shortProductName"], "fields": {"tradeId": "string|null", "productId": "int64|null", "productName": "string|null (asterisk suffix = in-licensing)", "shortProductName": "string|null", "l6Id": "number|null (D-4)", "l6Name": "string|null", "startDate": "date|null (first published)", "endDate": "date|null (terminated; null=active)"}, "evidence": "DOCUMENTED_OPENAPI"},
+    "EntityFocusRequest": {"kind": "request", "required": [], "fields": ["ids", "date", "levels", "includeNames"], "evidence": "DOCUMENTED_OPENAPI"},
+    "EntityRequest": {"kind": "request", "required": ["ids"], "fields": ["ids", "startDate", "endDate", "level"], "evidence": "DOCUMENTED_OPENAPI"},
+    "IndustryRequest": {"kind": "request", "required": ["rbicsIds"], "fields": ["rbicsIds", "startDate", "endDate"], "evidence": "DOCUMENTED_OPENAPI"},
+    "IndustryRevenueRequest": {"kind": "request", "required": ["rbicsIds"], "fields": ["rbicsIds (L6 only)", "startDate", "endDate"], "evidence": "DOCUMENTED_OPENAPI"},
+    "StructureRequest": {"kind": "request", "required": [], "fields": ["rbicsIds", "level", "includeNames", "date"], "evidence": "DOCUMENTED_OPENAPI"},
+    "TradeNamesRequest": {"kind": "request", "required": ["data"], "shape": "wrapped", "fields": {"data": {"ids": "required, max 500", "asOfDate": "optional"}}, "evidence": "DOCUMENTED_OPENAPI"},
+    "error_envelopes": {
+      "legacy (entity-focus, structure)": {"schema": "ErrorResponse", "fields": ["status", "timestamp", "path", "message", "subErrors{object,field,message,rejectedValue[]}"]},
+      "errors_array (entity/revenue, industry/*, trade-names)": {"schema": "ErrorsResponse", "fields": ["errors[]{code,title,id,detail}"]},
+      "per_row": {"schema": "ErrorObjectResponse", "fields": ["code", "title", "detail"], "examples": ["notFound", "parameterError"], "note": "partial failures inside HTTP 200; FS023 must account for them"}
+    }
+  },
+  "completeness_proof": {
+    "extractor": "docs/factset/capability/_extract_rbics.py",
+    "run_date": "2026-08-17",
+    "paths": {"spec": 6, "documented": 6},
+    "operations": {"spec": 11, "documented": 11},
+    "component_parameters": {"spec": 11, "documented": 11},
+    "schemas": {"spec": 44, "documented": 44},
+    "component_responses": {"spec": 10, "documented": 10},
+    "component_examples": {"spec": 28, "reviewed": 28},
+    "security_schemes": {"spec": 2, "documented": 2},
+    "enum_sites": {"spec": 0, "documented": 0, "note": "levels are bounded integers 1..6, not enums"},
+    "sdk_api_classes": {"sdk": 4, "documented": 4},
+    "sdk_methods": {"sdk": 11, "documented": 11},
+    "sdk_doc_files": {"sdk": 43, "delta_vs_spec_schemas": "6 primitives inlined by generator (StartDate, EndDate, EffectiveDate, AsOfDate, IncludeNames, RevenuePercent); 1 promoted model (ErrorResponseSubErrors)"},
+    "demo_operations_exercised": {"count": 1, "of": 11, "operation": "getRbicsEntityFocusForList"}
+  },
+  "discrepancies": [
+    {"id": "D-1", "summary": "Demo pins SDK 0.21.8 / imports EntityFocusApi; SDK 2.0.0 exposes EntityApi (demo broken vs current SDK)", "sources": "demo vs SDK", "posture": "spec+SDK win; FS015 uses EntityApi"},
+    {"id": "D-2", "summary": "EntityFocus schema omits all level fields; payload arrives via additionalProperties only (spec+SDK)", "sources": "spec-internal + SDK", "posture": "parse raw dicts defensively in FS015"},
+    {"id": "D-3", "summary": "Structure schema firstDate/lastDate vs spec example startDate/endDate/name", "sources": "spec-internal", "posture": "UNRESOLVED (U-5); FS010 smoke; VC-4"},
+    {"id": "D-4", "summary": "RBICS id types inconsistent: number (Industries/IndustriesRevenue/TradeNames) vs string (Structure.rbicsId, entity-focus examples)", "sources": "spec-internal", "posture": "canonical: zero-padded strings"},
+    {"id": "D-5", "summary": "'1,400+ sector groups' (info) vs 'over 1,600' + L6=1629 (structure)", "sources": "spec-internal", "posture": "cosmetic; live counts authoritative"},
+    {"id": "D-6", "summary": "GET date param lacks format:date; POST EffectiveDate has it", "sources": "spec-internal", "posture": "always send YYYY-MM-DD"},
+    {"id": "D-7", "summary": "GET ids description includes ISIN/Ticker-Exchange; POST Ids description omits them", "sources": "spec-internal", "posture": "assume same acceptance; confirm live (U-11)"},
+    {"id": "D-8", "summary": "Example-data defects: entity/revenue tree names-only (a); industry examples with inconsistent l6Id lineage; trade-names 50-prefixed l6Ids + one id mapping to two names (b)", "sources": "spec examples", "posture": "examples not authoritative; never seed fixtures as truth"},
+    {"id": "D-9", "summary": "trade-names body data-wrapped; all other POST bodies flat", "sources": "spec-internal", "posture": "mirror exactly in FS010"},
+    {"id": "D-10", "summary": "Requiredness quirks: request schemas mostly lack required; TradeNames inner fields required AND nullable", "sources": "spec-internal", "posture": "client validation stricter than schema"},
+    {"id": "D-11", "summary": "No concurrency limit documented (Symbology has one); exceedance semantics absent", "sources": "spec vs sibling API", "posture": "U-7; conservative FS010 defaults"},
+    {"id": "D-12", "summary": "Demo dataframe handling relies on D-2 additionalProperties behavior", "sources": "demo", "posture": "note only"},
+    {"id": "D-13", "summary": "Structure date description says 'full history for the requested entity' (copy-paste wording)", "sources": "spec-internal", "posture": "read as full taxonomy history (INFERRED)"}
+  ],
+  "unresolved": [
+    {"id": "U-1", "summary": "Entitlement per endpoint for trial serial", "route": "FS010 smoke (1-id probe per endpoint, 200 vs 403)"},
+    {"id": "U-2", "summary": "Interval integrity (overlap/gap/order/current-row uniqueness) unguaranteed", "route": "FS023 battery (see interval_integrity)"},
+    {"id": "U-3", "summary": "Intra-day effective timestamps (14:00:00Z) meaning + timezone basis", "route": "FS010 probe + VC-3"},
+    {"id": "U-4", "summary": "date as-of boundary convention vs date-time intervals", "route": "FS010 probe + VC-3"},
+    {"id": "U-5", "summary": "Structure wire field names (firstDate/lastDate vs startDate/endDate/name)", "route": "FS010 smoke raw capture; VC-4"},
+    {"id": "U-6", "summary": "Ordering of entity-focus full-history rows", "route": "FS010 smoke"},
+    {"id": "U-7", "summary": "Rate-limit exceedance behavior + concurrency ceiling", "route": "FS010 conservative defaults; observe"},
+    {"id": "U-8", "summary": "(a) future-date rejection for entity-focus/structure date; (b) padded 12-digit forms of higher-level ids on input", "route": "FS010 probes"},
+    {"id": "U-9", "summary": "industry/* response cardinality for broad screens (no pagination; 29s/400 risk); per-date row explosion in windows", "route": "FS015 chunking strategy from live tests"},
+    {"id": "U-10", "summary": "levels empty-array vs omitted behavior", "route": "FS010 probe"},
+    {"id": "U-11", "summary": "POST Ids acceptance of ISIN/Ticker-Exchange (D-7)", "route": "FS010 probe"},
+    {"id": "U-12", "summary": "entity/revenue history row shape over multi-period windows (time series vs latest-only)", "route": "FS015 live test"},
+    {"id": "U-13", "summary": "Can EntityFocus rows carry per-row error objects (schema silent)?", "route": "FS010 smoke with bad id"},
+    {"id": "U-14", "summary": "Restatement/revision policy for classification history (no bitemporal axis)", "route": "VC-2/VC-3 + repeated-pull diffing during trial"}
+  ],
+  "vendor_clarification_required": [
+    {"id": "VC-1", "summary": "Entitlement product for Mutual Fund/ETF revenue data (L1-L4 'additional access'); included in trial?"},
+    {"id": "VC-2", "summary": "Written interval-integrity guarantees (non-overlap, contiguity, single current row) for entity-focus + structure history"},
+    {"id": "VC-3", "summary": "Boundary/timezone convention for date-time effective stamps and date as-of comparison"},
+    {"id": "VC-4", "summary": "Authoritative Structure response contract: field names + name field under includeNames"},
+    {"id": "VC-5", "summary": "Is RBICS with TradeNames in the trial entitlement or a separate package?"},
+    {"id": "VC-6", "summary": "Current official per-level taxonomy counts; RBICS Extended Universe API roadmap"}
+  ],
+  "integration_guidance": {
+    "labelling": "rbics_ prefixed columns + taxonomy='RBICS' literal; no GICS aliasing",
+    "storage": "RBICS codes as zero-padded strings (never numeric)",
+    "identity": "entity-level joins via FS011 security->entity spine; never ticker-direct",
+    "neutralization_path": "entity-focus full history -> interval table -> as-of join at rebalance dates AFTER FS023 interval battery passes",
+    "revenue_surface": "prefer industry/revenue (ids + totalPercent) over entity/revenue names-only tree until U-12/D-8a resolved",
+    "throughput": "1 id/request for entity-revenue history; 29s->400 timeout is the binding constraint"
+  }
+}

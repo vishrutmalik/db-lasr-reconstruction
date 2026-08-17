@@ -311,8 +311,7 @@ def test_env_credentials_never_reach_any_artifact_or_surfaced_string(
         )
         for msg in surfaced:
             assert sentinel not in msg, (
-                f"BLOCKING: env credential {sentinel!r} leaked into a surfaced"
-                " string"
+                f"BLOCKING: env credential {sentinel!r} leaked into a surfaced string"
             )
     # The manifest records credential PRESENCE (names→bool), never values.
     presence = manifest["credential_presence"]
@@ -382,9 +381,7 @@ def test_credential_like_params_refused_before_caching(tmp_path: Path) -> None:
 
 
 def test_auth_dataclass_repr_and_fields_hide_values() -> None:
-    cfg = FactSetAuthConfig(
-        mode="basic", username=SENTINEL_USER, api_key=SENTINEL_KEY
-    )
+    cfg = FactSetAuthConfig(mode="basic", username=SENTINEL_USER, api_key=SENTINEL_KEY)
     assert SENTINEL_USER not in repr(cfg)
     assert SENTINEL_KEY not in repr(cfg)
     assert SENTINEL_USER not in str(cfg)
@@ -427,8 +424,9 @@ def test_cache_poisoning_payload_edit_is_refused(tmp_path: Path) -> None:
     root = tmp_path / "raw"
     cache = ResponseCache(root)
     req = _request()
-    rec = cache.store(req, b'{"data":[{"requestId":"AAA-US"}]}', http_status=200,
-                      retrieval_time=_T0)
+    rec = cache.store(
+        req, b'{"data":[{"requestId":"AAA-US"}]}', http_status=200, retrieval_time=_T0
+    )
     capture = cache.request_dir(req) / f"{rec.capture_id}.json.gz"
     assert capture.exists()
     # Overwrite the payload bytes with different (but valid-gzip) content.
@@ -858,8 +856,9 @@ def test_real_400_not_treated_as_29s_timeout_shape() -> None:
 def test_29s_timeout_shape_classified_as_split_by_body() -> None:
     klass, _ = classify_response(
         400,
-        json.dumps({"message": "The request took too long; try a smaller request"})
-        .encode(),
+        json.dumps(
+            {"message": "The request took too long; try a smaller request"}
+        ).encode(),
     )
     assert klass is ResponseClass.SPLIT_REQUIRED
 
@@ -911,8 +910,11 @@ def test_dual_envelope_flat_and_errors_array_both_parse() -> None:
 def test_transient_5xx_retries_then_raises(tmp_path: Path) -> None:
     root = tmp_path / "raw"
     sender = ScriptedSender(
-        [_err(503, {"message": "busy"}), _err(503, {"message": "busy"}),
-         _err(503, {"message": "busy"})]
+        [
+            _err(503, {"message": "busy"}),
+            _err(503, {"message": "busy"}),
+            _err(503, {"message": "busy"}),
+        ]
     )
     transport = _transport(root, live=True, sender=sender)
     with pytest.raises(Exception) as ei:

@@ -114,6 +114,17 @@ passed + content verified on main before branch deletion
   transcript-only.
 
 ## 8. Unclean-recovery procedure (any takeover)
+0. INCUMBENT-LIVENESS FENCE (CS-1): before ANY write, check (a) TAKEOVER.md
+   latest row state; (b) timestamps of the most recent commits on main and on
+   every agent/fs-* branch (`git log -1 --format=%cI`). If ANY advanced within
+   the last 30 minutes, the previous orchestrator may be alive: OBSERVE ONLY,
+   re-check after 30 minutes; take over only if no further writes appear.
+   To take over: FIRST append your TAKEOVER.md row (generation+1, ACTIVE) and
+   mark the prior row INTERRUPTED, commit+push — this commit is the writer
+   fence. Every orchestrator MUST re-verify it is still the latest ACTIVE
+   generation before each control-plane write (fetch TAKEOVER.md); if
+   superseded, STOP writing immediately and stand down. gh note: GraphQL
+   endpoints 503 transiently — REST (`gh api repos/...`) works as fallback.
 1. `git fetch --all --prune`; compare main vs origin/main; `git status`;
    `git worktree list` (OneDrive resurrects stale worktrees — prune only
    after verifying HEADs merged; see progress.md incident log).

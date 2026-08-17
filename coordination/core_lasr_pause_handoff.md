@@ -37,6 +37,21 @@ without conversational history.
   weekly-native feature kernels new-files-only; grants RT-G023-1 targets
   metadata + N5 registry guard; 12 CI bindings).
 
+## Condensed resume charters (CS-13: transcript-independent)
+- G030: nlasr2_2013 spec (docs/methodology/versions/); backcast producer w/
+  knowledge stamps satisfying G025 HedgeBackcast refusals (CI-008);
+  neutralization + hedge learner per P2; CI-017/020/025/026/029/030; grants:
+  RT-G025-3 enforcement + RT-G025-4 fix at ensembles definition sites; paths
+  src/lasr/models/nlasr2/** + configs/models/nlasr2_2013.yaml.
+- G031: lasr_2014 linearized kernel via shared loop interfaces (explicit
+  kernel=/objective=); NB-A3 factor-column constraint; CI-031/034/036/038/
+  041/054; close_to_open leg STOPS (RT-G023-1 is G033's); paths
+  src/lasr/models/lasr2014/** + configs/models/lasr_2014.yaml.
+- G033: nlasr_2020 weekly + 4 overlapping samples; CR-029/CR-030; weekly-
+  native feature kernels (new files only); 12 CI bindings (criteria table);
+  grants: RT-G023-1 targets-metadata fix + N5 registry guard; paths
+  src/lasr/models/nlasr2020/** + configs/models/nlasr_2020.yaml.
+
 ## Resume sequence (when the user asks — not before)
 1. Resume G030/G031/G033 from their transcripts (SendMessage; replacement only
    if resume fails — same goal/branch/worktree/paths).

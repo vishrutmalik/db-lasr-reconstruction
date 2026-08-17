@@ -1,8 +1,10 @@
 # FactSet Trial — Goal Graph (FS namespace; temporary priority phase)
 
-Governing input: the user's FactSet trial directive (2026-08-13) — sections
-1-26 — treated as requirements; the referenced "external analysis" document
-was NOT found on disk (user notified). Scope: Symbology, Standard
+Governing input: the user's FactSet trial directive (2026-08-13, sections
+1-26) + the full requirements document /Users/admin/Documents/
+factset_api_resources/external_analysis.md (arrived later on 2026-08-13,
+reconciled — see the reconciliation section below). NOTE: the Status column
+below may LAG TRIAL_STATE.yaml (the authoritative registry). Scope: Symbology, Standard
 Fundamentals, PIT Fundamentals (API), Standard Estimates (NON-PIT, labeled),
 Global Prices + Corporate Actions, RBICS, Benchmarks. PIT Estimates DATAFEED
 = Phase-2 documentation-only (FS021). Core LASR wave suspended
@@ -109,3 +111,40 @@ OneDrive. Tests: mocked unit tests for every behavior above; ONE bounded live
 auth/entitlement smoke (symbology, <=5 requests, cached) at completion.
 Gates: full repo gates + fresh verifier + red-team (quantitatively sensitive:
 cache/replay integrity). API budget: <=5 live requests. Storage: negligible.
+
+## FS011 durable charter (dispatched 2026-08-17)
+Objective: symbology adapter + the identity spine. scope_basis: EA WP2;
+D-020(b); MANIFEST identity_semantics; A-ARCH-01/CE-7. Owned paths: see
+TRIAL_STATE. In scope: typed resolution requests (CUSIP/ISIN/SEDOL/
+tickerRegion -> fsym flavors; NEVER shape-guessing), fsym-seeded identity map
+hydrated outward with dated bridge cross-checks, historical interval handling
+(outputs are CUSIP/SEDOL/ISIN/tickerRegion only — F-004), inactive/delisted
+resolution probes, mint_security_id_v2 (CE-7) bridging fsym->internal ids,
+normalize_id_list on every request path (VF-FS010-9), tickerRegion casing
+policy (RT-FS010-2). WP2 acceptance battery: cross-API join consistency,
+primary/secondary listings distinguishable, historical tickers resolve,
+inactive securities resolvable, no silent duplicate identities, every id
+mapped-or-explained (7-way accounting). Tests: mocked + <=60-request live
+battery (cached; via FS010 transport only). Out of scope: other adapters,
+trial.yaml family enables (FS024 exclusive). Gates: full repo suite +
+verifier + red-team (identity is quantitatively sensitive). Complete =
+battery green + reports.
+
+## FS024 durable charter (dispatched 2026-08-17)
+Objective: entitlement matrix + complete live metric catalogs + notebook
+scaffold. scope_basis: EA WP3 + §6.1 + §13; adjudication FS018-split. Owned
+paths: see TRIAL_STATE (trial.yaml family enables EXCLUSIVE to this goal).
+In scope: entitlement probe per endpoint family (all 6 families; ~1-2
+requests each; classify Working/Partial/Unauthorized/Unavailable/Clarify),
+Fundamentals metric catalogs PIT and NON-PIT pulled SEPARATELY (WP3: never
+assume identical dictionaries), Estimates metric catalog, catalog persistence
+to data root + summary tables to docs/factset/entitlements.md, OBSERVED_LIVE
+fold-in of F-005/F-006 facts into MANIFEST lifecycle fields, notebook
+notebooks/factset_api_trial.ipynb scaffold with LIVE_PULL flag + sections 1-4
+(scope/limitations, documentation+entitlement summary, environment/config,
+API health) importing reusable modules only. Live budget <=150 requests, all
+cached. Out of scope: discovery-sample data pulls (adapters own those),
+sections 5-18 (later goals populate). Gates: full suite + verifier (red-team
+not required — no quantitative transformation; entitlement tables are
+evidence displays). Complete = entitlement matrix + catalogs + scaffold
+running top-to-bottom in replay mode.

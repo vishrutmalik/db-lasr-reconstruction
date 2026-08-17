@@ -50,3 +50,15 @@ documented:false, telemetry-flagged (FS002 §6.4 rule). (ii) error-cache TTL
 matching is wording-fragile — OBSERVED_LIVE recheck at FS024. (iv) symbology
 429 kept retryable despite U-4 silence — conservative. (v)=F-005. OBSERVED_
 LIVE fold-in of smoke facts into MANIFEST lifecycle fields: FS024 duty.
+
+## F-007 (FS025 cold-start audit r1, 2026-08-17) — RECOVERABLE_WITH_GAPS
+Audit a669509 (audit/FS025-cold-start): content-state fully reconstructable
+from durable state (auditor re-ran gates, matched 2794/23/21; reconstruction
+confirmed by incumbent's live commits). 13 findings — CS-1 dual-writer hazard
+DEMONSTRATED (no liveness fence; fixed in bootstrap §8.0 this revision);
+pointer/metadata defects CS-2..CS-9 fixed this revision; CS-10 orchestrator
+memory said private repo (fixed); CS-11 the single pre-sanitize-fix smoke
+capture was re-audited — 200-success body, no error-envelope metadata, no
+credential material (hygiene note closed); CS-13 LASR resume charters
+condensed into core_lasr_pause_handoff.md. Rerun pending; gate passes only at
+RECOVERABLE.

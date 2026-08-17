@@ -677,15 +677,16 @@ def test_daily_budget_hard_stops(tmp_path: Path) -> None:
         transport.execute(_request(["CCC-US"]), force_refresh=True)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="RT-FS010-1 (non-blocking ratchet): per-endpoint/day budget uses a "
-    "check-then-act read of the ledger; the live_call is recorded only AFTER "
-    "the network round-trip, so requests racing inside that window all pass "
-    "the check and overrun the budget. Bounded by in-flight concurrency; "
-    "cannot leak secrets or replay errors. MUST become reserve-before-send "
-    "before FS011-16 run concurrent live pulls against a shared quota.",
-)
+# RT-FS010-1 ratchet — FLIPPED TO TEETH (was strict-xfail). Pre-fix
+# behavior: the budget was a check-then-act read (`check_budgets` before
+# the round-trip, `record_live_call` only after), so a request racing
+# inside that window passed the same check and OVERRAN a per-endpoint
+# limit of 1 (2 live calls recorded, demonstrated deterministically by
+# this re-entrant sender). Fixed by atomic RESERVE-BEFORE-SEND
+# (`LiveCallLedger.reserve_live_call`: check + reservation under the
+# in-process lock AND a cross-process flock, one unit consumed per
+# attempt, released only on failure-before-send). The racing request now
+# gets the typed hard stop and the wire never sees a second call.
 def test_budget_is_atomic_under_racing_requests(tmp_path: Path) -> None:
     """A second request entering after the budget check but before the first
     records its live_call must NOT be able to overrun a per-endpoint limit of
@@ -724,21 +725,34 @@ def test_budget_is_atomic_under_racing_requests(tmp_path: Path) -> None:
         def __init__(self) -> None:
             self.transport: FactSetTransport | None = None
             self.n = 0
+            self.racer_refused = False
 
         def send(self, **kw: Any) -> HttpResponse:
             self.n += 1
             if self.n == 1 and self.transport is not None:
                 # A concurrent second request arrives before #1 records.
-                self.transport.execute(req, force_refresh=True)
+                # Post-fix it must be REFUSED with the typed hard stop
+                # (pre-fix it executed and overran the budget); the racer
+                # models a loser of the reservation race, so the refusal
+                # is caught HERE and request #1 completes normally.
+                try:
+                    self.transport.execute(req, force_refresh=True)
+                except FactSetBudgetExceededError:
+                    self.racer_refused = True
             return _ok({"data": []})
 
     sender = ReentrantSender()
     transport = _transport(root, live=True, sender=sender, config=config)
     sender.transport = transport
     transport.execute(req, force_refresh=True)
+    assert sender.racer_refused, (
+        "racing request was NOT refused: it passed the budget check inside "
+        "the check-then-act window (pre-fix behavior)"
+    )
+    assert sender.n == 1, f"the wire saw {sender.n} calls for a limit of 1"
     ledger = LiveCallLedger(root, now=lambda: _T0)
     live_calls = ledger.live_calls_for_endpoint("symbology", "/identifier-resolution")
-    # DESIRED (ratchet target): never exceed the limit of 1.
+    # Ratchet target: never exceed the limit of 1.
     assert live_calls <= 1, f"budget overrun: {live_calls} live calls for a limit of 1"
 
 

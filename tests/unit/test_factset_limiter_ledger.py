@@ -171,6 +171,85 @@ class TestLedger:
             max_endpoint_requests=1,
         )
 
+    def test_reserve_before_send_atomicity(self, tmp_path: Path) -> None:
+        # RT-FS010-1: the reservation IS the budget unit — a second
+        # reserve while one is outstanding hits the typed hard stop.
+        ledger = LiveCallLedger(tmp_path, now=MutableNow(_DAY1))
+        rid = ledger.reserve_live_call(
+            api_family="symbology",
+            endpoint="/identifier-resolution",
+            request_hash="a" * 64,
+            max_live_calls_per_day=5,
+            max_endpoint_requests=1,
+        )
+        assert rid
+        with pytest.raises(FactSetBudgetExceededError, match="per-endpoint"):
+            ledger.reserve_live_call(
+                api_family="symbology",
+                endpoint="/identifier-resolution",
+                request_hash="b" * 64,
+                max_live_calls_per_day=5,
+                max_endpoint_requests=1,
+            )
+
+    def test_conversion_counts_exactly_once(self, tmp_path: Path) -> None:
+        # reservation + its live_call completion = ONE consumed unit.
+        ledger = LiveCallLedger(tmp_path, now=MutableNow(_DAY1))
+        rid = ledger.reserve_live_call(
+            api_family="symbology",
+            endpoint="/identifier-resolution",
+            request_hash="a" * 64,
+            max_live_calls_per_day=5,
+            max_endpoint_requests=2,
+        )
+        ledger.record_live_call(
+            api_family="symbology",
+            endpoint="/identifier-resolution",
+            request_hash="a" * 64,
+            http_status=200,
+            reservation_id=rid,
+        )
+        assert ledger.consumed_for_endpoint("symbology", "/identifier-resolution") == 1
+        assert ledger.consumed_on_day("2026-01-05") == 1
+
+    def test_release_frees_the_unit(self, tmp_path: Path) -> None:
+        # Failure-before-send releases; the budget is not burned.
+        ledger = LiveCallLedger(tmp_path, now=MutableNow(_DAY1))
+        rid = ledger.reserve_live_call(
+            api_family="symbology",
+            endpoint="/identifier-resolution",
+            request_hash="a" * 64,
+            max_live_calls_per_day=5,
+            max_endpoint_requests=1,
+        )
+        ledger.release_reservation(
+            api_family="symbology",
+            endpoint="/identifier-resolution",
+            request_hash="a" * 64,
+            reservation_id=rid,
+        )
+        assert ledger.consumed_for_endpoint("symbology", "/identifier-resolution") == 0
+        ledger.reserve_live_call(  # unit available again
+            api_family="symbology",
+            endpoint="/identifier-resolution",
+            request_hash="c" * 64,
+            max_live_calls_per_day=5,
+            max_endpoint_requests=1,
+        )
+
+    def test_unconverted_reservation_stays_consumed(self, tmp_path: Path) -> None:
+        # Timeout semantics: no live_call, no release → still consumed.
+        ledger = LiveCallLedger(tmp_path, now=MutableNow(_DAY1))
+        ledger.reserve_live_call(
+            api_family="symbology",
+            endpoint="/identifier-resolution",
+            request_hash="a" * 64,
+            max_live_calls_per_day=5,
+            max_endpoint_requests=2,
+        )
+        assert ledger.consumed_for_endpoint("symbology", "/identifier-resolution") == 1
+        assert ledger.consumed_on_day("2026-01-05") == 1
+
     def test_batch_resume_semantics(self, tmp_path: Path) -> None:
         # FT-05: unresolved batch ids block re-submission; terminal clears.
         ledger = LiveCallLedger(tmp_path, now=MutableNow(_DAY1))

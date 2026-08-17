@@ -520,6 +520,93 @@ class TestBudgetsAndStorage:
             transport.execute(other)
         assert len(sender.calls) == 1
 
+    def test_retry_attempts_consume_budget_no_overshoot(self, tmp_path: Path) -> None:
+        # VF-FS010-2 regression: pre-fix the budget was checked once per
+        # execute(), so a retry loop could overshoot the daily budget by
+        # max_attempts-1 calls. Post-fix every attempt reserves one unit
+        # atomically; exhaustion is a typed hard stop MID-RETRY.
+        config = _config(live=True, max_live_calls_per_day=2)
+        sender = FakeSender(
+            [HttpResponse(status=503, body=b"{}", headers={}) for _ in range(3)]
+        )
+        transport, _ = _transport(tmp_path, live=True, sender=sender, config=config)
+        with pytest.raises(FactSetBudgetExceededError, match="daily live-call"):
+            transport.execute(_request())
+        assert len(sender.calls) == 2  # budget 2 → exactly 2 attempts hit wire
+
+    def test_timeout_attempts_consume_budget(self, tmp_path: Path) -> None:
+        # A timed-out attempt may have reached the wire: its reservation
+        # stays conservatively consumed.
+        config = _config(live=True, max_live_calls_per_day=1)
+        sender = FakeSender([HttpTimeout("t"), _ok({"data": [1]})])
+        transport, _ = _transport(tmp_path, live=True, sender=sender, config=config)
+        with pytest.raises(FactSetBudgetExceededError, match="daily live-call"):
+            transport.execute(_request())
+        assert len(sender.calls) == 1
+
+    def test_failure_before_send_releases_reservation(self, tmp_path: Path) -> None:
+        # A sender failure that provably never sent bytes releases the
+        # reserved unit — the budget is not burned by local bugs.
+        config = _config(live=True, max_live_calls_per_day=1)
+
+        class ExplodingSender:
+            def send(self, **kwargs: Any) -> HttpResponse:
+                raise RuntimeError("constructed no request")
+
+        transport, _ = _transport(
+            tmp_path,
+            live=True,
+            sender=ExplodingSender(),  # type: ignore[arg-type]
+            config=config,
+        )
+        with pytest.raises(RuntimeError):
+            transport.execute(_request())
+        # The single budget unit is still available for a healthy sender.
+        sender = FakeSender([_ok({"data": [1]})])
+        transport2, _ = _transport(tmp_path, live=True, sender=sender, config=config)
+        assert transport2.execute(_request()).record.http_status == 200
+
+    def test_racing_request_refused_atomically(self, tmp_path: Path) -> None:
+        # RT-FS010-1 regression (unit-tier twin of the red-team ratchet):
+        # a request entering while another attempt holds the only budget
+        # unit is refused BEFORE the wire.
+        config = _config(live=True, max_live_calls_per_day=1)
+        outer = _request()
+        racer = NormalizedRequest(
+            api_family="symbology",
+            api_version="v3",
+            endpoint="/identifier-resolution",
+            verb="POST",
+            params={"ids": ["ZZZ-US"], "inputSymbolType": "tickerRegion"},
+        )
+
+        class ReentrantSender:
+            def __init__(self) -> None:
+                self.transport: FactSetTransport | None = None
+                self.calls = 0
+                self.racer_refused = False
+
+            def send(self, **kwargs: Any) -> HttpResponse:
+                self.calls += 1
+                if self.calls == 1 and self.transport is not None:
+                    try:
+                        self.transport.execute(racer)
+                    except FactSetBudgetExceededError:
+                        self.racer_refused = True
+                return _ok({"data": []})
+
+        sender = ReentrantSender()
+        transport, _ = _transport(
+            tmp_path,
+            live=True,
+            sender=sender,  # type: ignore[arg-type]
+            config=config,
+        )
+        sender.transport = transport
+        transport.execute(outer)
+        assert sender.racer_refused is True
+        assert sender.calls == 1
+
     def test_storage_cap_auto_stop(self, tmp_path: Path) -> None:
         config = _config(live=True)
         small = config.model_copy(

@@ -238,13 +238,12 @@ class FactSetTransport:
             return self._cache.replay(request)  # raises FactSetCacheMissError
 
         self._enforce_error_cache_policy(request, force_refresh=force_refresh)
-        self._ledger.check_budgets(
-            api_family=request.api_family,
-            endpoint=request.endpoint,
-            max_live_calls_per_day=self._config.transport.max_live_calls_per_day,
-            max_endpoint_requests=endpoint_policy.max_live_requests,
+        # Budget enforcement is per ATTEMPT via the ledger's atomic
+        # reserve-before-send inside the retry loop (VF-FS010-2 /
+        # RT-FS010-1) — no upfront check-then-act window remains.
+        return self._send_with_retries(
+            request, rhash, max_endpoint_requests=endpoint_policy.max_live_requests
         )
-        return self._send_with_retries(request, rhash)
 
     # ── error-cache policy (D-020(d)) ──────────────────────────────────
 
@@ -278,7 +277,11 @@ class FactSetTransport:
     # ── live send path ──────────────────────────────────────────────────
 
     def _send_with_retries(
-        self, request: NormalizedRequest, rhash: str
+        self,
+        request: NormalizedRequest,
+        rhash: str,
+        *,
+        max_endpoint_requests: int,
     ) -> CachedResponse:
         if self._sender is None:  # pragma: no cover - guarded in __init__
             raise FactSetConfigError("live mode requires an HttpSender")
@@ -291,8 +294,22 @@ class FactSetTransport:
         while attempt < retry.max_attempts:
             started = self._monotonic()
             limiter = self._limiter.family(request.api_family)
-            try:
-                with limiter.slot():
+            response: HttpResponse | None = None
+            timeout_error: HttpTimeout | None = None
+            with limiter.slot():
+                # RESERVE-BEFORE-SEND (RT-FS010-1/VF-FS010-2): each attempt
+                # atomically consumes one budget unit; exhaustion is a typed
+                # hard stop BEFORE the wire, even mid-retry, even racing.
+                reservation_id = self._ledger.reserve_live_call(
+                    api_family=request.api_family,
+                    endpoint=request.endpoint,
+                    request_hash=rhash,
+                    max_live_calls_per_day=(
+                        self._config.transport.max_live_calls_per_day
+                    ),
+                    max_endpoint_requests=max_endpoint_requests,
+                )
+                try:
                     response = self._sender.send(
                         method=request.verb,
                         url=self._url_for(request),
@@ -302,10 +319,24 @@ class FactSetTransport:
                             self._config.transport.request_timeout_seconds
                         ),
                     )
-            except HttpTimeout as exc:
+                except HttpTimeout as exc:
+                    # Reservation stays CONSUMED: the request may have
+                    # reached the wire (conservative budget accounting).
+                    timeout_error = exc
+                except BaseException:
+                    # Failure BEFORE any bytes went out (sender-construction
+                    # or programming errors): release the unit, surface.
+                    self._ledger.release_reservation(
+                        api_family=request.api_family,
+                        endpoint=request.endpoint,
+                        request_hash=rhash,
+                        reservation_id=reservation_id,
+                    )
+                    raise
+            if response is None:
                 latency = (self._monotonic() - started) * 1000.0
                 self.stats.retries += 1
-                last_failure = self._sanitizer.clean(str(exc))
+                last_failure = self._sanitizer.clean(str(timeout_error))
                 last_was_timeout = True
                 self._emit(
                     request,
@@ -328,6 +359,7 @@ class FactSetTransport:
                 endpoint=request.endpoint,
                 request_hash=rhash,
                 http_status=response.status,
+                reservation_id=reservation_id,
             )
             klass, detail = classify_response(
                 response.status, response.body, retryable_statuses=retryable

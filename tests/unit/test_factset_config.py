@@ -119,7 +119,8 @@ class TestCommittedTrialYaml:
 
     def test_loads_and_validates(self) -> None:
         config = load_trial_config(TRIAL_YAML)
-        assert config.config_id == "factset-trial-fs010-1"
+        # config revision bumped by FS024 (family enables + probe budgets)
+        assert config.config_id == "factset-trial-fs024-1"
 
     def test_replay_is_the_committed_default(self) -> None:
         # A committed config alone can never go live (FS002 §6.1) — and
@@ -137,10 +138,24 @@ class TestCommittedTrialYaml:
         assert symbology.limits.max_ids_per_request == 100  # D-1 ceiling
         assert symbology.limits.documented is True
 
-    def test_only_symbology_enabled_before_fs009(self) -> None:
+    def test_all_families_enabled_with_declared_endpoints(self) -> None:
+        # FS009 verified the manifests; FS024 (exclusive owner of the
+        # family enables) flipped all six on for the entitlement probes.
+        # Every enabled family must declare bounded endpoint budgets.
         config = load_trial_config(TRIAL_YAML)
         enabled = [n for n, f in config.families.items() if f.enabled]
-        assert enabled == ["symbology"]
+        assert sorted(enabled) == [
+            "benchmarks",
+            "estimates",
+            "fundamentals",
+            "global_prices",
+            "rbics",
+            "symbology",
+        ]
+        for family in config.families.values():
+            assert family.endpoints, "enabled family without endpoint budgets"
+            for ep in family.endpoints:
+                assert ep.max_live_requests >= 1
 
     def test_smoke_budget_at_most_five_requests(self) -> None:
         # FS010 charter: API budget <= 5 live requests.
@@ -151,12 +166,15 @@ class TestCommittedTrialYaml:
         assert 1 <= len(smoke.ids) <= 5
 
     def test_undocumented_families_flagged(self) -> None:
+        # Families with UNRESOLVED vendor rate limits stay on the
+        # conservative default and are telemetry-flagged even while
+        # enabled for the FS024 probes (FS002 §6.4).
         config = load_trial_config(TRIAL_YAML)
         for name in ("global_prices", "rbics", "benchmarks"):
             family = config.family(name)
-            assert family.enabled is False
             assert family.limits.documented is False
             assert family.limits.evidence == "UNRESOLVED"
+            assert family.limits.requests_per_second <= 5
 
     def test_retention_register_present(self) -> None:
         config = load_trial_config(TRIAL_YAML)

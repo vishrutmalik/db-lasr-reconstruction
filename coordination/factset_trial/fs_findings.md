@@ -72,3 +72,16 @@ CS-2 + residuals R2-1..R2-4 fixed in the immediately following control-plane
 commit. Fence adequacy ruled safe (detect-and-serialize; zombie writers
 degrade to loud push conflicts bounded by one atomic unit). The continuous-
 recoverability invariant is ACTIVE from this point.
+
+## F-009 (2026-08-17, OBSERVED_LIVE — VENDOR/ACCOUNT BLOCKER) — authorization revoked mid-day
+FS011 live battery: every request (11 calls, 3 endpoints incl. a byte-identical
+replay of the FS010 smoke request) returns HTTP 403 plain-text "User
+Authorization Failed" (undocumented THIRD error-envelope shape — extends the
+dual-envelope catalog). The same request returned 200 at 12:45:37Z; 403 at
+19:23Z and 19:28Z; never a 401; ledger shows no other traffic. Conclusion:
+account-level authorization lapsed/revoked server-side — NOT code, NOT quota
+self-inflicted. ALL live FactSet work is blocked pending user/vendor action.
+Post-restoration remediation is a single bounded --force-refresh re-run
+(~10 requests for FS011's battery; FS024 entitlement matrix similarly
+re-runnable). Also OBSERVED_LIVE: entitlement is time-variable within one
+trial day — the trial evidence model must timestamp all entitlement claims.

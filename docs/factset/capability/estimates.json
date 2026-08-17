@@ -1,0 +1,4036 @@
+{
+ "manifest_version": "FS006-draft-1",
+ "family": "estimates",
+ "goal": "FS006",
+ "generated": "2026-08-17",
+ "note_for_fs009": "Emitted before FS002's manifest schema finalized; structure chosen to be losslessly re-mappable. Mechanical sections regenerate from the spec via `_extract_estimates.py emit`.",
+ "posture": {
+  "pit_status": "NON_PIT",
+  "warning_label": "Standard/revised Estimates API data; not approved for definitive look-ahead-safe historical backtesting.",
+  "rule": "Every analytical output using Standard Estimates must carry the warning label (external_analysis.md WP6). Not to be merged into the PIT-safe headline result; separately labelled sensitivity experiment only. PIT Estimates DATAFEED (2 PDFs in resources dir) is FS021 scope; existence noted, not reviewed here."
+ },
+ "api": {
+  "title": "FactSet Estimates",
+  "openapi": "3.0.0",
+  "spec_version": "2.10.0",
+  "base_url": "https://api.factset.com/content",
+  "path_prefix": "/factset-estimates/v2",
+  "media_type": "application/json",
+  "auth_spec_declared": "http-basic (USERNAME-SERIAL / API key)",
+  "sdk": {
+   "package": "fds.sdk.FactSetEstimates",
+   "version": "4.1.0",
+   "tracks_api_version": "2.10.0",
+   "url": "https://github.com/factset/enterprise-sdk/tree/main/code/python/FactSetEstimates/v2"
+  },
+  "evidence": "DOCUMENTED_OPENAPI"
+ },
+ "limits": {
+  "rate_limit_rps": 10,
+  "rate_limit_concurrent": 10,
+  "datapoint_quota_per_minute": 4000000,
+  "datapoint_quota_exempt": [
+   "/company-reports/*",
+   "/metrics",
+   "/segments-metrics (E-D9, inferred from missing 429)"
+  ],
+  "quota_breach": "429 + Retry-After header",
+  "service_timeout_seconds": 30,
+  "history_guidance": "<=10 years per metric per id",
+  "segment_ids_per_request": 50,
+  "ids_schema_max": 3000,
+  "evidence": "DOCUMENTED_OPENAPI"
+ },
+ "family_coverage_map": {
+  "fixed_consensus": [
+   "getFixedConsensus",
+   "getFixedConsensusForList"
+  ],
+  "rolling_consensus": [
+   "getRollingConsensus",
+   "getRollingConsensusForList"
+  ],
+  "fixed_detail": [
+   "getFixedDetail",
+   "getFixedDetailForList"
+  ],
+  "rolling_detail": [
+   "getRollingDetail",
+   "getRollingDetailForList"
+  ],
+  "consensus_ratings": [
+   "getConsensusRatings",
+   "getConsensusRatingsForList"
+  ],
+  "detail_ratings": [
+   "getDetailRatings",
+   "getDetailRatingsForList"
+  ],
+  "surprise": [
+   "getSurprise",
+   "getSurpriseForList"
+  ],
+  "actuals": [
+   "getActuals",
+   "getActualsForList"
+  ],
+  "segment_actuals": [
+   "getSegmentActuals",
+   "getSegmentActualsForList"
+  ],
+  "guidance": [
+   "getGuidance",
+   "getGuidanceForList"
+  ],
+  "segments": [
+   "getSegments",
+   "getSegmentsForList",
+   "getSegmentsDetailsForList"
+  ],
+  "estimate_metrics": [
+   "getEstimateMetrics",
+   "getEstimateMetricsForList",
+   "getEstimateSegmentDetailMetrics"
+  ],
+  "company_reports_extra_family_not_in_wp6": [
+   "getAnalystRatings",
+   "getEstimates",
+   "getEstimateTypes",
+   "getSurpriseHistory"
+  ],
+  "families_in_wp6_missing_from_spec": []
+ },
+ "trial_preference": {
+  "fixed_over_rolling": "external_analysis.md WP6 prefers FIXED fiscal periods for model research: address periods absolutely via fiscalPeriodStart/End (YYYY for FY, YYYY/#F for quarters; SEMI YYYY/#S documented on POST schemas only, E-D5) so the estimated period cannot silently roll as the perspective window moves."
+ },
+ "non_pit_boundary": {
+  "verdict": "The API reconstructs consensus/detail values as of historical perspective dates (estimateDate), but it serves FactSet's current *standard* estimates database: nothing in the spec, SDK docs, or demo states that this history is immutable or as-originally-published, and several documented mechanisms (retroactive broker inclusion/exclusion visible via includeAll/section/statusCode, actual-type methodology switch for European actuals at 2017, broker actuals restated up to 100 days after report date, revision fields lastModifiedDate/prevEstimateValue, current-basis symbology and currency) imply the historical series is revised/current-view. Treat every value as the current-database reconstruction, not a point-in-time record.",
+  "what_is_revised_or_restatable": [
+   "Broker/analyst detail rows: corrections and exclusions from consensus applied by FactSet editorial process (includeAll TRUE exposes excluded rows as of *today*, not as of the perspective date) [DOCUMENTED_OPENAPI + INFERRED]",
+   "Broker actuals: 'can be updated up to 100 days post the fiscal period's report date' (actualType desc) [DOCUMENTED_OPENAPI]",
+   "European vs company actuals: methodology switch applied from 2017 onwards irrespective of country/listing (actualType desc) [DOCUMENTED_OPENAPI]",
+   "Consensus statistics: recomputed from the (current) detail set for the 100-day window at each perspective date; window/inclusion rules are current methodology [INFERRED from window + includeAll semantics]",
+   "Identifier mapping: responses keyed to current fsymId regional series [DOCUMENTED_OPENAPI, INFERRED for historical joins]",
+   "Split/per-share basis restatement policy: not stated in spec [VENDOR_CLARIFICATION_REQUIRED]"
+  ],
+  "timestamp_fields_available": {
+   "estimateDate": "perspective date the consensus/detail value is 'as of' (YYYY-MM-DD, no time) \u2014 reconstruction key, not a publication timestamp",
+   "inputDateTime": "detail endpoints only: 'Date and time when the data is available at the source' (type string, format 'string', example 2022-10-25T22:40:09, timezone unstated)",
+   "lastModifiedDate": "detail endpoints: date a broker provided a revision",
+   "prevEstimateDate/prevEstimateValue": "detail endpoints: prior estimate for revision analysis",
+   "guidanceDate/inputDateHigh/inputDateLow/inputDateHighTime/inputDateLowTime": "guidance: issue date + FactSet collection date/timestamps",
+   "reportDate": "actuals: date actual reported and/or fiscal period rolled",
+   "surpriseDate": "surprise: date of the reported event",
+   "asOfMonth": "company-reports analyst-ratings: month-end validity"
+  },
+  "missing_for_pit": [
+   "No bitemporal keys: no 'as-was-published' vs 'as-of' distinction on consensus rows",
+   "No immutability/restatement guarantee anywhere in the docs",
+   "No feed of database corrections/deletions (that is the PIT datafeed's job)"
+  ]
+ },
+ "fs010_guidance": {
+  "auth": "HTTP Basic (USERNAME-SERIAL / API key) from env; SDK also supports OAuth2 ConfidentialClient [DOCUMENTED_SDK].",
+  "prefer_post": "POST *ForList variants for batches (no URL-length constraint; flat JSON bodies except guidance's data-wrapper E-D11).",
+  "rate_limits": "10 rps, 10 concurrent, 4M datapoints/min (429 + Retry-After) except /company-reports/* and /metrics [E-D9 for /segments-metrics].",
+  "timeout": "30 s service duration threshold; keep <=10y history per metric per id; segments: <=50 ids.",
+  "pagination": "Only /company-reports/surprise-history paginates (_paginationLimit default 50 / _paginationOffset + meta.pagination.total). All other endpoints: unpaginated arrays.",
+  "async": "No server-side job/poll endpoints; SDK *_async = client-side threads only."
+ },
+ "operations": [
+  {
+   "operation_id": "getRollingConsensus",
+   "method": "GET",
+   "path": "/factset-estimates/v2/rolling-consensus",
+   "tag": "Consensus",
+   "summary": "Retrieves consensus estimates for a requested list of ids and rolling fiscal periods.",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "ids"
+    },
+    {
+     "name": "metrics",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "metrics"
+    },
+    {
+     "name": "startDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "startDate"
+    },
+    {
+     "name": "endDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "endDate"
+    },
+    {
+     "name": "frequency",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "D",
+     "enum": [
+      "D",
+      "W",
+      "AM",
+      "AQ",
+      "AY"
+     ],
+     "component_ref": "frequency"
+    },
+    {
+     "name": "relativeFiscalStart",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalStart"
+    },
+    {
+     "name": "relativeFiscalEnd",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalEnd"
+    },
+    {
+     "name": "periodicity",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "ANN",
+     "enum": [
+      "ANN",
+      "QTR",
+      "SEMI",
+      "NTMA",
+      "LTMA"
+     ],
+     "component_ref": "periodicity"
+    },
+    {
+     "name": "currency",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "currency"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "consensusResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "ConsensusApi",
+    "method": "get_rolling_consensus",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getRollingConsensusForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/rolling-consensus",
+   "tag": "Consensus",
+   "summary": "Retrieves consensus estimates for a requested list of ids and rolling fiscal periods",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "rollingConsensusRequest"
+   },
+   "responses": {
+    "200": "consensusResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "ConsensusApi",
+    "method": "get_rolling_consensus_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getFixedConsensus",
+   "method": "GET",
+   "path": "/factset-estimates/v2/fixed-consensus",
+   "tag": "Consensus",
+   "summary": "Retrieves consensus estimates for a requested list of ids and fixed fiscal periods",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "ids"
+    },
+    {
+     "name": "metrics",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "metrics"
+    },
+    {
+     "name": "startDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "startDate"
+    },
+    {
+     "name": "endDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "endDate"
+    },
+    {
+     "name": "frequency",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "D",
+     "enum": [
+      "D",
+      "W",
+      "AM",
+      "AQ",
+      "AY"
+     ],
+     "component_ref": "frequency"
+    },
+    {
+     "name": "fiscalPeriodStart",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "fiscalPeriodStart"
+    },
+    {
+     "name": "fiscalPeriodEnd",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "fiscalPeriodEnd"
+    },
+    {
+     "name": "periodicity",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "ANN",
+     "enum": [
+      "ANN",
+      "QTR",
+      "SEMI",
+      "NTMA",
+      "LTMA"
+     ],
+     "component_ref": "periodicity"
+    },
+    {
+     "name": "currency",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "currency"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "consensusResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "ConsensusApi",
+    "method": "get_fixed_consensus",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getFixedConsensusForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/fixed-consensus",
+   "tag": "Consensus",
+   "summary": "FactSet consensus estimates for fixed fiscal periods",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "fixedConsensusRequest"
+   },
+   "responses": {
+    "200": "consensusResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "ConsensusApi",
+    "method": "get_fixed_consensus_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getRollingDetail",
+   "method": "GET",
+   "path": "/factset-estimates/v2/rolling-detail",
+   "tag": "Broker Detail",
+   "summary": "FactSet estimates detail data for rolling fiscal periods",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "ids"
+    },
+    {
+     "name": "metrics",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "metrics"
+    },
+    {
+     "name": "startDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "startDate"
+    },
+    {
+     "name": "endDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "endDate"
+    },
+    {
+     "name": "frequency",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "D",
+     "enum": [
+      "D",
+      "W",
+      "AM",
+      "AQ",
+      "AY"
+     ],
+     "component_ref": "frequency"
+    },
+    {
+     "name": "periodicity",
+     "in": "query",
+     "required": false,
+     "type": "string enum(3)",
+     "default": "ANN",
+     "enum": [
+      "ANN",
+      "QTR",
+      "SEMI"
+     ],
+     "component_ref": "periodicityDetail"
+    },
+    {
+     "name": "includeAll",
+     "in": "query",
+     "required": false,
+     "type": "boolean",
+     "default": false,
+     "enum": null,
+     "component_ref": "includeAll"
+    },
+    {
+     "name": "relativeFiscalStart",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalStart"
+    },
+    {
+     "name": "relativeFiscalEnd",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalEnd"
+    },
+    {
+     "name": "currency",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "currency"
+    },
+    {
+     "name": "brokerNames",
+     "in": "query",
+     "required": false,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "brokerNames"
+    },
+    {
+     "name": "updatesOnly",
+     "in": "query",
+     "required": false,
+     "type": "boolean",
+     "default": false,
+     "enum": null,
+     "component_ref": "updatesOnly"
+    },
+    {
+     "name": "sortByInputDateTime",
+     "in": "query",
+     "required": false,
+     "type": "boolean",
+     "default": false,
+     "enum": null,
+     "component_ref": "sortByInputDateTime"
+    },
+    {
+     "name": "includeDocId",
+     "in": "query",
+     "required": false,
+     "type": "boolean",
+     "default": false,
+     "enum": null,
+     "component_ref": "includeDocId"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "detailResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "BrokerDetailApi",
+    "method": "get_rolling_detail",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getRollingDetailForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/rolling-detail",
+   "tag": "Broker Detail",
+   "summary": "FactSet estimates detail data for rolling fiscal periods",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "rollingDetailRequest"
+   },
+   "responses": {
+    "200": "detailResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "BrokerDetailApi",
+    "method": "get_rolling_detail_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getFixedDetail",
+   "method": "GET",
+   "path": "/factset-estimates/v2/fixed-detail",
+   "tag": "Broker Detail",
+   "summary": "Estimates detail data for fixed fiscal periods",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "ids"
+    },
+    {
+     "name": "metrics",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "metrics"
+    },
+    {
+     "name": "startDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "startDate"
+    },
+    {
+     "name": "endDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "endDate"
+    },
+    {
+     "name": "frequency",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "D",
+     "enum": [
+      "D",
+      "W",
+      "AM",
+      "AQ",
+      "AY"
+     ],
+     "component_ref": "frequency"
+    },
+    {
+     "name": "periodicity",
+     "in": "query",
+     "required": false,
+     "type": "string enum(3)",
+     "default": "ANN",
+     "enum": [
+      "ANN",
+      "QTR",
+      "SEMI"
+     ],
+     "component_ref": "periodicityDetail"
+    },
+    {
+     "name": "includeAll",
+     "in": "query",
+     "required": false,
+     "type": "boolean",
+     "default": false,
+     "enum": null,
+     "component_ref": "includeAll"
+    },
+    {
+     "name": "fiscalPeriodStart",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "fiscalPeriodStart"
+    },
+    {
+     "name": "fiscalPeriodEnd",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "fiscalPeriodEnd"
+    },
+    {
+     "name": "currency",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "currency"
+    },
+    {
+     "name": "brokerNames",
+     "in": "query",
+     "required": false,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "brokerNames"
+    },
+    {
+     "name": "updatesOnly",
+     "in": "query",
+     "required": false,
+     "type": "boolean",
+     "default": false,
+     "enum": null,
+     "component_ref": "updatesOnly"
+    },
+    {
+     "name": "sortByInputDateTime",
+     "in": "query",
+     "required": false,
+     "type": "boolean",
+     "default": false,
+     "enum": null,
+     "component_ref": "sortByInputDateTime"
+    },
+    {
+     "name": "includeDocId",
+     "in": "query",
+     "required": false,
+     "type": "boolean",
+     "default": false,
+     "enum": null,
+     "component_ref": "includeDocId"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "detailResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "BrokerDetailApi",
+    "method": "get_fixed_detail",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getFixedDetailForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/fixed-detail",
+   "tag": "Broker Detail",
+   "summary": "Estimates detail data for fixed fiscal periods",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "fixedDetailRequest"
+   },
+   "responses": {
+    "200": "detailResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "BrokerDetailApi",
+    "method": "get_fixed_detail_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getConsensusRatings",
+   "method": "GET",
+   "path": "/factset-estimates/v2/consensus-ratings",
+   "tag": "Ratings",
+   "summary": "Ratings consensus estimates to fetch Buy, overWeight, Hold, underWeight, and Sell.",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "ids"
+    },
+    {
+     "name": "startDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "startDate"
+    },
+    {
+     "name": "endDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "endDate"
+    },
+    {
+     "name": "frequency",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "D",
+     "enum": [
+      "D",
+      "W",
+      "AM",
+      "AQ",
+      "AY"
+     ],
+     "component_ref": "frequency"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "consensusRatingsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "RatingsApi",
+    "method": "get_consensus_ratings",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getConsensusRatingsForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/consensus-ratings",
+   "tag": "Ratings",
+   "summary": "Ratings consensus estimates to fetch Buy, overWeight, Hold, underWeight, and Sell.",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "consensusRatingsRequest"
+   },
+   "responses": {
+    "200": "consensusRatingsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "RatingsApi",
+    "method": "get_consensus_ratings_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getDetailRatings",
+   "method": "GET",
+   "path": "/factset-estimates/v2/detail-ratings",
+   "tag": "Ratings",
+   "summary": "Broker Detail estimates to fetch Buy, overWeight, Hold, underWeight, and Sell.",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "ids"
+    },
+    {
+     "name": "startDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "startDate"
+    },
+    {
+     "name": "endDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "endDate"
+    },
+    {
+     "name": "includeAll",
+     "in": "query",
+     "required": false,
+     "type": "boolean",
+     "default": false,
+     "enum": null,
+     "component_ref": "includeAll"
+    },
+    {
+     "name": "brokerNames",
+     "in": "query",
+     "required": false,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "brokerNames"
+    },
+    {
+     "name": "updatesOnly",
+     "in": "query",
+     "required": false,
+     "type": "boolean",
+     "default": false,
+     "enum": null,
+     "component_ref": "updatesOnly"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "detailRatingsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "RatingsApi",
+    "method": "get_detail_ratings",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getDetailRatingsForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/detail-ratings",
+   "tag": "Ratings",
+   "summary": "Broker Detail estimates to fetch Buy, overWeight, Hold, underWeight, and Sell.",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "detailRatingsRequest"
+   },
+   "responses": {
+    "200": "detailRatingsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "RatingsApi",
+    "method": "get_detail_ratings_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getSurprise",
+   "method": "GET",
+   "path": "/factset-estimates/v2/surprise",
+   "tag": "Surprise",
+   "summary": "Surprise estimates for rolling fiscal periods",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "ids"
+    },
+    {
+     "name": "metrics",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "metrics"
+    },
+    {
+     "name": "startDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "startDate"
+    },
+    {
+     "name": "endDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "endDate"
+    },
+    {
+     "name": "frequency",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "D",
+     "enum": [
+      "D",
+      "W",
+      "AM",
+      "AQ",
+      "AY"
+     ],
+     "component_ref": "frequency"
+    },
+    {
+     "name": "periodicity",
+     "in": "query",
+     "required": false,
+     "type": "string enum(3)",
+     "default": "ANN",
+     "enum": [
+      "ANN",
+      "QTR",
+      "SEMI"
+     ],
+     "component_ref": "periodicitySurprise"
+    },
+    {
+     "name": "statistic",
+     "in": "query",
+     "required": false,
+     "type": "string enum(6)",
+     "default": "MEAN",
+     "enum": [
+      "MEAN",
+      "MEDIAN",
+      "HIGH",
+      "LOW",
+      "COUNT",
+      "STDDEV"
+     ],
+     "component_ref": "statistic"
+    },
+    {
+     "name": "currency",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "currency"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "surpriseResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "SurpriseApi",
+    "method": "get_surprise",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getSurpriseForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/surprise",
+   "tag": "Surprise",
+   "summary": "Surprise estimates for rolling fiscal periods",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "surpriseRequest"
+   },
+   "responses": {
+    "200": "surpriseResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "SurpriseApi",
+    "method": "get_surprise_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getSegmentsDetailsForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/segments-detail",
+   "tag": "Segments",
+   "summary": "Retrieves product segment detail estimates for a requested list of ids and fiscal periods",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "segmentsDetailsRequest"
+   },
+   "responses": {
+    "200": "segmentsDetailsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "SegmentsApi",
+    "method": "get_segments_details_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getEstimateSegmentDetailMetrics",
+   "method": "GET",
+   "path": "/factset-estimates/v2/segments-metrics",
+   "tag": "Data Items",
+   "summary": "Available Estimate Segment Detail metrics",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": null
+    },
+    {
+     "name": "metrics",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": null
+    },
+    {
+     "name": "segmentType",
+     "in": "query",
+     "required": false,
+     "type": "string enum(3)",
+     "default": "BUS",
+     "enum": [
+      "BUS",
+      "GEO",
+      "ALL"
+     ],
+     "component_ref": null
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "metricsSegmentDetailResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": false,
+   "sdk": {
+    "class": "DataItemsApi",
+    "method": "get_estimate_segment_detail_metrics",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getSegments",
+   "method": "GET",
+   "path": "/factset-estimates/v2/segments",
+   "tag": "Segments",
+   "summary": "Retrieves product & geographic segment estimates for a requested list of ids and fiscal periods",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "segmentIds"
+    },
+    {
+     "name": "segmentType",
+     "in": "query",
+     "required": true,
+     "type": "string enum(2)",
+     "default": "BUS",
+     "enum": [
+      "BUS",
+      "GEO"
+     ],
+     "component_ref": "segmentType"
+    },
+    {
+     "name": "metrics",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "metrics"
+    },
+    {
+     "name": "startDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "startDate"
+    },
+    {
+     "name": "endDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "endDate"
+    },
+    {
+     "name": "relativeFiscalStart",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalStart"
+    },
+    {
+     "name": "relativeFiscalEnd",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalEnd"
+    },
+    {
+     "name": "periodicity",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "ANN",
+     "enum": [
+      "ANN",
+      "QTR",
+      "SEMI",
+      "NTMA",
+      "LTMA"
+     ],
+     "component_ref": "periodicity"
+    },
+    {
+     "name": "frequency",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "D",
+     "enum": [
+      "D",
+      "W",
+      "AM",
+      "AQ",
+      "AY"
+     ],
+     "component_ref": "frequency"
+    },
+    {
+     "name": "currency",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "currency"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "segmentsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "SegmentsApi",
+    "method": "get_segments",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getSegmentsForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/segments",
+   "tag": "Segments",
+   "summary": "Retrieves product segment estimates for a requested list of ids and fiscal periods",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "segmentsRequest"
+   },
+   "responses": {
+    "200": "segmentsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "SegmentsApi",
+    "method": "get_segments_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getEstimateMetrics",
+   "method": "GET",
+   "path": "/factset-estimates/v2/metrics",
+   "tag": "Data Items",
+   "summary": "Available Estimate metrics",
+   "parameters": [
+    {
+     "name": "category",
+     "in": "query",
+     "required": false,
+     "type": "string enum(3)",
+     "default": null,
+     "enum": [
+      "FINANCIAL_STATEMENT",
+      "INDUSTRY_METRIC",
+      "OTHER"
+     ],
+     "component_ref": "category"
+    },
+    {
+     "name": "subcategory",
+     "in": "query",
+     "required": false,
+     "type": "string enum(28)",
+     "default": null,
+     "enum": [
+      "AIRLINES",
+      "BALANCE_SHEET",
+      "BANKS",
+      "CASH_FLOW",
+      "COMMODITIES",
+      "COMPUTER_HARDWARE",
+      "CONSUMER_SERVICES",
+      "EDUCATION",
+      "FINANCIAL_SERVICE_PROVIDER",
+      "FOREX",
+      "HOME_BUILDERS",
+      "HOSPITALS",
+      "HOTELS",
+      "INCOME_STATEMENT",
+      "INSURANCE",
+      "MARIJUANA",
+      "MINING",
+      "MISCELLANEOUS",
+      "MULTIFINANCIAL",
+      "OIL_AND_GAS",
+      "OTHER",
+      "POWER_AND_UTILITIES",
+      "REITS",
+      "RESTAURANTS",
+      "RETAILERS",
+      "SOCIAL_MEDIA_AND_GAMES",
+      "TELECOMMUNICATIONS",
+      "TRANSPORTATION"
+     ],
+     "component_ref": "subcategory"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "metricsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": false,
+   "sdk": {
+    "class": "DataItemsApi",
+    "method": "get_estimate_metrics",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getEstimateMetricsForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/metrics",
+   "tag": "Data Items",
+   "summary": "Available Estimate metrics or ratios.",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "metricsRequest"
+   },
+   "responses": {
+    "200": "metricsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": false,
+   "sdk": {
+    "class": "DataItemsApi",
+    "method": "get_estimate_metrics_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getAnalystRatings",
+   "method": "GET",
+   "path": "/factset-estimates/v2/company-reports/analyst-ratings",
+   "tag": "Estimates and Ratings Reports",
+   "summary": "Retrieves the historical monthly view of analyst ratings for a given identifier.",
+   "parameters": [
+    {
+     "name": "id",
+     "in": "query",
+     "required": true,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "id"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "AnalystRatingResponse",
+    "400": "companyReportsErrorResponse",
+    "401": "companyReportsErrorResponse",
+    "403": "companyReportsErrorResponse",
+    "404": "companyReportsErrorResponse",
+    "415": "companyReportsErrorResponse",
+    "500": "companyReportsErrorResponse"
+   },
+   "has_429": false,
+   "sdk": {
+    "class": "EstimatesAndRatingsReportsApi",
+    "method": "get_analyst_ratings",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getEstimates",
+   "method": "GET",
+   "path": "/factset-estimates/v2/company-reports/forecast",
+   "tag": "Estimates and Ratings Reports",
+   "summary": "Returns forecasted estimates.",
+   "parameters": [
+    {
+     "name": "id",
+     "in": "query",
+     "required": true,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "identifier"
+    },
+    {
+     "name": "estimateType",
+     "in": "query",
+     "required": true,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "estimateType"
+    },
+    {
+     "name": "periodicity",
+     "in": "query",
+     "required": false,
+     "type": "string enum(2)",
+     "default": "ANN",
+     "enum": [
+      "ANN",
+      "QTR"
+     ],
+     "component_ref": "periodicityForecast"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "EstimateResponse",
+    "400": "companyReportsErrorResponse",
+    "401": "companyReportsErrorResponse",
+    "403": "companyReportsErrorResponse",
+    "404": "companyReportsErrorResponse",
+    "415": "companyReportsErrorResponse",
+    "500": "companyReportsErrorResponse"
+   },
+   "has_429": false,
+   "sdk": {
+    "class": "EstimatesAndRatingsReportsApi",
+    "method": "get_estimates",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getEstimateTypes",
+   "method": "GET",
+   "path": "/factset-estimates/v2/company-reports/estimate-types",
+   "tag": "Estimates and Ratings Reports",
+   "summary": "Returns a list of valid estimate types.",
+   "parameters": [],
+   "request_body": null,
+   "responses": {
+    "200": "EstimateTypesResponse",
+    "400": "companyReportsErrorResponse",
+    "401": "companyReportsErrorResponse",
+    "403": "companyReportsErrorResponse",
+    "404": "companyReportsErrorResponse",
+    "415": "companyReportsErrorResponse",
+    "500": "companyReportsErrorResponse"
+   },
+   "has_429": false,
+   "sdk": {
+    "class": "EstimatesAndRatingsReportsApi",
+    "method": "get_estimate_types",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getSurpriseHistory",
+   "method": "GET",
+   "path": "/factset-estimates/v2/company-reports/surprise-history",
+   "tag": "Estimates and Ratings Reports",
+   "summary": "Surprise History",
+   "parameters": [
+    {
+     "name": "id",
+     "in": "query",
+     "required": true,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "identifier"
+    },
+    {
+     "name": "estimateType",
+     "in": "query",
+     "required": true,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "estimateType"
+    },
+    {
+     "name": "periodicity",
+     "in": "query",
+     "required": false,
+     "type": "string enum(2)",
+     "default": "ANN",
+     "enum": [
+      "ANN",
+      "QTR"
+     ],
+     "component_ref": "periodicityForecast"
+    },
+    {
+     "name": "_paginationLimit",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": 50,
+     "enum": null,
+     "component_ref": "_paginationLimit"
+    },
+    {
+     "name": "_paginationOffset",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": 0,
+     "enum": null,
+     "component_ref": "_paginationOffset"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "SurpriseHistoryResponse",
+    "400": "companyReportsErrorResponse",
+    "401": "companyReportsErrorResponse",
+    "403": "companyReportsErrorResponse",
+    "404": "companyReportsErrorResponse",
+    "415": "companyReportsErrorResponse",
+    "500": "companyReportsErrorResponse"
+   },
+   "has_429": false,
+   "sdk": {
+    "class": "EstimatesAndRatingsReportsApi",
+    "method": "get_surprise_history",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getActuals",
+   "method": "GET",
+   "path": "/factset-estimates/v2/actuals",
+   "tag": "Actuals",
+   "summary": "Retrieves actuals for a requested list of ids and reported fiscal periods.",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "ids"
+    },
+    {
+     "name": "metrics",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "metrics"
+    },
+    {
+     "name": "relativeFiscalStart",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalStartActuals"
+    },
+    {
+     "name": "relativeFiscalEnd",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalEndActuals"
+    },
+    {
+     "name": "periodicity",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "ANN",
+     "enum": [
+      "ANN",
+      "QTR",
+      "SEMI",
+      "NTMA",
+      "LTMA"
+     ],
+     "component_ref": "periodicity"
+    },
+    {
+     "name": "currency",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "currency"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "actualsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "ActualsApi",
+    "method": "get_actuals",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getActualsForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/actuals",
+   "tag": "Actuals",
+   "summary": "Retrieves actuals for a requested list of ids and reported fiscal periods.",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "actualsRequest"
+   },
+   "responses": {
+    "200": "actualsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "ActualsApi",
+    "method": "get_actuals_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getSegmentActuals",
+   "method": "GET",
+   "path": "/factset-estimates/v2/segment-actuals",
+   "tag": "Segment Actuals",
+   "summary": "Retrieves Segment Actuals for a requested list of ids and reported fiscal periods.",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "ids"
+    },
+    {
+     "name": "segmentType",
+     "in": "query",
+     "required": true,
+     "type": "string enum(2)",
+     "default": "BUS",
+     "enum": [
+      "BUS",
+      "GEO"
+     ],
+     "component_ref": "segmentType"
+    },
+    {
+     "name": "metrics",
+     "in": "query",
+     "required": true,
+     "type": "array[string enum(39)]",
+     "default": [
+      "SALES"
+     ],
+     "enum": [
+      "ASP",
+      "ARR",
+      "CAPEX",
+      "CCUR_GRTH",
+      "COS",
+      "CFO_GAAP",
+      "DELIVERIES_UNITS",
+      "EPS",
+      "EBIT",
+      "EBIT_REP",
+      "EBITDA",
+      "EBITDA_REP",
+      "G_A_EXP",
+      "GROSS_INC",
+      "GMV",
+      "LCUR_GRTH",
+      "NET_ADDS",
+      "NET_INC",
+      "NET_SALES",
+      "SUBSCRIBERS_NB",
+      "ORGANICGROWTH",
+      "PTX_INC",
+      "RATEBASE",
+      "AVGRATEBASE",
+      "SALES",
+      "SAMESTORESALES",
+      "SGA",
+      "S_M_EXP",
+      "REV_TOT",
+      "UNITS",
+      "NEW_ORDERS_VALUE",
+      "BACKLOG_VALUE",
+      "MCR",
+      "CASH_COST",
+      "REAL_PRICE",
+      "DAU",
+      "ARPU",
+      "CONTR_PROF",
+      "PAIDNADDS"
+     ],
+     "component_ref": "metricSegments"
+    },
+    {
+     "name": "relativeFiscalStart",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalStartActuals"
+    },
+    {
+     "name": "relativeFiscalEnd",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalEndActuals"
+    },
+    {
+     "name": "periodicity",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "ANN",
+     "enum": [
+      "ANN",
+      "QTR",
+      "SEMI",
+      "NTMA",
+      "LTMA"
+     ],
+     "component_ref": "periodicity"
+    },
+    {
+     "name": "currency",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "currency"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "segmentActualsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "SegmentActualsApi",
+    "method": "get_segment_actuals",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getSegmentActualsForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/segment-actuals",
+   "tag": "Segment Actuals",
+   "summary": "Retrieves Segment Actuals for a requested list of ids and reported fiscal periods.",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "segmentActualsRequest"
+   },
+   "responses": {
+    "200": "segmentActualsResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "SegmentActualsApi",
+    "method": "get_segment_actuals_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getGuidance",
+   "method": "GET",
+   "path": "/factset-estimates/v2/guidance",
+   "tag": "Guidance",
+   "summary": "Retrieves guidance for a requested list of ids and dates.",
+   "parameters": [
+    {
+     "name": "ids",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "ids"
+    },
+    {
+     "name": "metrics",
+     "in": "query",
+     "required": true,
+     "type": "array[string]",
+     "default": null,
+     "enum": null,
+     "component_ref": "metrics"
+    },
+    {
+     "name": "startDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "startDate"
+    },
+    {
+     "name": "endDate",
+     "in": "query",
+     "required": false,
+     "type": "string(date)",
+     "default": null,
+     "enum": null,
+     "component_ref": "endDate"
+    },
+    {
+     "name": "relativeFiscalStart",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalStart"
+    },
+    {
+     "name": "relativeFiscalEnd",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "default": null,
+     "enum": null,
+     "component_ref": "relativeFiscalEnd"
+    },
+    {
+     "name": "periodicity",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "ANN",
+     "enum": [
+      "ANN",
+      "QTR",
+      "SEMI",
+      "NTMA",
+      "LTMA"
+     ],
+     "component_ref": "periodicity"
+    },
+    {
+     "name": "frequency",
+     "in": "query",
+     "required": false,
+     "type": "string enum(5)",
+     "default": "D",
+     "enum": [
+      "D",
+      "W",
+      "AM",
+      "AQ",
+      "AY"
+     ],
+     "component_ref": "frequency"
+    },
+    {
+     "name": "currency",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "default": null,
+     "enum": null,
+     "component_ref": "currency"
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": "guidanceResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "GuidanceApi",
+    "method": "get_guidance",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  },
+  {
+   "operation_id": "getGuidanceForList",
+   "method": "POST",
+   "path": "/factset-estimates/v2/guidance",
+   "tag": "Guidance",
+   "summary": "Retrieves guidance for a requested list of ids and dates.",
+   "parameters": [],
+   "request_body": {
+    "media_type": "application/json",
+    "required": true,
+    "schema": "guidanceRequest"
+   },
+   "responses": {
+    "200": "guidanceResponse",
+    "400": "errorResponse",
+    "401": "errorResponse",
+    "403": "errorResponse",
+    "415": "errorResponse",
+    "429": "errorResponse",
+    "500": "errorResponse"
+   },
+   "has_429": true,
+   "sdk": {
+    "class": "GuidanceApi",
+    "method": "get_guidance_for_list",
+    "evidence": "DOCUMENTED_SDK"
+   },
+   "entitlement": "UNRESOLVED",
+   "evidence": "DOCUMENTED_OPENAPI"
+  }
+ ],
+ "component_parameters": {
+  "identifier": {
+   "name": "id",
+   "in": "query",
+   "required": true,
+   "type": "string",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "estimateType": {
+   "name": "estimateType",
+   "in": "query",
+   "required": true,
+   "type": "string",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "_paginationLimit": {
+   "name": "_paginationLimit",
+   "in": "query",
+   "required": false,
+   "type": "integer",
+   "default": 50,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "_paginationOffset": {
+   "name": "_paginationOffset",
+   "in": "query",
+   "required": false,
+   "type": "integer",
+   "default": 0,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "id": {
+   "name": "id",
+   "in": "query",
+   "required": true,
+   "type": "string",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "ids": {
+   "name": "ids",
+   "in": "query",
+   "required": true,
+   "type": "array[string]",
+   "default": null,
+   "min_items": 1,
+   "max_items": 3000,
+   "enum": null,
+   "explode": false
+  },
+  "segmentIds": {
+   "name": "ids",
+   "in": "query",
+   "required": true,
+   "type": "array[string]",
+   "default": null,
+   "min_items": 1,
+   "max_items": 50,
+   "enum": null,
+   "explode": false
+  },
+  "relativeFiscalStart": {
+   "name": "relativeFiscalStart",
+   "in": "query",
+   "required": false,
+   "type": "integer",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "relativeFiscalEnd": {
+   "name": "relativeFiscalEnd",
+   "in": "query",
+   "required": false,
+   "type": "integer",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "relativeFiscalStartActuals": {
+   "name": "relativeFiscalStart",
+   "in": "query",
+   "required": false,
+   "type": "integer",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "relativeFiscalEndActuals": {
+   "name": "relativeFiscalEnd",
+   "in": "query",
+   "required": false,
+   "type": "integer",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "fiscalPeriodStart": {
+   "name": "fiscalPeriodStart",
+   "in": "query",
+   "required": false,
+   "type": "string",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "fiscalPeriodEnd": {
+   "name": "fiscalPeriodEnd",
+   "in": "query",
+   "required": false,
+   "type": "string",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "periodicity": {
+   "name": "periodicity",
+   "in": "query",
+   "required": false,
+   "type": "string enum(5)",
+   "default": "ANN",
+   "min_items": null,
+   "max_items": null,
+   "enum": [
+    "ANN",
+    "QTR",
+    "SEMI",
+    "NTMA",
+    "LTMA"
+   ],
+   "explode": null
+  },
+  "periodicityForecast": {
+   "name": "periodicity",
+   "in": "query",
+   "required": false,
+   "type": "string enum(2)",
+   "default": "ANN",
+   "min_items": null,
+   "max_items": null,
+   "enum": [
+    "ANN",
+    "QTR"
+   ],
+   "explode": null
+  },
+  "periodicityDetail": {
+   "name": "periodicity",
+   "in": "query",
+   "required": false,
+   "type": "string enum(3)",
+   "default": "ANN",
+   "min_items": null,
+   "max_items": null,
+   "enum": [
+    "ANN",
+    "QTR",
+    "SEMI"
+   ],
+   "explode": null
+  },
+  "periodicitySurprise": {
+   "name": "periodicity",
+   "in": "query",
+   "required": false,
+   "type": "string enum(3)",
+   "default": "ANN",
+   "min_items": null,
+   "max_items": null,
+   "enum": [
+    "ANN",
+    "QTR",
+    "SEMI"
+   ],
+   "explode": null
+  },
+  "metrics": {
+   "name": "metrics",
+   "in": "query",
+   "required": true,
+   "type": "array[string]",
+   "default": null,
+   "min_items": 1,
+   "max_items": null,
+   "enum": null,
+   "explode": false
+  },
+  "metric": {
+   "name": "metric",
+   "in": "query",
+   "required": true,
+   "type": "string",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "statistic": {
+   "name": "statistic",
+   "in": "query",
+   "required": false,
+   "type": "string enum(6)",
+   "default": "MEAN",
+   "min_items": null,
+   "max_items": null,
+   "enum": [
+    "MEAN",
+    "MEDIAN",
+    "HIGH",
+    "LOW",
+    "COUNT",
+    "STDDEV"
+   ],
+   "explode": null
+  },
+  "currency": {
+   "name": "currency",
+   "in": "query",
+   "required": false,
+   "type": "string",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "startDate": {
+   "name": "startDate",
+   "in": "query",
+   "required": false,
+   "type": "string(date)",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "endDate": {
+   "name": "endDate",
+   "in": "query",
+   "required": false,
+   "type": "string(date)",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "frequency": {
+   "name": "frequency",
+   "in": "query",
+   "required": false,
+   "type": "string enum(5)",
+   "default": "D",
+   "min_items": null,
+   "max_items": null,
+   "enum": [
+    "D",
+    "W",
+    "AM",
+    "AQ",
+    "AY"
+   ],
+   "explode": null
+  },
+  "category": {
+   "name": "category",
+   "in": "query",
+   "required": false,
+   "type": "string enum(3)",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": [
+    "FINANCIAL_STATEMENT",
+    "INDUSTRY_METRIC",
+    "OTHER"
+   ],
+   "explode": null
+  },
+  "subcategory": {
+   "name": "subcategory",
+   "in": "query",
+   "required": false,
+   "type": "string enum(28)",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": [
+    "AIRLINES",
+    "BALANCE_SHEET",
+    "BANKS",
+    "CASH_FLOW",
+    "COMMODITIES",
+    "COMPUTER_HARDWARE",
+    "CONSUMER_SERVICES",
+    "EDUCATION",
+    "FINANCIAL_SERVICE_PROVIDER",
+    "FOREX",
+    "HOME_BUILDERS",
+    "HOSPITALS",
+    "HOTELS",
+    "INCOME_STATEMENT",
+    "INSURANCE",
+    "MARIJUANA",
+    "MINING",
+    "MISCELLANEOUS",
+    "MULTIFINANCIAL",
+    "OIL_AND_GAS",
+    "OTHER",
+    "POWER_AND_UTILITIES",
+    "REITS",
+    "RESTAURANTS",
+    "RETAILERS",
+    "SOCIAL_MEDIA_AND_GAMES",
+    "TELECOMMUNICATIONS",
+    "TRANSPORTATION"
+   ],
+   "explode": null
+  },
+  "includeAll": {
+   "name": "includeAll",
+   "in": "query",
+   "required": false,
+   "type": "boolean",
+   "default": false,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "includeDocId": {
+   "name": "includeDocId",
+   "in": "query",
+   "required": false,
+   "type": "boolean",
+   "default": false,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "sortByInputDateTime": {
+   "name": "sortByInputDateTime",
+   "in": "query",
+   "required": false,
+   "type": "boolean",
+   "default": false,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "brokerNames": {
+   "name": "brokerNames",
+   "in": "query",
+   "required": false,
+   "type": "array[string]",
+   "default": null,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": false
+  },
+  "updatesOnly": {
+   "name": "updatesOnly",
+   "in": "query",
+   "required": false,
+   "type": "boolean",
+   "default": false,
+   "min_items": null,
+   "max_items": null,
+   "enum": null,
+   "explode": null
+  },
+  "segmentType": {
+   "name": "segmentType",
+   "in": "query",
+   "required": true,
+   "type": "string enum(2)",
+   "default": "BUS",
+   "min_items": null,
+   "max_items": null,
+   "enum": [
+    "BUS",
+    "GEO"
+   ],
+   "explode": null
+  },
+  "metricSegments": {
+   "name": "metrics",
+   "in": "query",
+   "required": true,
+   "type": "array[string enum(39)]",
+   "default": [
+    "SALES"
+   ],
+   "min_items": null,
+   "max_items": null,
+   "enum": [
+    "ASP",
+    "ARR",
+    "CAPEX",
+    "CCUR_GRTH",
+    "COS",
+    "CFO_GAAP",
+    "DELIVERIES_UNITS",
+    "EPS",
+    "EBIT",
+    "EBIT_REP",
+    "EBITDA",
+    "EBITDA_REP",
+    "G_A_EXP",
+    "GROSS_INC",
+    "GMV",
+    "LCUR_GRTH",
+    "NET_ADDS",
+    "NET_INC",
+    "NET_SALES",
+    "SUBSCRIBERS_NB",
+    "ORGANICGROWTH",
+    "PTX_INC",
+    "RATEBASE",
+    "AVGRATEBASE",
+    "SALES",
+    "SAMESTORESALES",
+    "SGA",
+    "S_M_EXP",
+    "REV_TOT",
+    "UNITS",
+    "NEW_ORDERS_VALUE",
+    "BACKLOG_VALUE",
+    "MCR",
+    "CASH_COST",
+    "REAL_PRICE",
+    "DAU",
+    "ARPU",
+    "CONTR_PROF",
+    "PAIDNADDS"
+   ],
+   "explode": null
+  }
+ },
+ "schemas": {
+  "companyReportsErrorResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "errors": "array[ref:ErrorObject]"
+   }
+  },
+  "ErrorObject": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "id": "string(uuid)",
+    "code": "string",
+    "title": "string",
+    "detail": "string"
+   }
+  },
+  "EstimateTypesResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:EstimateType]"
+   }
+  },
+  "EstimateType": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "type": "string",
+    "description": "string"
+   }
+  },
+  "EstimateResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "object"
+   }
+  },
+  "Estimate": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "endDate": "string(date)",
+    "currency": "string",
+    "high": "number(double)",
+    "low": "number(double)",
+    "up": "integer",
+    "down": "integer",
+    "analystCount": "integer",
+    "mean": "number(double)",
+    "median": "number(double)",
+    "standardDeviation": "number(double)"
+   }
+  },
+  "SurpriseHistoryResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "object",
+    "meta": "ref:Meta"
+   }
+  },
+  "SurpriseHistory": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "endDate": "string(date)",
+    "currency": "string",
+    "high": "number(double)",
+    "low": "number(double)",
+    "up": "integer",
+    "down": "integer",
+    "analystCount": "integer",
+    "mean": "number(double)",
+    "median": "number(double)",
+    "standardDeviation": "number(double)",
+    "actual": "number(double)",
+    "surprisePercent": "number(double)"
+   }
+  },
+  "Meta": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "pagination": "ref:Pagination"
+   }
+  },
+  "Pagination": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "total": "integer",
+    "isEstimatedTotal": "boolean"
+   }
+  },
+  "rollingConsensusRequest": {
+   "type": "object",
+   "required": [
+    "ids",
+    "metrics"
+   ],
+   "fields": {
+    "ids": "ref:ids",
+    "metrics": "ref:metrics",
+    "startDate": "ref:startDate",
+    "endDate": "ref:endDate",
+    "frequency": "ref:frequency",
+    "relativeFiscalStart": "ref:relativeFiscalStart",
+    "relativeFiscalEnd": "ref:relativeFiscalEnd",
+    "periodicity": "ref:periodicity",
+    "currency": "ref:currency"
+   }
+  },
+  "consensusResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:consensusEstimate]"
+   }
+  },
+  "consensusEstimate": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "requestId": "string",
+    "fsymId": "string",
+    "metric": "string",
+    "periodicity": "string",
+    "fiscalPeriod": "integer",
+    "fiscalYear": "integer",
+    "fiscalEndDate": "string(date)",
+    "relativePeriod": "integer",
+    "estimateDate": "string(date)",
+    "currency": "string",
+    "estimateCurrency": "string",
+    "mean": "number(double)",
+    "median": "number(double)",
+    "standardDeviation": "number(double)",
+    "high": "number(double)",
+    "low": "number(double)",
+    "estimateCount": "integer",
+    "up": "integer",
+    "down": "integer"
+   }
+  },
+  "fixedConsensusRequest": {
+   "type": "object",
+   "required": [
+    "ids",
+    "metrics"
+   ],
+   "fields": {
+    "ids": "ref:ids",
+    "metrics": "ref:metrics",
+    "startDate": "ref:startDate",
+    "endDate": "ref:endDate",
+    "frequency": "ref:frequency",
+    "fiscalPeriodStart": "ref:fiscalPeriodStart",
+    "fiscalPeriodEnd": "ref:fiscalPeriodEnd",
+    "periodicity": "ref:periodicity",
+    "currency": "ref:currency"
+   }
+  },
+  "surpriseRequest": {
+   "type": "object",
+   "required": [
+    "ids",
+    "metrics"
+   ],
+   "fields": {
+    "ids": "ref:ids",
+    "metrics": "ref:metrics",
+    "startDate": "ref:startDate",
+    "endDate": "ref:endDate",
+    "frequency": "ref:frequency",
+    "periodicity": "ref:periodicitySurprise",
+    "currency": "ref:currency",
+    "statistic": "ref:statistic"
+   }
+  },
+  "surpriseResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:surprise]"
+   }
+  },
+  "surprise": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "fsymId": "string",
+    "date": "string(date)",
+    "currency": "string",
+    "estimateCurrency": "string",
+    "metric": "string",
+    "statistic": "string",
+    "periodicity": "string",
+    "fiscalEndDate": "string(date)",
+    "fiscalYear": "integer",
+    "fiscalPeriod": "integer",
+    "surpriseDate": "string(date)",
+    "surpriseAmount": "number(double)",
+    "surprisePercent": "number(double)",
+    "surpriseBefore": "number(double)",
+    "surpriseAfter": "number(double)",
+    "eventDescription": "string",
+    "eventFlag": "integer",
+    "requestId": "string"
+   }
+  },
+  "rollingDetailRequest": {
+   "type": "object",
+   "required": [
+    "ids",
+    "metrics"
+   ],
+   "fields": {
+    "ids": "ref:ids",
+    "startDate": "ref:startDate",
+    "endDate": "ref:endDate",
+    "frequency": "ref:frequency",
+    "includeAll": "ref:includeAll",
+    "relativeFiscalStart": "ref:relativeFiscalStart",
+    "relativeFiscalEnd": "ref:relativeFiscalEnd",
+    "periodicity": "ref:periodicityDetail",
+    "metrics": "ref:metrics",
+    "currency": "ref:currency",
+    "brokerNames": "ref:brokerNames",
+    "updatesOnly": "ref:updatesOnly",
+    "sortByInputDateTime": "ref:sortByInputDateTime",
+    "includeDocId": "ref:includeDocId"
+   }
+  },
+  "detailResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:detailEstimate]"
+   }
+  },
+  "detailEstimate": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "requestId": "string",
+    "fsymId": "string",
+    "metric": "string",
+    "periodicity": "string",
+    "fiscalYear": "integer",
+    "fiscalPeriod": "integer",
+    "fiscalEndDate": "string(date)",
+    "relativePeriod": "integer",
+    "currency": "string",
+    "estimateCurrency": "string",
+    "estimateDate": "string(date)",
+    "estimateValue": "number(double)",
+    "analystId": "string",
+    "analystName": "string",
+    "brokerId": "string",
+    "brokerName": "string",
+    "docId": "string",
+    "lastModifiedDate": "string(date)",
+    "prevEstimateDate": "string(date)",
+    "prevEstimateValue": "number(double)",
+    "changeType": "string enum(3)",
+    "section": "string",
+    "statusCode": "integer",
+    "statusText": "string",
+    "inputDateTime": "string(string)",
+    "securityCurrency": "string",
+    "brokerEstimateCurrency": "string"
+   }
+  },
+  "fixedDetailRequest": {
+   "type": "object",
+   "required": [
+    "ids",
+    "metrics"
+   ],
+   "fields": {
+    "ids": "ref:ids",
+    "metrics": "ref:metrics",
+    "startDate": "ref:startDate",
+    "endDate": "ref:endDate",
+    "frequency": "ref:frequency",
+    "includeAll": "ref:includeAll",
+    "periodicity": "ref:periodicityDetail",
+    "fiscalPeriodStart": "ref:fiscalPeriodStart",
+    "fiscalPeriodEnd": "ref:fiscalPeriodStart",
+    "currency": "ref:currency",
+    "brokerNames": "ref:brokerNames",
+    "updatesOnly": "ref:updatesOnly",
+    "sortByInputDateTime": "ref:sortByInputDateTime",
+    "includeDocId": "ref:includeDocId"
+   }
+  },
+  "consensusRatingsRequest": {
+   "type": "object",
+   "required": [
+    "ids"
+   ],
+   "fields": {
+    "ids": "ref:ids",
+    "startDate": "ref:startDate",
+    "endDate": "ref:endDate",
+    "frequency": "ref:frequency"
+   }
+  },
+  "consensusRatingsResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:consensusRatings]"
+   }
+  },
+  "consensusRatings": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "fsymId": "string",
+    "estimateDate": "string(date)",
+    "buyCount": "integer",
+    "overweightCount": "integer",
+    "holdCount": "integer",
+    "underweightCount": "integer",
+    "sellCount": "integer",
+    "ratingsNestTotal": "integer",
+    "ratingsNote": "number(double)",
+    "ratingsNoteText": "string",
+    "requestId": "string"
+   }
+  },
+  "brokerNames": {
+   "type": "array",
+   "required": null,
+   "items": "string"
+  },
+  "updatesOnly": {
+   "type": "boolean",
+   "required": null
+  },
+  "detailRatingsRequest": {
+   "type": "object",
+   "required": [
+    "ids"
+   ],
+   "fields": {
+    "ids": "ref:ids",
+    "startDate": "ref:startDate",
+    "endDate": "ref:endDate",
+    "includeAll": "ref:includeAll",
+    "brokerNames": "ref:brokerNames",
+    "updatesOnly": "ref:updatesOnly"
+   }
+  },
+  "detailRatingsResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:detailRatings]"
+   }
+  },
+  "detailRatings": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "fsymId": "string",
+    "estimateDate": "string(date)",
+    "analystId": "string",
+    "analystName": "string",
+    "brokerId": "string",
+    "brokerName": "string",
+    "ratingsNoteText": "string",
+    "changeType": "string enum(3)",
+    "requestId": "string",
+    "inputDateTime": "string(string)",
+    "lastModifiedDate": "string(date)"
+   }
+  },
+  "segmentsRequest": {
+   "type": "object",
+   "required": [
+    "ids",
+    "metrics"
+   ],
+   "fields": {
+    "ids": "ref:segmentIds",
+    "startDate": "ref:startDate",
+    "endDate": "ref:endDate",
+    "relativeFiscalStart": "ref:relativeFiscalStart",
+    "relativeFiscalEnd": "ref:relativeFiscalEnd",
+    "periodicity": "ref:periodicity",
+    "frequency": "ref:frequency",
+    "segmentType": "ref:segmentType",
+    "metrics": "ref:metrics",
+    "currency": "ref:currency"
+   }
+  },
+  "segmentsDetailsRequest": {
+   "type": "object",
+   "required": [
+    "ids",
+    "metrics",
+    "segmentIds"
+   ],
+   "fields": {
+    "ids": "array[string]",
+    "startDate": "ref:startDate",
+    "endDate": "ref:endDate",
+    "relativeFiscalStart": "ref:relativeFiscalStart",
+    "relativeFiscalEnd": "ref:relativeFiscalEnd",
+    "periodicity": "ref:periodicityDetail",
+    "frequency": "ref:frequency",
+    "metrics": "ref:segmentsMetrics",
+    "segmentType": "ref:segmentType",
+    "segmentIds": "ref:segmentId",
+    "currency": "ref:currency",
+    "brokerNames": "ref:brokerNames",
+    "updatesOnly": "ref:updatesOnly",
+    "includeAll": "ref:includeAll",
+    "sortByInputDateTime": "ref:sortByInputDateTime"
+   }
+  },
+  "segmentsResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:segmentsEstimate]"
+   }
+  },
+  "segmentsEstimate": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "requestId": "string",
+    "fsymId": "string",
+    "segmentType": "string",
+    "metric": "string",
+    "fiscalPeriod": "integer",
+    "fiscalYear": "integer",
+    "segmentLabel": "string",
+    "segmentLevel": "string",
+    "fiscalEndDate": "string(date)",
+    "estimateDate": "string(date)",
+    "currency": "string",
+    "estimateCurrency": "string",
+    "mean": "number(double)",
+    "median": "number(double)",
+    "standardDeviation": "number(double)",
+    "high": "number(double)",
+    "low": "number(double)",
+    "estimateCount": "integer",
+    "up": "integer",
+    "down": "integer"
+   }
+  },
+  "segmentsDetailsResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:segmentsDetailsEstimate]"
+   }
+  },
+  "segmentsDetailsEstimate": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "requestId": "string",
+    "fsymId": "string",
+    "metric": "string",
+    "segmentId": "string",
+    "segmentType": "string enum(2)",
+    "fiscalYear": "integer",
+    "fiscalPeriod": "integer",
+    "fiscalEndDate": "string(date)",
+    "segmentLabel": "string",
+    "segmentLevel": "string enum(2)",
+    "currency": "string",
+    "estimateCurrency": "string",
+    "estimateDate": "string(date)",
+    "estimateValue": "number(double)",
+    "analystId": "string",
+    "analystName": "string",
+    "brokerId": "string",
+    "brokerName": "string",
+    "lastModifiedDate": "string(date)",
+    "prevEstimateDate": "string(date)",
+    "prevEstimateValue": "number(double)",
+    "changeType": "string enum(3)",
+    "section": "string",
+    "statusCode": "integer",
+    "statusText": "string",
+    "inputDateTime": "string(string)",
+    "securityCurrency": "string",
+    "brokerEstimateCurrency": "string"
+   }
+  },
+  "errorResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "status": "string",
+    "timestamp": "string(date-time)",
+    "path": "string",
+    "message": "string",
+    "subErrors": "object"
+   }
+  },
+  "metricsRequest": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "category": "ref:category",
+    "subcategory": "ref:subcategory"
+   }
+  },
+  "metricsResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:metric]"
+   }
+  },
+  "metric": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "metric": "string",
+    "name": "string",
+    "category": "string",
+    "subcategory": "string",
+    "OAurl": "string",
+    "factor": "number(double)"
+   }
+  },
+  "metricsSegmentDetailResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:metricSegmentDetail]"
+   }
+  },
+  "metricSegmentDetail": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "metric": "string",
+    "segmentId": "string",
+    "segmentLabel": "string",
+    "segmentType": "string enum(2)",
+    "requestId": "string",
+    "fsymId": "string"
+   }
+  },
+  "ids": {
+   "type": "array",
+   "required": null,
+   "items": "string"
+  },
+  "segmentIds": {
+   "type": "array",
+   "required": null,
+   "items": "string"
+  },
+  "startDate": {
+   "type": "string",
+   "required": null
+  },
+  "endDate": {
+   "type": "string",
+   "required": null
+  },
+  "statistic": {
+   "type": "string",
+   "required": null,
+   "enum": [
+    "MEAN",
+    "MEDIAN",
+    "HIGH",
+    "LOW",
+    "COUNT",
+    "STDDEV"
+   ]
+  },
+  "frequency": {
+   "type": "string",
+   "required": null,
+   "enum": [
+    "D",
+    "W",
+    "AM",
+    "AQ",
+    "AY"
+   ]
+  },
+  "relativeFiscalStart": {
+   "type": "integer",
+   "required": null
+  },
+  "relativeFiscalEnd": {
+   "type": "integer",
+   "required": null
+  },
+  "relativeFiscalStartActuals": {
+   "type": "integer",
+   "required": null
+  },
+  "relativeFiscalEndActuals": {
+   "type": "integer",
+   "required": null
+  },
+  "metricSegments": {
+   "type": "array",
+   "required": null,
+   "items": "string enum(39)"
+  },
+  "fiscalPeriodStart": {
+   "type": "string",
+   "required": null
+  },
+  "fiscalPeriodEnd": {
+   "type": "string",
+   "required": null
+  },
+  "periodicity": {
+   "type": "string",
+   "required": null,
+   "enum": [
+    "ANN",
+    "QTR",
+    "SEMI",
+    "LTMA",
+    "NTMA"
+   ]
+  },
+  "periodicityDetail": {
+   "type": "string",
+   "required": null,
+   "enum": [
+    "ANN",
+    "QTR",
+    "SEMI"
+   ]
+  },
+  "periodicitySurprise": {
+   "type": "string",
+   "required": null,
+   "enum": [
+    "ANN",
+    "QTR",
+    "SEMI"
+   ]
+  },
+  "metrics": {
+   "type": "array",
+   "required": null,
+   "items": "string"
+  },
+  "segmentsMetrics": {
+   "type": "array",
+   "required": null,
+   "items": "string"
+  },
+  "segmentId": {
+   "type": "array",
+   "required": null,
+   "items": "string"
+  },
+  "currency": {
+   "type": "string",
+   "required": null
+  },
+  "category": {
+   "type": "string",
+   "required": null,
+   "enum": [
+    "FINANCIAL_STATEMENT",
+    "INDUSTRY_METRIC",
+    "OTHER"
+   ]
+  },
+  "subcategory": {
+   "type": "string",
+   "required": null,
+   "enum": [
+    "AIRLINES",
+    "BALANCE_SHEET",
+    "BANKS",
+    "CASH_FLOW",
+    "COMMODITIES",
+    "COMPUTER_HARDWARE",
+    "CONSUMER_SERVICES",
+    "EDUCATION",
+    "FINANCIAL_SERVICE_PROVIDER",
+    "FOREX",
+    "HOME_BUILDERS",
+    "HOSPITALS",
+    "HOTELS",
+    "INCOME_STATEMENT",
+    "INSURANCE",
+    "MARIJUANA",
+    "MINING",
+    "MISCELLANEOUS",
+    "MULTIFINANCIAL",
+    "OIL_AND_GAS",
+    "OTHER",
+    "POWER_AND_UTILITIES",
+    "REITS",
+    "RESTAURANTS",
+    "RETAILERS",
+    "SOCIAL_MEDIA_AND_GAMES",
+    "TELECOMMUNICATIONS",
+    "TRANSPORTATION"
+   ]
+  },
+  "includeAll": {
+   "type": "boolean",
+   "required": null
+  },
+  "includeDocId": {
+   "type": "boolean",
+   "required": null
+  },
+  "sortByInputDateTime": {
+   "type": "boolean",
+   "required": null
+  },
+  "segmentType": {
+   "type": "string",
+   "required": null,
+   "enum": [
+    "BUS",
+    "GEO"
+   ]
+  },
+  "AnalystRatingResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:AnalystRating]"
+   }
+  },
+  "AnalystRating": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "fsymId": "string",
+    "requestId": "string",
+    "asOfMonth": "string",
+    "currency": "string",
+    "ratingsCount": "ref:RatingsCount",
+    "meanRecommendation": "string enum(5)",
+    "meanRecommendationScale": "number(double)",
+    "targetPrice": "ref:TargetPrice"
+   }
+  },
+  "RatingsCount": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "buy": "integer",
+    "overWeight": "integer",
+    "hold": "integer",
+    "underWeight": "integer",
+    "sell": "integer",
+    "total": "integer"
+   }
+  },
+  "TargetPrice": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "high": "number(double)",
+    "low": "number(double)",
+    "analystsCount": "integer",
+    "mean": "number(double)",
+    "median": "number(double)"
+   }
+  },
+  "actualsRequest": {
+   "type": "object",
+   "required": [
+    "ids",
+    "metrics"
+   ],
+   "fields": {
+    "ids": "ref:ids",
+    "metrics": "ref:metrics",
+    "relativeFiscalStart": "ref:relativeFiscalStartActuals",
+    "relativeFiscalEnd": "ref:relativeFiscalEndActuals",
+    "periodicity": "ref:periodicity",
+    "currency": "ref:currency"
+   }
+  },
+  "actualsResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:actual]"
+   }
+  },
+  "actual": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "requestId": "string",
+    "fsymId": "string",
+    "metric": "string",
+    "periodicity": "string",
+    "fiscalPeriod": "integer",
+    "fiscalYear": "integer",
+    "fiscalEndDate": "string(date)",
+    "actualValue": "number",
+    "actualType": "string enum(3)",
+    "reportDate": "string(date)",
+    "currency": "string",
+    "estimateCurrency": "string"
+   }
+  },
+  "segmentActualsRequest": {
+   "type": "object",
+   "required": [
+    "ids",
+    "metrics"
+   ],
+   "fields": {
+    "ids": "ref:ids",
+    "metrics": "ref:metricSegments",
+    "segmentType": "ref:segmentType",
+    "relativeFiscalStart": "ref:relativeFiscalStartActuals",
+    "relativeFiscalEnd": "ref:relativeFiscalEndActuals",
+    "periodicity": "ref:periodicity",
+    "currency": "ref:currency"
+   }
+  },
+  "segmentActualsResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:segmentActuals]"
+   }
+  },
+  "segmentActuals": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "requestId": "string",
+    "fsymId": "string",
+    "metric": "string",
+    "periodicity": "string",
+    "fiscalYear": "integer",
+    "fiscalPeriod": "integer",
+    "fiscalEndDate": "string(date)",
+    "segmentType": "string",
+    "segmentLabel": "string",
+    "segmentLevel": "string",
+    "segmentActualValue": "number",
+    "segmentActualType": "string enum(3)",
+    "reportDate": "string(date)",
+    "currency": "string",
+    "estimateCurrency": "string"
+   }
+  },
+  "guidanceRequest": {
+   "type": "object",
+   "required": [
+    "data"
+   ],
+   "fields": {
+    "data": "ref:guidanceRequestBody"
+   }
+  },
+  "guidanceRequestBody": {
+   "type": "object",
+   "required": [
+    "ids",
+    "metrics"
+   ],
+   "fields": {
+    "ids": "ref:ids",
+    "metrics": "ref:metrics",
+    "startDate": "ref:startDate",
+    "endDate": "ref:endDate",
+    "periodicity": "ref:periodicity",
+    "frequency": "ref:frequency",
+    "relativeFiscalStart": "ref:relativeFiscalStart",
+    "relativeFiscalEnd": "ref:relativeFiscalEnd",
+    "currency": "ref:currency"
+   }
+  },
+  "guidanceResponse": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "data": "array[ref:guidance]"
+   }
+  },
+  "guidance": {
+   "type": "object",
+   "required": null,
+   "fields": {
+    "requestId": "string",
+    "fsymId": "string",
+    "metric": "string",
+    "currency": "string",
+    "estimateCurrency": "string",
+    "periodicity": "string",
+    "consensusDate": "string(date)",
+    "fiscalYear": "integer",
+    "fiscalEndDate": "string(date)",
+    "relativePeriod": "integer",
+    "fiscalPeriod": "integer",
+    "guidanceDate": "string(date)",
+    "inputDateHigh": "string(date)",
+    "inputDateLow": "string(date)",
+    "inputDateHighTime": "string(date-time)",
+    "inputDateLowTime": "string(date-time)",
+    "guidanceMidpoint": "number(double)",
+    "guidanceLow": "number(double)",
+    "guidanceHigh": "number(double)",
+    "guidanceRange": "string",
+    "prevMidpoint": "number(double)",
+    "prevLow": "number(double)",
+    "prevHigh": "number(double)",
+    "meanBefore": "number(double)",
+    "meanSurpriseAmt": "number(double)",
+    "meanSurpriseAmtPercent": "number(double)"
+   }
+  }
+ },
+ "unique_enums": [
+  {
+   "values": [
+    "BUS",
+    "GEO",
+    "ALL"
+   ],
+   "locations": [
+    "$.paths./factset-estimates/v2/segments-metrics.get.parameters[2].schema"
+   ]
+  },
+  {
+   "values": [
+    "ANN",
+    "QTR",
+    "SEMI",
+    "NTMA",
+    "LTMA"
+   ],
+   "locations": [
+    "$.components.parameters.periodicity.schema"
+   ]
+  },
+  {
+   "values": [
+    "ANN",
+    "QTR"
+   ],
+   "locations": [
+    "$.components.parameters.periodicityForecast.schema"
+   ]
+  },
+  {
+   "values": [
+    "ANN",
+    "QTR",
+    "SEMI"
+   ],
+   "locations": [
+    "$.components.parameters.periodicityDetail.schema",
+    "$.components.parameters.periodicitySurprise.schema",
+    "$.components.schemas.periodicityDetail",
+    "$.components.schemas.periodicitySurprise"
+   ]
+  },
+  {
+   "values": [
+    "MEAN",
+    "MEDIAN",
+    "HIGH",
+    "LOW",
+    "COUNT",
+    "STDDEV"
+   ],
+   "locations": [
+    "$.components.parameters.statistic.schema",
+    "$.components.schemas.statistic"
+   ]
+  },
+  {
+   "values": [
+    "D",
+    "W",
+    "AM",
+    "AQ",
+    "AY"
+   ],
+   "locations": [
+    "$.components.parameters.frequency.schema",
+    "$.components.schemas.frequency"
+   ]
+  },
+  {
+   "values": [
+    "FINANCIAL_STATEMENT",
+    "INDUSTRY_METRIC",
+    "OTHER"
+   ],
+   "locations": [
+    "$.components.parameters.category.schema",
+    "$.components.schemas.category"
+   ]
+  },
+  {
+   "values": [
+    "AIRLINES",
+    "BALANCE_SHEET",
+    "BANKS",
+    "CASH_FLOW",
+    "COMMODITIES",
+    "COMPUTER_HARDWARE",
+    "CONSUMER_SERVICES",
+    "EDUCATION",
+    "FINANCIAL_SERVICE_PROVIDER",
+    "FOREX",
+    "HOME_BUILDERS",
+    "HOSPITALS",
+    "HOTELS",
+    "INCOME_STATEMENT",
+    "INSURANCE",
+    "MARIJUANA",
+    "MINING",
+    "MISCELLANEOUS",
+    "MULTIFINANCIAL",
+    "OIL_AND_GAS",
+    "OTHER",
+    "POWER_AND_UTILITIES",
+    "REITS",
+    "RESTAURANTS",
+    "RETAILERS",
+    "SOCIAL_MEDIA_AND_GAMES",
+    "TELECOMMUNICATIONS",
+    "TRANSPORTATION"
+   ],
+   "locations": [
+    "$.components.parameters.subcategory.schema",
+    "$.components.schemas.subcategory"
+   ]
+  },
+  {
+   "values": [
+    "BUS",
+    "GEO"
+   ],
+   "locations": [
+    "$.components.parameters.segmentType.schema",
+    "$.components.schemas.segmentsDetailsEstimate.properties.segmentType",
+    "$.components.schemas.metricSegmentDetail.properties.segmentType",
+    "$.components.schemas.segmentType"
+   ]
+  },
+  {
+   "values": [
+    "ASP",
+    "ARR",
+    "CAPEX",
+    "CCUR_GRTH",
+    "COS",
+    "CFO_GAAP",
+    "DELIVERIES_UNITS",
+    "EPS",
+    "EBIT",
+    "EBIT_REP",
+    "EBITDA",
+    "EBITDA_REP",
+    "G_A_EXP",
+    "GROSS_INC",
+    "GMV",
+    "LCUR_GRTH",
+    "NET_ADDS",
+    "NET_INC",
+    "NET_SALES",
+    "SUBSCRIBERS_NB",
+    "ORGANICGROWTH",
+    "PTX_INC",
+    "RATEBASE",
+    "AVGRATEBASE",
+    "SALES",
+    "SAMESTORESALES",
+    "SGA",
+    "S_M_EXP",
+    "REV_TOT",
+    "UNITS",
+    "NEW_ORDERS_VALUE",
+    "BACKLOG_VALUE",
+    "MCR",
+    "CASH_COST",
+    "REAL_PRICE",
+    "DAU",
+    "ARPU",
+    "CONTR_PROF",
+    "PAIDNADDS"
+   ],
+   "locations": [
+    "$.components.parameters.metricSegments.schema.items",
+    "$.components.schemas.metricSegments.items"
+   ]
+  },
+  {
+   "values": [
+    "increase",
+    "decrease",
+    "unchanged"
+   ],
+   "locations": [
+    "$.components.schemas.detailEstimate.properties.changeType",
+    "$.components.schemas.detailRatings.properties.changeType",
+    "$.components.schemas.segmentsDetailsEstimate.properties.changeType"
+   ]
+  },
+  {
+   "values": [
+    "P",
+    "S"
+   ],
+   "locations": [
+    "$.components.schemas.segmentsDetailsEstimate.properties.segmentLevel"
+   ]
+  },
+  {
+   "values": [
+    "ANN",
+    "QTR",
+    "SEMI",
+    "LTMA",
+    "NTMA"
+   ],
+   "locations": [
+    "$.components.schemas.periodicity"
+   ]
+  },
+  {
+   "values": [
+    "Buy",
+    "Sell",
+    "Hold",
+    "Overweight",
+    "Underweight"
+   ],
+   "locations": [
+    "$.components.schemas.AnalystRating.properties.meanRecommendation"
+   ]
+  },
+  {
+   "values": [
+    "company",
+    "european",
+    "broker"
+   ],
+   "locations": [
+    "$.components.schemas.actual.properties.actualType",
+    "$.components.schemas.segmentActuals.properties.segmentActualType"
+   ]
+  }
+ ],
+ "counts": {
+  "paths": 18,
+  "operations": 30,
+  "operations_documented": 30,
+  "components_schemas": 81,
+  "schemas_documented": 81,
+  "components_parameters": 33,
+  "parameters_documented": 33,
+  "components_responses": 12,
+  "components_examples": 51,
+  "enum_nodes": 29,
+  "enum_value_sets_unique": 15,
+  "completeness": "documented == defined by construction (mechanical emit)"
+ },
+ "discrepancies": [
+  {
+   "id": "E-D1",
+   "severity": "doc-errata",
+   "where": "consensusEstimate.down, segmentsEstimate.down",
+   "detail": "Description reads 'Number of Up Revisions' for the DOWN field (copy/paste of `up`)."
+  },
+  {
+   "id": "E-D2",
+   "severity": "spec-bug",
+   "where": "fixedDetailRequest.fiscalPeriodEnd",
+   "detail": "$ref points to #/components/schemas/fiscalPeriodStart instead of fiscalPeriodEnd (YAML line ~3115). POST fixed-detail callers lose the documented Month-end MM/YYYY format; live behavior unknown."
+  },
+  {
+   "id": "E-D3",
+   "severity": "doc-errata",
+   "where": "fixedDetailRequest.description",
+   "detail": "Fixed Detail request body described as 'Request object for requesting rolling detail estimates.'"
+  },
+  {
+   "id": "E-D4",
+   "severity": "doc-errata",
+   "where": "components.parameters.fiscalPeriodEnd",
+   "detail": "GET parameter description begins 'Fiscal period start expressed...' (copy/paste)."
+  },
+  {
+   "id": "E-D5",
+   "severity": "spec-internal-conflict",
+   "where": "fiscalPeriod{Start,End} GET params vs POST schemas",
+   "detail": "GET params document formats {YYYY/#F, YYYY} only; POST body schemas add Semiannual YYYY/#S (both) and Month-end MM/YYYY (end only). Fixed-period addressability differs by verb on paper."
+  },
+  {
+   "id": "E-D6",
+   "severity": "spec-internal-conflict",
+   "where": "startDate/endDate GET params vs POST schemas",
+   "detail": "GET param default: 'start/end of the latest company reporting period'. POST schema default: 'previous close'. Both blank-date defaults cannot be simultaneously true."
+  },
+  {
+   "id": "E-D7",
+   "severity": "cosmetic",
+   "where": "components.parameters.periodicity vs components.schemas.periodicity",
+   "detail": "Same 5 values, different order (NTMA/LTMA swapped). No semantic impact."
+  },
+  {
+   "id": "E-D8",
+   "severity": "spec-internal-conflict",
+   "where": "getEstimateTypes/estimateType descriptions",
+   "detail": "Reference '/meta/estimate-types', a path that does not exist in this spec (actual: /company-reports/estimate-types)."
+  },
+  {
+   "id": "E-D9",
+   "severity": "spec-internal-conflict",
+   "where": "info.description vs responses",
+   "detail": "4M datapoint/min quota exempts '/company-reports/* and /metrics', but /segments-metrics also lacks a 429 response while not being listed as exempt."
+  },
+  {
+   "id": "E-D10",
+   "severity": "doc-errata",
+   "where": "consensusEstimate.periodicity, actual.periodicity, guidance.periodicity, segmentActuals.periodicity",
+   "detail": "'NMTA' typo for NTMA in Period List."
+  },
+  {
+   "id": "E-D11",
+   "severity": "shape-asymmetry",
+   "where": "guidanceRequest",
+   "detail": "Only POST body in the spec wrapped in a required `data` object (guidanceRequestBody); all 12 other POST bodies are flat."
+  },
+  {
+   "id": "E-D12",
+   "severity": "doc-errata",
+   "where": "consensus statistics fields",
+   "detail": "Link text 'Online Assistant Page #16598' but URL targets pages/16114 on mean/median/stddev/high/low/estimateCount/up/down."
+  },
+  {
+   "id": "E-D13",
+   "severity": "spec-bug",
+   "where": "detailEstimate.inputDateTime etc.",
+   "detail": "type string with `format: string` (not date-time) though example is ISO 8601; guidance.inputDateHighTime/LowTime correctly use format date-time. Timezone unstated."
+  },
+  {
+   "id": "E-D14",
+   "severity": "dead-node",
+   "where": "components.parameters.metric",
+   "detail": "Component parameter `metric` (singular, required) is referenced by zero operations."
+  },
+  {
+   "id": "E-D15",
+   "severity": "doc-errata",
+   "where": "POST 200 descriptions",
+   "detail": "POST /actuals, /segment-actuals, /guidance 200 described as 'List of Estimate metric Ids' (copy/paste from /metrics); POST /rolling-consensus 200 says 'Rolling Conensus' (typo)."
+  },
+  {
+   "id": "E-D16",
+   "severity": "spec-internal-conflict",
+   "where": "segments ids limits",
+   "detail": "segmentIds prose: 'ids limit = 50 per request' (30 s duration otherwise); generic `ids` parameter schema allows maxItems 3000 with only a 10-years-per-metric-per-id prose guard. No numeric cap stated for non-segment endpoints."
+  },
+  {
+   "id": "E-D17",
+   "severity": "spec-vs-demo",
+   "where": "factset_estimates.py demo",
+   "detail": "Demo defaults frequency=AM (spec default D), currency=USD (spec default: unadjusted/ESTIMATE optional), dates 2019, relative fiscal 1..3; demo reads credentials from api_keys.txt file when env vars absent (trial HARD RULE: env-only in repo code). Demo exercises POST rolling-consensus only."
+  },
+  {
+   "id": "E-D18",
+   "severity": "doc-errata",
+   "where": "actual.fiscalEndDate / segmentActuals.fiscalEndDate",
+   "detail": "Description says \"Company's 'fiscal year'\" for a date field (copy/paste)."
+  },
+  {
+   "id": "E-D19",
+   "severity": "spec-internal-conflict",
+   "where": "segmentsDetailsRequest.metrics vs segmentActualsRequest.metrics",
+   "detail": "Segment DETAIL metrics ref free-string `segmentsMetrics` ('use /metrics endpoint') while segment ACTUALS metrics ref the 39-value `metricSegments` enum ('use /segments-metrics'); /segments-metrics GET says it lists metrics for 'the segment details endpoint'. Which catalog governs which segment endpoint is contradictory on paper."
+  },
+  {
+   "id": "E-D20",
+   "severity": "sdk-vs-spec",
+   "where": "SDK README (fetched 2026-08-17)",
+   "detail": "SDK 4.1.0 tracks API 2.10.0 = supplied spec version; no parameter-surface divergence found on fetched pages (README, ConsensusApi.md). Local demo imports models (Ids, Metrics, Frequency, Periodicity, RollingConsensusRequest) consistent with SDK."
+  }
+ ],
+ "unresolved": [
+  {
+   "id": "E-U1",
+   "tag": "UNRESOLVED",
+   "item": "Entitlement per endpoint/family (all 30 operations; detail + guidance + segments families most in doubt). Offline docs cannot discriminate; FS010 live smoke: 403 => not entitled."
+  },
+  {
+   "id": "E-U2",
+   "tag": "UNRESOLVED",
+   "item": "Practical batch ceiling for `ids`/`metrics` per request (schema max 3000 ids; prose only warns via 30 s timeout + 10y/metric/id). Determine empirically under FS010 budget."
+  },
+  {
+   "id": "E-U3",
+   "tag": "UNRESOLVED",
+   "item": "Definition of a 'datapoint' for the 4M/min quota (ids x metrics x dates x periods?) and Retry-After header format on 429."
+  },
+  {
+   "id": "E-U4",
+   "tag": "UNRESOLVED",
+   "item": "Behavior when 10 rps / 10 concurrent limit (info.description) is exceeded \u2014 spec documents 429 only for the datapoint quota."
+  },
+  {
+   "id": "E-U5",
+   "tag": "VENDOR_CLARIFICATION_REQUIRED",
+   "item": "inputDateTime timezone (example has no offset). Feeds any revision-timing analysis."
+  },
+  {
+   "id": "E-U6",
+   "tag": "VENDOR_CLARIFICATION_REQUIRED",
+   "item": "Is historical consensus (mean/median at past estimateDates) stored as-was or recomputed from the current detail database under current inclusion rules? Core non-PIT boundary question."
+  },
+  {
+   "id": "E-U7",
+   "tag": "VENDOR_CLARIFICATION_REQUIRED",
+   "item": "Split/corporate-action restatement policy for per-share estimate history (EPS/DPS/BPS/CFPS, PRICE_TGT) \u2014 spec silent."
+  },
+  {
+   "id": "E-U8",
+   "tag": "VENDOR_CLARIFICATION_REQUIRED",
+   "item": "Does includeAll=TRUE reflect inclusion status as of the perspective date or as of today? (Spec wording is timeless.)"
+  },
+  {
+   "id": "E-U9",
+   "tag": "VENDOR_CLARIFICATION_REQUIRED",
+   "item": "E-D2 errata: intended schema for fixedDetailRequest.fiscalPeriodEnd; does POST fixed-detail accept MM/YYYY?"
+  },
+  {
+   "id": "E-U10",
+   "tag": "UNRESOLVED",
+   "item": "Earliest history per region/metric ('since 1999' global; detail '20+ years'; OA 20121 History section is behind login). Coverage profiling is a WP6 live task."
+  },
+  {
+   "id": "E-U11",
+   "tag": "UNRESOLVED",
+   "item": "E-D6: actual blank-date default (latest reporting period vs previous close) \u2014 resolve live."
+  },
+  {
+   "id": "E-U12",
+   "tag": "UNRESOLVED",
+   "item": "_paginationLimit maximum page size on /company-reports/surprise-history (default 50; max undocumented)."
+  },
+  {
+   "id": "E-U13",
+   "tag": "UNRESOLVED",
+   "item": "Semantics of NTMA/LTMA periodicity on /actuals and /segment-actuals (enum allows them; 'actuals' for a time-weighted forward period is undefined in docs)."
+  },
+  {
+   "id": "E-U14",
+   "tag": "UNRESOLVED",
+   "item": "frequency=AY 'Actual Annual, based on the start date' \u2014 exact row-selection rule unclear (anniversary of startDate vs fiscal-year end)."
+  },
+  {
+   "id": "E-U15",
+   "tag": "VENDOR_CLARIFICATION_REQUIRED",
+   "item": "Consensus window: default 100 days 'window' \u2014 whether alternative windows exist via API (no parameter exposes it) and how NEST/up/down interact with it."
+  }
+ ],
+ "demo": {
+  "file": "factset_estimates.py (resources dir)",
+  "tag": "DOCUMENTED_SAMPLE",
+  "exercises": "ConsensusApi.get_rolling_consensus_for_list (POST /rolling-consensus)",
+  "notes": "Most elaborate of the supplied demos; see E-D17."
+ },
+ "sample_evidence": {
+  "file": "/Users/admin/Documents/factset_api_test/factset_rolling_consensus.csv",
+  "tag": "DOCUMENTED_SAMPLE",
+  "detail": "36 rows, AAPL-US SALES ANN, monthly perspectives 2019-01-01..2019-12-01, relative periods 1-3. Confirms consensusEstimate field set (mean/median/stddev/high/low/estimateCount/up/down, fsymId MH33D6-R) and rolling semantics: at 2019-12 perspective, relativePeriod 1 = FY2020 (FY2019 reported, period rolled at Sep-2019 FYE). Snake_cased by SDK to_dict."
+ }
+}

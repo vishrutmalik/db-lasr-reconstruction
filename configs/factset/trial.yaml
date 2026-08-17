@@ -1,0 +1,150 @@
+# FactSet trial configuration (FS010) — schema:
+#   src/lasr/data/providers/factset/config.py::FactSetTrialConfig
+# Serialized (with its hash) into every trial run manifest (EA §7.3).
+#
+# CREDENTIALS ARE NEVER HERE. Env-var NAMES only (values at runtime only):
+#   FACTSET_AUTH_MODE          basic (primary, FS003 D-2) | oauth_config
+#   FACTSET_USERNAME           username-serial (basic mode)
+#   FACTSET_API_KEY            API key (basic mode)
+#   FACTSET_OAUTH_CONFIG_PATH  OAuth2 ConfidentialClient config, outside repo
+#   FACTSET_LIVE               must be "1" for live mode (in ADDITION to
+#                              transport.live below — belt-and-braces)
+#   FACTSET_KILL_SWITCH        "1" refuses live mode regardless
+#   FACTSET_TRIAL_DATA_ROOT    REQUIRED in live mode; validated outside the
+#                              repo and outside OneDrive/CloudStorage paths
+#                              (D-020(d)); all raw captures land under
+#                              <root>/raw, run manifests under <root>/runs.
+
+config_id: factset-trial-fs010-1
+seed: 1729
+
+transport:
+  live: false            # replay is the default and the only CI mode
+  kill_switch: false     # config-side kill switch (env override also exists)
+  base_url: https://api.factset.com/content
+  request_timeout_seconds: 60.0
+  max_live_calls_per_day: 25          # WP0 daily budget (shared ledger)
+  error_cache_ttl_seconds: 86400.0    # cached auth/entitlement evidence TTL
+
+retries:
+  max_attempts: 4
+  backoff_initial_seconds: 1.0
+  backoff_cap_seconds: 30.0
+
+batch_poll:                # async batch cadence (fundamentals /batch-*)
+  poll_initial_seconds: 2.0
+  poll_cap_seconds: 30.0
+  poll_timeout_seconds: 1200.0        # < documented 20-min long-running max
+  failure_statuses: [failed, error, cancelled]
+
+storage:
+  max_total_bytes: 1073741824         # 1 GiB trial cap (FS010: negligible)
+  free_disk_reserve_bytes: 10737418240  # 10 GiB free-disk reserve auto-stop
+  retention_register:
+    - artifact: raw response captures (gzip, verbatim vendor bytes)
+      location: $FACTSET_TRIAL_DATA_ROOT/raw/<family>/<hh>/<request_hash>/
+      contains_vendor_data: true
+      retention: trial duration; post-trial disposal VENDOR_CLARIFICATION_REQUIRED (FS002 §3.5)
+      disposal_owner: user
+    - artifact: live-call ledger + telemetry JSONL (hashes/counts only)
+      location: $FACTSET_TRIAL_DATA_ROOT/raw/_ledger.jsonl, _telemetry/
+      contains_vendor_data: false
+      retention: trial duration + audit
+      disposal_owner: user
+    - artifact: run manifests (config snapshot, metrics, capture checksums)
+      location: $FACTSET_TRIAL_DATA_ROOT/runs/<run_id>/manifest.json
+      contains_vendor_data: false
+      retention: trial duration + audit
+      disposal_owner: user
+
+# Per-family transport facts. Limits are seeded from the capability
+# manifests; documented=false families run the conservative default and
+# are flagged in telemetry (FS002 §6.4). Only symbology is enabled by
+# FS010 — the other families flip on with their FS011-16 adapters after
+# FS009 verifies their manifests.
+families:
+  symbology:
+    api_version: v3
+    path_prefix: /symbology/v3
+    enabled: true
+    limits:
+      requests_per_second: 10        # FS003 DOCUMENTED_OPENAPI
+      concurrent_requests: 10        # FS003 DOCUMENTED_OPENAPI
+      max_ids_per_request: 100       # FS003 D-1 safe ceiling (100 vs 3000)
+      retryable_statuses: [429, 500, 502, 503, 504]  # no 429 documented (U-4); kept retryable conservatively
+      documented: true
+      evidence: DOCUMENTED_OPENAPI
+    endpoints:
+      - endpoint: /identifier-resolution
+        verb: POST
+        max_live_requests: 5         # FS010 smoke budget: <=5 live requests
+      - endpoint: /historical-identifier-resolution
+        verb: POST
+        max_live_requests: 0         # not exercised by FS010
+  fundamentals:
+    api_version: v2
+    path_prefix: /factset-fundamentals/v2   # FS012 re-verifies after FS009
+    enabled: false
+    limits:
+      requests_per_second: 10        # FS004 DOCUMENTED_OPENAPI
+      concurrent_requests: 10
+      max_ids_per_request: 1000      # /point-in-time IdentifierList maxItems
+      retryable_statuses: [429, 500, 503]   # FS004: 429/503 carry Retry-After
+      documented: true
+      evidence: DOCUMENTED_OPENAPI
+  estimates:
+    api_version: v2
+    path_prefix: /factset-estimates/v2
+    enabled: false
+    limits:
+      requests_per_second: 10        # FS006 DOCUMENTED_OPENAPI
+      concurrent_requests: 10
+      max_ids_per_request: 3000      # schema max; FS014 pins safe ceiling
+      retryable_statuses: [429, 500, 502, 503, 504]  # 429 + Retry-After documented (quota breach)
+      documented: true
+      evidence: DOCUMENTED_OPENAPI
+  global_prices:
+    api_version: v1
+    path_prefix: /factset-global-prices/v1
+    enabled: false
+    limits:
+      requests_per_second: 5         # UNRESOLVED (GP-UNRES-06) → conservative default
+      concurrent_requests: 5
+      max_ids_per_request: 50
+      retryable_statuses: [429, 500, 502, 503, 504]
+      documented: false
+      evidence: UNRESOLVED
+  rbics:
+    api_version: v1
+    path_prefix: /factset-rbics/v1
+    enabled: false
+    limits:
+      requests_per_second: 5         # pending FS009-verified manifest values
+      concurrent_requests: 5
+      max_ids_per_request: 50
+      retryable_statuses: [429, 500, 502, 503, 504]
+      documented: false
+      evidence: UNRESOLVED
+  benchmarks:
+    api_version: v1
+    path_prefix: /factset-benchmarks/v1
+    enabled: false
+    limits:
+      requests_per_second: 5
+      concurrent_requests: 5
+      max_ids_per_request: 50
+      retryable_statuses: [429, 500, 502, 503, 504]
+      documented: false
+      evidence: UNRESOLVED
+
+# Deterministic sample blocks (EA §7.3). FS010 carries only the bounded
+# live-smoke sample; discovery/panel/edge blocks land with FS022.
+samples:
+  fs010_live_smoke:
+    ids: [AAPL-US, FDS-US, IBM-US, MSFT-US, NVDA-US]   # <=5 well-known tickerRegion ids
+    anchor_dates: []
+    notes: >-
+      FS010 bounded auth/entitlement smoke: one symbology
+      identifier-resolution POST, cache-first, recorded to the run
+      manifest. tickerRegion inputs (no subscription-flagged id types;
+      entitlement for CUSIP/SEDOL/ISIN is FS003 U-1, probed by FS024).

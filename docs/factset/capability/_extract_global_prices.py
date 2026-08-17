@@ -14,6 +14,7 @@ Run (offline, no API calls):
     ~/.local/bin/uv run --with pyyaml python3 _extract_global_prices.py \
     /path/to/factset_global_prices_api-v1-yaml.yaml global_prices.json
 """
+
 from __future__ import annotations
 
 import json
@@ -41,8 +42,19 @@ def schema_summary(spec: dict, schema: Any, depth: int = 0) -> Any:
     if "$ref" in schema:
         return {"$ref": schema["$ref"].split("/")[-1]}
     out: dict[str, Any] = {}
-    for k in ("type", "format", "description", "enum", "default", "example",
-              "minimum", "maximum", "minItems", "maxItems", "nullable"):
+    for k in (
+        "type",
+        "format",
+        "description",
+        "enum",
+        "default",
+        "example",
+        "minimum",
+        "maximum",
+        "minItems",
+        "maxItems",
+        "nullable",
+    ):
         if k in schema:
             out[k] = schema[k]
     if "items" in schema:
@@ -61,7 +73,11 @@ def schema_summary(spec: dict, schema: Any, depth: int = 0) -> Any:
 
 
 def param_summary(spec: dict, p: Any) -> dict:
-    ref_name = p.get("$ref", "").split("/")[-1] if isinstance(p, dict) and "$ref" in p else None
+    ref_name = (
+        p.get("$ref", "").split("/")[-1]
+        if isinstance(p, dict) and "$ref" in p
+        else None
+    )
     p = deref(spec, p)
     sch = p.get("schema", {})
     resolved_sch = deref(spec, sch)
@@ -86,13 +102,15 @@ def collect_enums(spec: dict) -> dict:
     def walk(name: str, node: Any, path: str) -> None:
         if isinstance(node, dict):
             if "enum" in node:
-                enums.setdefault(name, []).append({
-                    "at": path or "(root)",
-                    "type": node.get("type"),
-                    "values": node["enum"],
-                    "default": node.get("default"),
-                    "description": node.get("description"),
-                })
+                enums.setdefault(name, []).append(
+                    {
+                        "at": path or "(root)",
+                        "type": node.get("type"),
+                        "values": node["enum"],
+                        "default": node.get("default"),
+                        "description": node.get("description"),
+                    }
+                )
             for k, v in node.items():
                 if k == "enum":
                     continue
@@ -141,17 +159,27 @@ SDK_METHOD_MAP = {  # DOCUMENTED_SDK (enterprise-sdk FactSetGlobalPrices v1, SDK
 
 CURATED = {
     "_note": "FS005-authored interpretation layer; every item evidence-tagged. "
-             "Full prose: docs/factset/capability/global_prices.md",
+    "Full prose: docs/factset/capability/global_prices.md",
     "checklist_constants": {  # external_analysis.md §3.3 items uniform across all 24 operations
-        "entitlement_status": {"value": "UNRESOLVED", "evidence": "UNRESOLVED",
-                               "note": "offline doc phase; FS010 smoke resolves (GP-UNRES-08)"},
-        "rate_and_concurrency_limits": {"value": "undocumented in spec and SDK",
-                                        "evidence": "UNRESOLVED", "id": "GP-UNRES-06"},
-        "pit_as_of_parameters": {"value": "none on any endpoint; payload anchors: "
-                                          "sharesOutstanding.publicationDate, CA announcementDate (nullable)",
-                                 "evidence": "DOCUMENTED_OPENAPI"},
-        "observed_live_discrepancies": {"value": "N/A (no live calls in doc phase)",
-                                        "evidence": "UNRESOLVED"},
+        "entitlement_status": {
+            "value": "UNRESOLVED",
+            "evidence": "UNRESOLVED",
+            "note": "offline doc phase; FS010 smoke resolves (GP-UNRES-08)",
+        },
+        "rate_and_concurrency_limits": {
+            "value": "undocumented in spec and SDK",
+            "evidence": "UNRESOLVED",
+            "id": "GP-UNRES-06",
+        },
+        "pit_as_of_parameters": {
+            "value": "none on any endpoint; payload anchors: "
+            "sharesOutstanding.publicationDate, CA announcementDate (nullable)",
+            "evidence": "DOCUMENTED_OPENAPI",
+        },
+        "observed_live_discrepancies": {
+            "value": "N/A (no live calls in doc phase)",
+            "evidence": "UNRESOLVED",
+        },
         "implementation_status": "NOT_STARTED (adapter=FS013, transport=FS010)",
         "test_status": "NOT_TESTED",
     },
@@ -159,8 +187,10 @@ CURATED = {
     "sdk_transport": {  # DOCUMENTED_SDK; FS010 requirements, md §10
         "evidence": "DOCUMENTED_SDK",
         "package": "fds.sdk.FactSetGlobalPrices==3.1.0 (API 1.12.0); python>=3.7; fds.sdk.utils for OAuth",
-        "auth": ["Configuration(fds_oauth_client=ConfidentialClient(<app-config.json>))",
-                 "Configuration(username='USERNAME-SERIAL', password='API-KEY')"],
+        "auth": [
+            "Configuration(fds_oauth_client=ConfidentialClient(<app-config.json>))",
+            "Configuration(username='USERNAME-SERIAL', password='API-KEY')",
+        ],
         "dual_status_wrapper": "get_status_code() / get_response_200() / get_response_202()",
         "async": "*_async and *_with_http_info_async -> async_result.get()",
         "exceptions": "single fds.sdk.FactSetGlobalPrices.ApiException (dispatch on .status + body shape)",
@@ -169,13 +199,16 @@ CURATED = {
     },
     "adjustment_semantics": {  # md §4
         "evidence": "DOCUMENTED_OPENAPI",
-        "adjust_arms": {"SPLIT": "Split ONLY Adjusted (DEFAULT)",
-                        "SPLIT_SPINOFF": "Splits and Spinoff Adjusted",
-                        "DIV_SPIN_SPLITS": "Dividend adjustments, Spinoff, and Splits combined",
-                        "UNSPLIT": "No Adjustments"},
-        "d013_basis_mapping": {"UNSPLIT": "UNADJUSTED (only canonical-acceptable arm)",
-                               "SPLIT|SPLIT_SPINOFF|DIV_SPIN_SPLITS":
-                                   "ADJUSTED -> REFUSED at canonical build (CT-15)"},
+        "adjust_arms": {
+            "SPLIT": "Split ONLY Adjusted (DEFAULT)",
+            "SPLIT_SPINOFF": "Splits and Spinoff Adjusted",
+            "DIV_SPIN_SPLITS": "Dividend adjustments, Spinoff, and Splits combined",
+            "UNSPLIT": "No Adjustments",
+        },
+        "d013_basis_mapping": {
+            "UNSPLIT": "UNADJUSTED (only canonical-acceptable arm)",
+            "SPLIT|SPLIT_SPINOFF|DIV_SPIN_SPLITS": "ADJUSTED -> REFUSED at canonical build (CT-15)",
+        },
         "vendor_default_is_adjusted": True,
         "ca_amount_arms": "amt*Adj = split-adjusted, amt*Unadj = raw; net/gross x trading/declared",
         "adj_factor": "multiplicative price factor (2-for-1 -> 0.50); adjFactorCombined = same-day composite",
@@ -183,15 +216,19 @@ CURATED = {
     },
     "returns_conventions": {  # md §5
         "evidence": "DOCUMENTED_OPENAPI",
-        "dividendAdjust": {"PRICE": "price return, dividends excluded",
-                           "EXDATE": "simple TR, divs received ex-date, not reinvested",
-                           "PAYDATE": "simple TR, divs received pay-date, not reinvested",
-                           "EXDATE_C": "compound TR, reinvested ex-date (DEFAULT)",
-                           "PAYDATE_C": "compound TR, reinvested pay-date"},
-        "silent": ["totalReturn units/orientation (GP-UNRES-01)",
-                   "net vs gross dividend leg (GP-UNRES-15)",
-                   "split handling inside returns (INFERRED consistent)",
-                   "FX composition under non-LOCAL currency (GP-UNRES-14)"],
+        "dividendAdjust": {
+            "PRICE": "price return, dividends excluded",
+            "EXDATE": "simple TR, divs received ex-date, not reinvested",
+            "PAYDATE": "simple TR, divs received pay-date, not reinvested",
+            "EXDATE_C": "compound TR, reinvested ex-date (DEFAULT)",
+            "PAYDATE_C": "compound TR, reinvested pay-date",
+        },
+        "silent": [
+            "totalReturn units/orientation (GP-UNRES-01)",
+            "net vs gross dividend leg (GP-UNRES-15)",
+            "split handling inside returns (INFERRED consistent)",
+            "FX composition under non-LOCAL currency (GP-UNRES-14)",
+        ],
     },
     "corporate_action_taxonomy": {  # md §6.1
         "evidence": "DOCUMENTED_OPENAPI",
@@ -201,10 +238,14 @@ CURATED = {
         "RIGHTS": ["DSR"],
         "SPLITS": ["FSP", "RSP", "SPL", "EXOS"],
         "not_covered": "mergers/acquisitions, delistings, ticker changes, final trading dates",
-        "date_fields": ["announcementDate (nullable)", "recordDate", "payDate",
-                        "effectiveDate (= ex-date)"],
+        "date_fields": [
+            "announcementDate (nullable)",
+            "recordDate",
+            "payDate",
+            "effectiveDate (= ex-date)",
+        ],
         "identifier_continuity": "eventId unique across exchanges; distInstFsymId/distIdentifier "
-                                 "links distributed instrument (BNS/DVS/DSR/SPO)",
+        "links distributed instrument (BNS/DVS/DSR/SPO)",
     },
     "discrepancies": {  # md §11; spec authoritative per charter
         "GP-DISC-01": "demo IdsBatchMax10000 absent from spec (IdsBatchMax2000) and SDK 3.1.0 models",
@@ -221,42 +262,73 @@ CURATED = {
         "GP-DISC-12": "calendar detailsRelativePath targets /content/corporate-actions/v1 (different family)",
         "GP-DISC-13": "shares example reportingPeriod 3 labeled '2nd Quarter' vs documented code table",
         "GP-DISC-14": "CA examples use keys outside field dictionary (adjFactorComnined [sic], "
-                      "adjustmentFactor, currencyDeclared, distRatio)",
+        "adjustmentFactor, currencyDeclared, distRatio)",
     },
     "unresolved": {  # md §12
-        "GP-UNRES-01": {"item": "totalReturn units (pct vs fraction) and per-period vs cumulative",
-                        "tag": "UNRESOLVED"},
-        "GP-UNRES-02": {"item": "which event types fold into each adjust arm (STOCK_DIST/RIGHTS under SPLIT?)",
-                        "tag": "VENDOR_CLARIFICATION_REQUIRED"},
-        "GP-UNRES-03": {"item": "shares 'split adjusted': restated-to-current vs as-of-date basis",
-                        "tag": "VENDOR_CLARIFICATION_REQUIRED"},
-        "GP-UNRES-04": {"item": "history depth (earliest servable date per market)", "tag": "UNRESOLVED"},
-        "GP-UNRES-05": {"item": "delisted/inactive coverage; final trading dates absent from schema",
-                        "tag": "VENDOR_CLARIFICATION_REQUIRED"},
+        "GP-UNRES-01": {
+            "item": "totalReturn units (pct vs fraction) and per-period vs cumulative",
+            "tag": "UNRESOLVED",
+        },
+        "GP-UNRES-02": {
+            "item": "which event types fold into each adjust arm (STOCK_DIST/RIGHTS under SPLIT?)",
+            "tag": "VENDOR_CLARIFICATION_REQUIRED",
+        },
+        "GP-UNRES-03": {
+            "item": "shares 'split adjusted': restated-to-current vs as-of-date basis",
+            "tag": "VENDOR_CLARIFICATION_REQUIRED",
+        },
+        "GP-UNRES-04": {
+            "item": "history depth (earliest servable date per market)",
+            "tag": "UNRESOLVED",
+        },
+        "GP-UNRES-05": {
+            "item": "delisted/inactive coverage; final trading dates absent from schema",
+            "tag": "VENDOR_CLARIFICATION_REQUIRED",
+        },
         "GP-UNRES-06": {"item": "rate/concurrency limits", "tag": "UNRESOLVED"},
-        "GP-UNRES-07": {"item": "batch-result retention window before 404 expiry", "tag": "UNRESOLVED"},
-        "GP-UNRES-08": {"item": "trial entitlements per endpoint AND per id (403 both documented)",
-                        "tag": "UNRESOLVED"},
+        "GP-UNRES-07": {
+            "item": "batch-result retention window before 404 expiry",
+            "tag": "UNRESOLVED",
+        },
+        "GP-UNRES-08": {
+            "item": "trial entitlements per endpoint AND per id (403 both documented)",
+            "tag": "UNRESOLVED",
+        },
         "GP-UNRES-09": {"item": "D vs AD frequency semantics", "tag": "UNRESOLVED"},
-        "GP-UNRES-10": {"item": "US/LOCAL calendar semantics; non-trading-day fill", "tag": "UNRESOLVED"},
-        "GP-UNRES-11": {"item": "totalOutstanding units (millions inferred)", "tag": "UNRESOLVED"},
-        "GP-UNRES-12": {"item": "FX source/timing for price-level currency conversion", "tag": "UNRESOLVED"},
-        "GP-UNRES-13": {"item": "no knowledge-time stamps on CA events; announcementDate nullable",
-                        "tag": "UNRESOLVED"},
-        "GP-UNRES-14": {"item": "currency-return composition in /returns under non-LOCAL currency",
-                        "tag": "UNRESOLVED"},
-        "GP-UNRES-15": {"item": "gross vs net dividend inside vendor TR (taxRate interaction)",
-                        "tag": "VENDOR_CLARIFICATION_REQUIRED"},
+        "GP-UNRES-10": {
+            "item": "US/LOCAL calendar semantics; non-trading-day fill",
+            "tag": "UNRESOLVED",
+        },
+        "GP-UNRES-11": {
+            "item": "totalOutstanding units (millions inferred)",
+            "tag": "UNRESOLVED",
+        },
+        "GP-UNRES-12": {
+            "item": "FX source/timing for price-level currency conversion",
+            "tag": "UNRESOLVED",
+        },
+        "GP-UNRES-13": {
+            "item": "no knowledge-time stamps on CA events; announcementDate nullable",
+            "tag": "UNRESOLVED",
+        },
+        "GP-UNRES-14": {
+            "item": "currency-return composition in /returns under non-LOCAL currency",
+            "tag": "UNRESOLVED",
+        },
+        "GP-UNRES-15": {
+            "item": "gross vs net dividend inside vendor TR (taxRate interaction)",
+            "tag": "VENDOR_CLARIFICATION_REQUIRED",
+        },
         "GP-UNRES-16": {"item": "eventId '-A' suffix semantics", "tag": "UNRESOLVED"},
     },
     "wp7_notes": {  # md §7A
         "historical_market_cap": "no historical MV series (market-value is current-only); derive from "
-                                 "UNSPLIT price x totalOutstanding with basis-consistency care "
-                                 "(GP-UNRES-03/11); INFERRED",
+        "UNSPLIT price x totalOutstanding with basis-consistency care "
+        "(GP-UNRES-03/11); INFERRED",
         "special_cash_dividends": "no dedicated type code; via divTypeCode (OA#8764) + dividendsSpecFlag",
         "returns_reconstruction_inputs": "prices UNSPLIT/LOCAL/D + CA ALL cancelledDividend=include "
-                                         "(amt*Unadj arms, adjFactor(Combined), ex/pay dates) vs "
-                                         "5 dividendAdjust arms + DIV_SPIN_SPLITS cross-check",
+        "(amt*Unadj arms, adjFactor(Combined), ex/pay dates) vs "
+        "5 dividendAdjust arms + DIV_SPIN_SPLITS cross-check",
     },
 }
 
@@ -277,35 +349,51 @@ def main() -> None:
                 body = None
                 for ctype, media in (r.get("content") or {}).items():
                     sch = media.get("schema", {})
-                    body = {"content_type": ctype,
-                            "schema": sch.get("$ref", "").split("/")[-1] if "$ref" in sch
-                                      else schema_summary(spec, sch)}
-                responses[code] = {"description": r.get("description"), "body": body,
-                                   "headers": sorted((r.get("headers") or {}).keys()) or None}
+                    body = {
+                        "content_type": ctype,
+                        "schema": sch.get("$ref", "").split("/")[-1]
+                        if "$ref" in sch
+                        else schema_summary(spec, sch),
+                    }
+                responses[code] = {
+                    "description": r.get("description"),
+                    "body": body,
+                    "headers": sorted((r.get("headers") or {}).keys()) or None,
+                }
             body_schema = None
             body_required = None
             if "requestBody" in op:
                 rb = deref(spec, op["requestBody"])
                 body_required = rb.get("required")
                 sch = rb["content"]["application/json"]["schema"]
-                body_schema = sch.get("$ref", "").split("/")[-1] if "$ref" in sch else schema_summary(spec, sch)
-            ops.append({
-                "path": path,
-                "method": method.upper(),
-                "operationId": op.get("operationId"),
-                "tags": op.get("tags"),
-                "summary": (op.get("summary") or "").strip(),
-                "description": (op.get("description") or "").strip(),
-                "parameters": [param_summary(spec, p) for p in op.get("parameters", [])],
-                "request_body_schema": body_schema,
-                "request_body_required": body_required,
-                "responses": responses,
-            })
+                body_schema = (
+                    sch.get("$ref", "").split("/")[-1]
+                    if "$ref" in sch
+                    else schema_summary(spec, sch)
+                )
+            ops.append(
+                {
+                    "path": path,
+                    "method": method.upper(),
+                    "operationId": op.get("operationId"),
+                    "tags": op.get("tags"),
+                    "summary": (op.get("summary") or "").strip(),
+                    "description": (op.get("description") or "").strip(),
+                    "parameters": [
+                        param_summary(spec, p) for p in op.get("parameters", [])
+                    ],
+                    "request_body_schema": body_schema,
+                    "request_body_required": body_required,
+                    "responses": responses,
+                }
+            )
 
     comp = spec["components"]
     schemas = {name: schema_summary(spec, sch) for name, sch in comp["schemas"].items()}
-    parameters = {name: param_summary(spec, {"$ref": f"#/components/parameters/{name}"})
-                  for name in comp.get("parameters", {})}
+    parameters = {
+        name: param_summary(spec, {"$ref": f"#/components/parameters/{name}"})
+        for name in comp.get("parameters", {})
+    }
     enums = collect_enums(spec)
 
     inventory = {
@@ -314,7 +402,7 @@ def main() -> None:
             "generator": "_extract_global_prices.py (FS005)",
             "evidence_tag": "DOCUMENTED_OPENAPI",
             "note": "All content below is mechanically extracted from the vendor OpenAPI spec; "
-                    "see global_prices.md for SDK/sample evidence and interpretation.",
+            "see global_prices.md for SDK/sample evidence and interpretation.",
         },
         "api": {
             "title": spec["info"]["title"],
@@ -322,8 +410,10 @@ def main() -> None:
             "openapi": spec["openapi"],
             "description": spec["info"].get("description", "").strip(),
             "servers": spec.get("servers"),
-            "security_schemes": {k: {kk: vv for kk, vv in v.items() if kk != "description"}
-                                 for k, v in comp.get("securitySchemes", {}).items()},
+            "security_schemes": {
+                k: {kk: vv for kk, vv in v.items() if kk != "description"}
+                for k, v in comp.get("securitySchemes", {}).items()
+            },
             "security": spec.get("security"),
             "tags": spec.get("tags"),
             "externalDocs": spec.get("externalDocs"),
@@ -350,10 +440,12 @@ def main() -> None:
     with open(out_path, "w") as f:
         json.dump(inventory, f, indent=2, sort_keys=False)
     c = inventory["counts"]
-    print(f"paths={c['paths']} operations={c['operations']} schemas={c['component_schemas']} "
-          f"params={c['component_parameters']} responses={c['component_responses']} "
-          f"examples={c['component_examples']} enum_schemas={c['schemas_with_enums']} "
-          f"enum_sites={c['distinct_enum_sites']}")
+    print(
+        f"paths={c['paths']} operations={c['operations']} schemas={c['component_schemas']} "
+        f"params={c['component_parameters']} responses={c['component_responses']} "
+        f"examples={c['component_examples']} enum_schemas={c['schemas_with_enums']} "
+        f"enum_sites={c['distinct_enum_sites']}"
+    )
 
 
 if __name__ == "__main__":

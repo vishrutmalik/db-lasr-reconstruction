@@ -157,3 +157,21 @@
   amends after direct contract inspection; any amendment gets its own entry.
 - **Reversibility:** MODERATE. **Date:** 2026-08-13. **Agent:** orchestrator.
   **Goal:** FS002.
+
+## D-019 — FactSet canonical extensions CE-1..CE-9 PROVISIONALLY RATIFIED
+- **Decision:** the nine provider-neutral canonical extensions proposed by
+  FS002 (docs/architecture/factset_integration.md §A3 queue) are ratified for
+  implementation by the owning FS adapters, each bound to the FS002-specified
+  acceptance gate: synthetic-golden BYTE-IDENTITY (the merged synthetic slice
+  must produce bit-identical artifacts before/after each extension). CE-4
+  (new BENCHMARK_LEVELS family — largest blast radius, forces declarations on
+  synthetic/local_file via CT-01) and CE-9 (reconciliation-grade
+  vendor_return_series — resolves the EA-WP10 vs provider-contract §7
+  tension) carry HEIGHTENED verifier/red-team scrutiny. CE-1
+  PitGrade.PERSPECTIVE_DATED; CE-2 fsym id_schemes; CE-3 rbics_l1..l6; CE-5
+  estimates knowledge_basis; CE-6 raw_fds_* tables keyed by fsym (ticker
+  recycling breaks (ticker,exchange) PKs); CE-7 mint_security_id_v2 extends
+  A-ARCH-01; CE-8 fundamentals.report_status.
+- **Evidence:** FS002 (D-018 ratified with A1-A3); FS003/FS004/FS005 manifests.
+- **Reversibility:** MODERATE (additive; golden gate protects).
+  **Date:** 2026-08-17. **Agent:** orchestrator. **Goal:** FS010-FS016.

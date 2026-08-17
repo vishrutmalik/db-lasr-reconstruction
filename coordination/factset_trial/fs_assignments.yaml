@@ -8,30 +8,14 @@
 # exceptions/models/methods for FS010.
 
 active:
-  FS002:
-    agent_role: architect
-    objective: Repo-side FactSet integration architecture + capability-manifest schema + D-018 ratification
-    branch: agent/fs-architect/FS002-integration
-    worktree: .worktrees/FS002
-    status: IN_PROGRESS
-    runtime: LAUNCHED 2026-08-13 (agent a2986c44383d08113, live)
-    owned_paths: ["docs/architecture/factset_integration.md"]
-  FS006:
+  FS021:
     agent_role: researcher (general-purpose)
-    objective: Exhaustive capability manifest — Estimates v2 (NON-PIT posture)
-    branch: agent/fs-researcher/FS006-estimates
-    worktree: .worktrees/FS006
+    objective: Phase-2 PIT-Estimates DATAFEED specification (docs only)
+    branch: agent/fs-researcher/FS021-pit-estimates-spec
+    worktree: .worktrees/FS021
     status: IN_PROGRESS
-    runtime: LAUNCHED 2026-08-13 (agent aace0f7cf80e5c2ae, live)
-    owned_paths: ["docs/factset/capability/estimates.md", "docs/factset/capability/estimates.json", "docs/factset/capability/_extract_estimates.py"]
-  FS007:
-    agent_role: researcher (general-purpose)
-    objective: Exhaustive capability manifest — RBICS v1 (effective dating focus)
-    branch: agent/fs-researcher/FS007-rbics
-    worktree: .worktrees/FS007
-    status: IN_PROGRESS
-    runtime: LAUNCHED 2026-08-13 (agent a2980d2bcda46427a, live)
-    owned_paths: ["docs/factset/capability/rbics.md", "docs/factset/capability/rbics.json", "docs/factset/capability/_extract_rbics.py"]
+    runtime: LAUNCHED 2026-08-17 (agent a16186e670b1d8d11, live)
+    owned_paths: ["docs/factset/phase2_pit_estimates_spec.md"]
   FS008:
     agent_role: researcher (general-purpose)
     objective: Exhaustive capability manifest — Benchmarks v1 (historical membership focus)
@@ -47,6 +31,21 @@ queued:
   FS021: Phase-2 PIT-Estimates DATAFEED contract (docs-only; the 2 PDFs)
 
 history:
+  - goal_id: FS002
+    objective: FactSet integration architecture + manifest schema
+    agent: a2986c44383d08113
+    final_commit: 3fda393 (PR #78, docs-only, OPEN — merges via FS009)
+    result: COMPLETE — D-018 RATIFIED with A1 (provider instances per arm: factset / factset_fundamentals_standard / factset_estimates_nonpit), A2 (zero Protocol changes; request-hashed gzip capture cache under FACTSET_TRIAL_DATA_ROOT), A3 (CE ratification queue). CE-1..9 ratified provisionally (D-019, synthetic-golden byte-identity gate). Manifest schema fs002-1 validated against FS003 output
+  - goal_id: FS007
+    objective: Capability manifest — RBICS v1
+    agent: a2980d2bcda46427a
+    final_commit: 26a055b (PR #80, docs-only, OPEN — merges via FS009)
+    result: COMPLETE — 11/11 ops, 44/44 schemas; effective-dated interval history REAL (entity-level, firstDate/lastDate) but NO knowledge-time axis: label effective-dated-not-PIT; interval integrity NOT vendor-guaranteed -> FS023 battery mandatory (CT-16 precedent). 14 UNRESOLVED + 6 VENDOR (incl. Structure wire-contract conflict D-3/VC-4). Storage rule: RBICS ids as zero-padded strings (D-4)
+  - goal_id: FS006
+    objective: Capability manifest — Estimates v2
+    agent: aace0f7cf80e5c2ae
+    final_commit: 1ac8530 (PR #79, docs-only, OPEN — merges via FS009)
+    result: COMPLETE — 30/30 ops, 81/81 schemas; ALL WP6 families present + company-reports extra. NON-PIT VERDICT DEFINITIVE: perspective-date reconstruction over a revised/current-view database (actuals updatable 100d post-report, methodology switch written through history, editorial inclusion, no bitemporal keys) -> sensitivity arm ONLY with WP6 warning label. 20 discrepancies incl. spec bug E-D2 (fiscalPeriodEnd $refs wrong schema); 15 UNRESOLVED (6 VENDOR incl. core E-U6 stored-as-was vs recomputed)
   - goal_id: FS005
     objective: Exhaustive capability manifest — Global Prices + CA v1
     agent: a1fc93cb1e139ab6e

@@ -1,3 +1,7 @@
+# ⚠ SUPERSEDED 2026-08-17 — ARCHIVAL ONLY. Authoritative state moved to
+# TRIAL_STATE.yaml (machine) + CURRENT_STATE.md (human) per
+# ORCHESTRATOR_BOOTSTRAP.md. Do not update this file.
+
 # FactSet trial agent registry — orchestrator sole writer.
 # Same lifecycle discipline as the core registry. FS goals only.
 

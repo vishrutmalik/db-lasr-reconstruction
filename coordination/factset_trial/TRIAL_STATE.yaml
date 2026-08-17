@@ -1,0 +1,72 @@
+# AUTHORITATIVE machine-readable FactSet trial state. Single writer: the
+# orchestrator. Lane checkpoints (lanes/*.md on goal branches) may be AHEAD
+# of this file after a crash — they win; reconcile here on collection.
+# Lifecycle + ownership + recovery rules: ORCHESTRATOR_BOOTSTRAP.md.
+meta:
+  schema_version: 1
+  state_revision: 1
+  orchestration_generation: 1  # Claude Fable 5 orchestrator, session of 2026-08-13..17
+  last_reconciled_main: 36d802d
+  last_reconciled_at: 2026-08-17T
+  charter_source: fs_goals.md (durable charters) + external_analysis.md (local requirements doc)
+
+goals:
+  FS001: {title: Safety scaffolding + credential policy, scope_basis: EA §7/§10, lifecycle: MERGED, evidence: main f96ec8b + policy commits}
+  FS002: {title: Integration architecture + manifest schema, scope_basis: EA §3.1/§5, lifecycle: MERGED, pr: 78, evidence: docs/architecture/factset_integration.md, decisions: [D-018, D-019]}
+  FS003: {title: Symbology manifest, scope_basis: EA §3.2, lifecycle: MERGED, pr: 75}
+  FS004: {title: Fundamentals manifest, scope_basis: EA §3.2, lifecycle: MERGED, pr: 76}
+  FS005: {title: Global Prices manifest, scope_basis: EA §3.2, lifecycle: MERGED, pr: 77}
+  FS006: {title: Estimates manifest, scope_basis: EA §3.2, lifecycle: MERGED, pr: 79}
+  FS007: {title: RBICS manifest, scope_basis: EA §3.2, lifecycle: MERGED, pr: 80}
+  FS008: {title: Benchmarks manifest, scope_basis: EA §3.2, lifecycle: MERGED, pr: 82}
+  FS009: {title: Reconciled MANIFEST + verification + rulings N1/N2/N3, scope_basis: EA §3.3, lifecycle: MERGED, pr: 83, evidence: docs/factset/capability/MANIFEST.md + docs/verification/FS009.md (FS-VQ-01..75)}
+  FS021: {title: Phase-2 PIT-Estimates datafeed spec, scope_basis: EA §19, lifecycle: MERGED, pr: 81, evidence: docs/factset/phase2_pit_estimates_spec.md}
+  FS010:
+    title: Shared transport + trial configuration
+    scope_basis: EA WP0+WP1; D-020(d)
+    lifecycle: REMEDIATING  # verifier FAIL (VF-FS010-1, adjudicated blocking) -> fixes 1-6 pushed, fix 7 + final gates in flight
+    branch: agent/fs-implementer/FS010-transport
+    worktree: .worktrees/FS010
+    owned_paths: ["src/lasr/data/providers/factset/**", "tests/unit/test_factset_*.py", "configs/factset/trial.yaml"]
+    pr: 84
+    start_sha: 37ecf1b
+    latest_reconciled_sha: 652b2f0
+    implementation: IMPLEMENTED (2d6cba5) + live smoke PASSED (auth ACCEPTED, symbology ENTITLED, F-005)
+    verification: FAIL r1 (928f2d5; VF-FS010-1..9) -> narrow re-check pending after remediation
+    red_team: NO_BLOCKING r1 (fadd2cd; RT-FS010-1..3) -> keeper-flip integrity re-check pending
+    remediation: fixes 1-6 COMMITTED (25ea0e8 sanitize-blocking, ba2b25f reserve-before-send+per-attempt, 05ec78a exact-"1" gate, 652b2f0 encoder pin, 0cc90f0 keeper format); remaining = PR body refresh + full gates
+    lanes:
+      FS010-IMPLEMENT-01: {state: REMEDIATING, agent_runtime: ac723078d6a4e2880 (ephemeral), checkpoint: lanes/FS010-IMPLEMENT-01.md on branch}
+      FS010-VERIFY-01: {state: VERDICT_DELIVERED_FAIL, report: docs/verification/FS010.md on branch}
+      FS010-REDTEAM-01: {state: VERDICT_DELIVERED_NO_BLOCKING, report: docs/red_team/FS010.md on branch}
+    next_action: collect remediation -> resume both reviewer lanes for NARROW re-checks (sanitize fix + ratchet-flip integrity) -> CI green -> merge PR 84
+  FS011:
+    title: Symbology adapter + identity spine (fsym-seeded, typed resolution)
+    scope_basis: EA WP2; D-020(b); MANIFEST identity_semantics
+    lifecycle: READY_AFTER_FS010
+    dependencies: [FS010]
+    charter: fs_goals.md row + VF-FS010-9 (normalize_id_list duty) + RT-FS010-2 (casing policy)
+    next_action: write-ahead dispatch on FS010 merge
+  FS024:
+    title: Live metric-catalog + entitlement discovery + notebook scaffold (sections 1-4)
+    scope_basis: EA WP3 + §6.1; adjudication (FS018 split)
+    lifecycle: READY_AFTER_FS010
+    dependencies: [FS010]
+    next_action: write-ahead dispatch on FS010 merge (parallel with FS011; disjoint paths)
+  FS012: {title: Fundamentals adapter (standard+PIT arms), scope_basis: EA WP4+WP5; ruling N1, lifecycle: BLOCKED, dependencies: [FS010, FS011], note: must fix VF-FS010-3 batch-poll budget bypass before batch live}
+  FS013: {title: Prices+CA adapter + reconciliation battery, scope_basis: EA WP7; F-001/F-002, lifecycle: BLOCKED, dependencies: [FS010, FS011]}
+  FS014: {title: Estimates adapter (NON-PIT labeled), scope_basis: EA WP6; ruling N2, lifecycle: BLOCKED, dependencies: [FS010, FS011]}
+  FS015: {title: RBICS adapter (effective-dated), scope_basis: EA WP8; ruling N3, lifecycle: BLOCKED, dependencies: [FS010, FS011]}
+  FS016: {title: Benchmarks adapter (snapshot membership + entitlement table), scope_basis: EA WP9; ruling N3; D-020(f), lifecycle: BLOCKED, dependencies: [FS010, FS011]}
+  FS017: {title: Fundamentals PIT gate (WP5 12-step + adversarial; HARD GATE), scope_basis: EA WP5; adjudication, lifecycle: BLOCKED, dependencies: [FS011, FS012]}
+  FS018: {title: Metric profiling + feature register, scope_basis: EA §10; adjudication, lifecycle: BLOCKED, dependencies: [FS024, FS012, FS013, FS014, FS015, FS016]}
+  FS019: {title: Model panel experiments (5 required arms), scope_basis: EA §12, lifecycle: BLOCKED, dependencies: [FS017, FS018, FS022]}
+  FS020: {title: E2E slice + notebook completion + purchase memo, scope_basis: EA §13/§18/§20, lifecycle: BLOCKED, dependencies: [FS019, FS023, FS021]}
+  FS022: {title: Deterministic samples + predeclared split, scope_basis: EA §6/§11.1, lifecycle: BLOCKED, dependencies: [FS011, FS016, FS024]}
+  FS023: {title: DQ battery + temporal-honesty gates, scope_basis: EA §9; ruling N3, lifecycle: BLOCKED, dependencies: [FS011, FS012, FS013, FS014, FS015, FS016]}
+  FS025:
+    title: Portability control plane + cold-start recovery gate
+    scope_basis: user directive 2026-08-17 (continuous recoverability invariant)
+    lifecycle: IMPLEMENTING  # orchestrator-built control plane; cold-start audit = blocking acceptance
+    owned_paths: ["coordination/factset_trial/ORCHESTRATOR_BOOTSTRAP.md", "coordination/factset_trial/TRIAL_STATE.yaml", "coordination/factset_trial/CURRENT_STATE.md", "coordination/factset_trial/TAKEOVER.md"]
+    next_action: cold-start recovery audit by independent context-free verifier; record result; then ongoing invariant

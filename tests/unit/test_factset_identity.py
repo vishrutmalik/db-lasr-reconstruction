@@ -432,6 +432,23 @@ def test_bridge_falls_back_on_recycled_ticker_disagreement() -> None:
     assert outcome.fsym_security_id == "BBBBBB-S"  # evidence retained
 
 
+def test_bridge_falls_back_on_contradictory_covering_intervals() -> None:
+    outcome = evaluate_bridge(
+        ticker="EXMP",
+        exchange="NAS",
+        first_seen=date(2015, 1, 2),
+        retrieval_date=date(2019, 6, 28),
+        resolved_fsym_security_id="MH33D6-S",
+        historical_ticker_regions=[
+            ("EXMP-US", "2012-05-31", None),
+            ("OTHER-US", "2018-01-01", None),
+        ],
+    )
+    assert outcome.decision is BridgeDecision.FALLBACK_CROSSCHECK_DISAGREE
+    assert outcome.minting_policy == "legacy_v1"
+    assert "ambiguous" in outcome.reason
+
+
 def test_bridge_falls_back_when_crosscheck_unverifiable() -> None:
     outcome = evaluate_bridge(
         ticker="EXMP",

@@ -596,6 +596,20 @@ def evaluate_bridge(
         for value, start, end in historical_ticker_regions
     ]
     covering = [i for i in intervals if _covers(i, retrieval_date)]
+    covering_values = {i.value for i in covering}
+    if len(covering_values) > 1:
+        return BridgeOutcome(
+            decision=BridgeDecision.FALLBACK_CROSSCHECK_DISAGREE,
+            security_id=legacy_id,
+            minting_policy="legacy_v1",
+            fsym_security_id=fsym,
+            legacy_alias_id=legacy_id,
+            reason=(
+                f"dated cross-check is ambiguous: multiple contradictory"
+                f" tickerRegion values cover {retrieval_date.isoformat()}"
+                f" for {fsym}; v1 minting retained (RT-FS011-07)"
+            ),
+        )
     matching = [i for i in covering if i.value.rsplit("-", 1)[0] == ticker_norm]
     if matching:
         return BridgeOutcome(

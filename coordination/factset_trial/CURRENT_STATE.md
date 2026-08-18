@@ -2,11 +2,13 @@
 
 Materialized human view; canonical machine state is `TRIAL_STATE.yaml`.
 
-- **Control:** revision 17, orchestration generation 2, reconciled against clean
-  main/origin main `ae72d1ec1916446eb6d19a0ee74e4dc09f77146d` and all listed
-  worktrees on 2026-08-18. Normal execution is QUIESCED for a planned graceful
-  handoff. No workers remain running and no new live requests were made during
-  handoff. The final `HANDED_OFF` marker is in `TAKEOVER.md`.
+- **Control:** revision 18, orchestration generation 2 `HANDED_OFF`. The full
+  handoff content is pushed at
+  `448ec1b79bbde70ba8d65ceb873b5a8b615b806e`; its successor control commit is
+  the final marker on `origin/main`. All listed worktrees were clean at
+  reconciliation. Normal execution is QUIESCED; no workers remain running and
+  no new live requests were made during handoff. The next claimant must
+  register generation 3 before writing.
 - **Scope:** FactSet-only execution remains the active program; the original
   LASR M7 wave is intentionally PAUSED, not abandoned.
 - **Merged:** FS001–FS010, FS021, FS024 and FS025. FS024 PR #87 merged as

@@ -4,10 +4,10 @@
 # Lifecycle + ownership + recovery rules: ORCHESTRATOR_BOOTSTRAP.md.
 meta:
   schema_version: 1
-  state_revision: 17
+  state_revision: 18
   orchestration_generation: 2  # OpenAI Codex GPT-5 takeover, session 2026-08-18
-  last_reconciled_main: ae72d1ec1916446eb6d19a0ee74e4dc09f77146d  # handoff basis; final control commit is recorded in TAKEOVER/HANDOFF_LATEST
-  last_reconciled_at: 2026-08-18T11:29:06+04:00
+  last_reconciled_main: 448ec1b79bbde70ba8d65ceb873b5a8b615b806e  # pushed handoff content; successor marks HANDED_OFF
+  last_reconciled_at: 2026-08-18T11:35:48+04:00
   charter_source: fs_goals.md (durable charters) + external_analysis.md (local requirements doc)
 
 goals:
@@ -104,7 +104,7 @@ goals:
 
 handoff:
   outgoing_generation: 2
-  state: PREPARED_FOR_HANDED_OFF_MARKER
+  state: HANDED_OFF
   execution_mode: QUIESCED_NO_NEW_WORK
   prepared_at: 2026-08-18T11:29:06+04:00
   immutable_snapshot: coordination/factset_trial/handoffs/20260818T072906Z-codex-generation-2.md
@@ -112,6 +112,8 @@ handoff:
   manager_report: docs/status/MANAGER_CATCHUP_2026-08-18.md
   quiesced_lanes: [FS026-IMPLEMENT-01]
   unquiesced_lanes: []
+  content_commit: 448ec1b79bbde70ba8d65ceb873b5a8b615b806e
+  expected_next_generation: 3
 
 blockers:
   SUBSCRIPTION-GAPS:

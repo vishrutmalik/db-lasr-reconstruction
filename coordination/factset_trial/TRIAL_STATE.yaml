@@ -4,10 +4,10 @@
 # Lifecycle + ownership + recovery rules: ORCHESTRATOR_BOOTSTRAP.md.
 meta:
   schema_version: 1
-  state_revision: 14
+  state_revision: 15
   orchestration_generation: 2  # OpenAI Codex GPT-5 takeover, session 2026-08-18
-  last_reconciled_main: 887cfef  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
-  last_reconciled_at: 2026-08-18T10:40:19+04:00
+  last_reconciled_main: 7d1f3ce  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
+  last_reconciled_at: 2026-08-18T10:53:13+04:00
   charter_source: fs_goals.md (durable charters) + external_analysis.md (local requirements doc)
 
 goals:
@@ -60,7 +60,7 @@ goals:
   FS024:
     title: Live metric-catalog + entitlement discovery + notebook scaffold (sections 1-4)
     scope_basis: EA WP3 + §6.1; adjudication (FS018 split)
-    lifecycle: FAILED_VERIFICATION  # verifier FAIL 0c0ae86 at pinned 087edc6; three evidence-integrity blockers; PR 87 remains blocked
+    lifecycle: REVERIFYING  # VF-FS024-1..3 remediated at final evidence checkpoint 45eae8d; fresh independent reverification dispatched; PR 87 remains blocked meanwhile
     dependencies: [FS010 MERGED]
     branch: agent/fs-implementer/FS024-discovery
     worktree: .worktrees/FS024
@@ -69,8 +69,9 @@ goals:
     lanes:
       FS024-IMPLEMENT-01: {state: IMPLEMENTED_IDLE, implementation_sha: 3f15d04fa9e52e049a5dd80b6abe39ac881c54de, checkpoint_sha: 087edc61b4c8ce766d7180e2442fbe4423f9dd39, checkpoint: lanes/FS024-IMPLEMENT-01.md, evidence: bounded discovery 14 live + 1 hit; final fold 14 hits/0 live; notebook sections 1-4 replayed; ruff/mypy clean; full pytest 2886/23/22}
       FS024-VERIFY-01: {state: VERDICT_FAIL, reviewed_sha: 087edc61b4c8ce766d7180e2442fbe4423f9dd39, verdict_sha: 0c0ae8670cab681a0dedab155abc566a260d91e2, report: docs/verification/FS024.md, findings: [VF-FS024-1, VF-FS024-2, VF-FS024-3], tests: 73 targeted pass; full 2886/23/22; notebook replay 15 probes/0 live/14 hits; PR CI 8/8}
-      FS024-REMEDIATE-01: {state: DISPATCHED, role: implementer remediation, scope_basis: verifier findings VF-FS024-1..3 at 0c0ae86, branch: agent/fs-implementer/FS024-discovery, worktree: .worktrees/FS024, start_sha: 0c0ae8670cab681a0dedab155abc566a260d91e2, owned_paths: [src/lasr/data/providers/factset/discovery*.py, tests/unit/test_factset_discovery*.py, docs/factset/entitlements.md, docs/factset/capability/MANIFEST.md, docs/factset/capability/manifest.json, notebooks/factset_api_trial.ipynb, coordination/factset_trial/lanes/FS024-REMEDIATE-01.md], acceptance: probe gated output types separately and regenerate evidence with only supported claims; 401 account-auth abort distinct from entitlement; immutable acquisition and replay manifests use distinct run ids; focused/full gates; bounded live calls only if required after cache inspection}
-    next_action: remediate VF-FS024-1..3, checkpoint new SHA, fresh independent reverification; merge PR 87 only after PASS (red-team not required by charter)
+      FS024-REMEDIATE-01: {state: REMEDIATED_IDLE, role: implementer remediation, scope_basis: verifier findings VF-FS024-1..3 at 0c0ae86, branch: agent/fs-implementer/FS024-discovery, worktree: .worktrees/FS024, start_sha: 0c0ae8670cab681a0dedab155abc566a260d91e2, code_shas: [55cf788fc0ccebe05e9398ae834b0d15d86bc27c, 8c4c9171a3e467878b5c4958b73efa61399c4b52], checkpoint_sha: 45eae8dcc9f95f33a9a4812321de1b8a8117eaa6, evidence: acquisition 3 separately hashed live 403 captures + distinct 17-probe/0-live replay with 17 capture hashes; cached 401 account-aborts; run IDs preflighted and immutable; original overwritten manifest not claimed recovered; total remediation live 4 incl. one preserved malformed-auth 401, tests: 103 focused; full 2891/23/22; notebook 17 probes/0 live/14 hits/0 errors; ruff/mypy clean; PR CI 8/8}
+      FS024-REVERIFY-01: {state: DISPATCHED, role: fresh independent verifier, reviewed_sha: 45eae8dcc9f95f33a9a4812321de1b8a8117eaa6, scope_basis: prior verifier report 0c0ae86 + FS024 charter + remediation evidence, branch: agent/fs-implementer/FS024-discovery, worktree: .worktrees/FS024, owned_paths: [docs/verification/FS024.md, coordination/factset_trial/lanes/FS024-REVERIFY-01.md], acceptance: independently re-probe VF-FS024-1..3, external manifest/capture lineage, cache-only notebook replay, focused/full/static gates; no live calls}
+    next_action: collect fresh independent FS024 reverification at exact 45eae8d; merge PR 87 only after PASS (red-team not required by charter)
   FS012: {title: Fundamentals adapter (standard+PIT arms), scope_basis: EA WP4+WP5; ruling N1, lifecycle: BLOCKED, dependencies: [FS010, FS011], note: must fix VF-FS010-3 batch-poll budget bypass before batch live}
   FS013: {title: Prices+CA adapter + reconciliation battery, scope_basis: EA WP7; F-001/F-002, lifecycle: BLOCKED, dependencies: [FS010, FS011]}
   FS014: {title: Estimates adapter (NON-PIT labeled), scope_basis: EA WP6; ruling N2, lifecycle: BLOCKED, dependencies: [FS010, FS011]}

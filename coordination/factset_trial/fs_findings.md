@@ -201,3 +201,20 @@ identifier/ticker-change content, while the historical endpoint remains HTTP
 403 and content is unassessed. PR #86 and FS011 dependents therefore remain
 blocked pending entitlement restoration and a bounded historical acceptance
 rerun; no charter weakening or causal vendor claim is inferred.
+
+## F-018 (2026-08-18, OBSERVED_LIVE + PROVEN — FS024 remediation) — direct gated-type evidence and immutable run lineage
+FS024 remediation checkpoint `45eae8d` replaces the bundled gated-type inference
+with three correctly authenticated, separately hashed live requests. CUSIP,
+ISIN, and SEDOL each returned HTTP 403 under its own request and capture hash;
+these are three endpoint/request-specific entitlement observations, not a
+family-wide or causal claim. Immutable acquisition run
+`fs024-remediation-acquisition-20260818-8c4c917` records 3 probes/3 live calls/3
+captures. Distinct replay run `fs024-remediation-replay-20260818-8c4c917`
+records 17 probes/17 capture hashes/0 live calls/14 success-cache hits and the
+same 2246/439/710 catalog counts. One earlier remediation call used malformed
+temporary parsing of the authorized labeled credential-file format and returned
+401; the new account-auth guard aborted before sibling calls or entitlement
+output, and that ledger/capture evidence remains preserved. Total remediation
+usage was therefore four live calls. The original overwritten acquisition
+manifest is explicitly not claimed recovered. Keeper/full/static/notebook gates
+are green; fresh independent reverification remains required before PR #87.

@@ -1,6 +1,6 @@
 # FactSet Trial — Current State (materialized view; canonical = TRIAL_STATE.yaml)
 
-- state_revision: 14 · generation 2 · reconciled 2026-08-18 after targeted
+- state_revision: 15 · generation 2 · reconciled 2026-08-18 after targeted
   unclean takeover at main `ad4df3f`
 - PHASE: live-data phase (identity + discovery wave)
 - MERGED (11): FS001-FS010, FS021 — docs/design phase + the shared transport
@@ -27,7 +27,10 @@
   checkpointed at `087edc6`, and open as PR #87. Notebook sections 1-4 replayed
   top-to-bottom from real captures with zero live calls; full gates are green.
   Independent FS024 verification returned FAIL at `0c0ae86` with three evidence-
-  integrity blockers; remediation is dispatched (no red-team required by charter).
+  integrity blockers. All three are remediated at `45eae8d`: separately hashed
+  gated-type evidence, account-level 401 abort semantics, and immutable distinct
+  acquisition/replay manifests with full lineage. Fresh reverification is
+  running there (no red-team required by charter).
 - NEXT on FS011+FS024: adapters FS012/13/14/15/16 in parallel (disjoint
   paths), then gates FS017 (PIT, HARD) + FS023 (DQ), FS022 samples, FS018
   features, FS019 models, FS020 close-out. LASR wave stays PAUSED.
@@ -50,6 +53,6 @@
   under independent dual review at exact `400f28a`. Historical Symbology
   content remains unverified because the endpoint is 403, which both reviews
   rule does not satisfy the unchanged charter.
-- FS024 blockers: gated CUSIP/ISIN/SEDOL evidence must be separated; cached
-  HTTP 401 must remain an account-auth abort; the acquisition manifest must be
-  immutable and distinct from zero-live replay output (F-015).
+- FS024 recheck: remediation produced three separate CUSIP/ISIN/SEDOL 403
+  captures, preserves 401 as an account-auth abort, and keeps immutable distinct
+  acquisition/replay manifests. Fresh verifier is checking F-015 at `45eae8d`.

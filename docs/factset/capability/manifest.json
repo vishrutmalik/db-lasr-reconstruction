@@ -4,7 +4,7 @@
  "generated": "2026-08-17",
  "note": "Reconciled SHARED capability manifest for the six FactSet API trial families. Human capability matrix + NORMATIVE design rulings: docs/factset/capability/MANIFEST.md. Verification: docs/verification/FS009.md. Bulk sub-blocks (schemas/enums/full parameter tables) are pointers into the per-family JSONs committed by PRs #75-#82; pointer targets are part of this manifest by reference.",
  "operations_total": 95,
- "entitlement_status_all_operations": "UNKNOWN (offline doc phase; FS010/FS024 resolve)",
+ "entitlement_status_all_operations": "PARTIAL (FS024 sampled 13 operation shapes / 17 probes on 2026-08-18; unprobed operations remain UNKNOWN)",
  "cross_family_consistency": [
   {
    "id": "CFC-1",
@@ -324,7 +324,7 @@
      "path": "/symbology/v3/identifier-resolution",
      "method": "POST",
      "purpose": "Same as GET; preferred for large id lists (no 8KB URL cap).",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "PARTIAL (OBSERVED_LIVE 2026-08-18: fsym/tickerRegion outputs Working; three separately hashed probes show CUSIP HTTP 403, ISIN HTTP 403, SEDOL HTTP 403)",
      "identity": {
       "accepted_id_types": "31-value input enum (see symbology.json#enums)",
       "primary_only": null,
@@ -397,9 +397,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "securities",
       "identifier_map",
@@ -506,7 +508,7 @@
      "path": "/symbology/v3/historical-identifier-resolution",
      "method": "POST",
      "purpose": "Same as GET historical; body is data-wrapped (D-9).",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "UNAUTHORIZED (OBSERVED_LIVE HTTP 403, 2026-08-18)",
      "identity": {
       "accepted_id_types": "31-value input enum (see symbology.json#enums)",
       "primary_only": null,
@@ -581,9 +583,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "securities",
       "identifier_map",
@@ -1059,7 +1063,7 @@
      "path": "/fundamentals",
      "method": "POST",
      "purpose": "Returns Company Fundamentals Data.",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "WORKING (OBSERVED_LIVE HTTP 200, 2026-08-18)",
      "identity": {
       "accepted_id_types": [
        "ticker",
@@ -1147,9 +1151,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "fundamentals"
      ],
@@ -1888,7 +1894,7 @@
      "path": "/metrics",
      "method": "GET",
      "purpose": "Returns available FactSet Fundamental metrics and ratios.",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "WORKING (OBSERVED_LIVE HTTP 200, 2026-08-18; PIT and non-PIT selectors both sampled separately)",
      "identity": {
       "accepted_id_types": [
        "ticker",
@@ -1976,9 +1982,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "fundamentals"
      ],
@@ -2513,7 +2521,7 @@
      "path": "/factset-global-prices/v1/prices",
      "method": "POST",
      "purpose": "Requests end-of-day Open, High, Low, Close for a large list of securities.",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "WORKING (OBSERVED_LIVE HTTP 200, 2026-08-18; UNSPLIT probe)",
      "identity": {
       "accepted_id_types": [
        "ticker",
@@ -2618,9 +2626,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "prices_daily",
       "corporate_actions"
@@ -2753,7 +2763,7 @@
      "path": "/factset-global-prices/v1/corporate-actions",
      "method": "POST",
      "purpose": "Requests Corporate Actions information.",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "WORKING (OBSERVED_LIVE HTTP 200, 2026-08-18)",
      "identity": {
       "accepted_id_types": [
        "ticker",
@@ -2858,9 +2868,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "prices_daily",
       "corporate_actions"
@@ -5797,7 +5809,7 @@
      "path": "/factset-estimates/v2/fixed-consensus",
      "method": "POST",
      "purpose": "FactSet consensus estimates for fixed fiscal periods",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "WORKING (OBSERVED_LIVE HTTP 200, 2026-08-18; NON-PIT sensitivity arm)",
      "identity": {
       "accepted_id_types": [
        "FactSet ids",
@@ -5890,9 +5902,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "estimates_consensus (labeled NON-PIT arm; CE-1/CE-5)"
      ],
@@ -7417,7 +7431,7 @@
      "path": "/factset-estimates/v2/metrics",
      "method": "GET",
      "purpose": "Available Estimate metrics",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "WORKING (OBSERVED_LIVE HTTP 200, 2026-08-18)",
      "identity": {
       "accepted_id_types": [
        "FactSet ids",
@@ -7510,9 +7524,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "estimates_consensus (labeled NON-PIT arm; CE-1/CE-5)"
      ],
@@ -9165,7 +9181,7 @@
      "path": "/factset-rbics/v1/entity-focus",
      "method": "POST",
      "purpose": "Same as GET; preferred for long id lists.",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "WORKING (OBSERVED_LIVE HTTP 200, 2026-08-18)",
      "identity": {
       "accepted_id_types": [
        "ticker-exchange",
@@ -9250,9 +9266,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "classification_intervals (CE-3)"
      ],
@@ -9965,7 +9983,7 @@
      "path": "/factset-rbics/v1/structure",
      "method": "POST",
      "purpose": "Same as GET structure; optimal for long rbicsIds lists.",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "WORKING (OBSERVED_LIVE HTTP 200, 2026-08-18)",
      "identity": {
       "accepted_id_types": [
        "ticker-exchange",
@@ -10050,9 +10068,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "classification_intervals (CE-3)"
      ],
@@ -10579,7 +10599,7 @@
      "path": "/factset-benchmarks/v1/constituents",
      "method": "POST",
      "purpose": "Returns the requested Benchmark Constituents and respective Weights, Price and Market Value.",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "UNAUTHORIZED (OBSERVED_LIVE HTTP 403, 2026-08-18; SP50 probe)",
      "identity": {
       "accepted_id_types": [
        "benchmark ids (heterogeneous vendor namespaces: SP50, R.3000, 990100, HSI-HKX, SPY-US)"
@@ -10662,9 +10682,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "universe_membership_intervals",
       "benchmark_levels (CE-4, auxiliary service per D-020a)"
@@ -10975,7 +10997,7 @@
      "path": "/factset-benchmarks/v1/index-snapshot",
      "method": "POST",
      "purpose": "Retrieves the Index Level Snapshot of Prices and Returns information for a given identifier and single date.",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "UNAUTHORIZED (OBSERVED_LIVE HTTP 403, 2026-08-18; SP50 probe)",
      "identity": {
       "accepted_id_types": [
        "benchmark ids (heterogeneous vendor namespaces: SP50, R.3000, 990100, HSI-HKX, SPY-US)"
@@ -11058,9 +11080,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "universe_membership_intervals",
       "benchmark_levels (CE-4, auxiliary service per D-020a)"
@@ -11795,7 +11819,7 @@
      "path": "/factset-benchmarks/v1/id-list",
      "method": "POST",
      "purpose": "Returns a sample list of Benchmark Identifiers and the benchmark categorization to use in other Benchmark API endpoints.",
-     "entitlement_status": "UNKNOWN",
+     "entitlement_status": "WORKING (OBSERVED_LIVE HTTP 200, 2026-08-18; sample-list endpoint only)",
      "identity": {
       "accepted_id_types": [
        "benchmark ids (heterogeneous vendor namespaces: SP50, R.3000, 990100, HSI-HKX, SPY-US)"
@@ -11878,9 +11902,11 @@
       "inputs": ""
      },
      "discrepancy_refs": [],
-     "observed_live_refs": [],
-     "implementation_status": "NOT_STARTED",
-     "test_status": "NONE",
+     "observed_live_refs": [
+      "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
+     ],
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
      "canonical_targets": [
       "universe_membership_intervals",
       "benchmark_levels (CE-4, auxiliary service per D-020a)"
@@ -12015,5 +12041,24 @@
     "demo": "benchmarks.py"
    }
   }
+ },
+ "observed_live_fold_in": {
+  "goal": "FS024",
+  "observed_at": "2026-08-18",
+  "evidence": "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations",
+  "sampled_operation_shapes": 13,
+  "probe_count": 17,
+  "acquisition_live_calls": 14,
+  "acquisition_exact_request_cache_hits": 1,
+  "final_fold_in_live_calls": 0,
+  "final_fold_in_success_cache_hits": 14,
+  "remediation_malformed_auth_abort_live_calls": 1,
+  "remediation_separate_output_type_live_calls": 3,
+  "remediation_acquisition_run_id": "fs024-remediation-acquisition-20260818-8c4c917",
+  "remediation_replay_run_id": "fs024-remediation-replay-20260818-8c4c917",
+  "remediation_replay_capture_count": 17,
+  "async_batch_live_calls": 0,
+  "unsampled_operations": "UNKNOWN",
+  "warning": "Observed entitlement is endpoint/request-family/time specific; never infer a family-wide or account-wide grant/denial."
  }
 }

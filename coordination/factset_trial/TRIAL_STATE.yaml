@@ -4,10 +4,10 @@
 # Lifecycle + ownership + recovery rules: ORCHESTRATOR_BOOTSTRAP.md.
 meta:
   schema_version: 1
-  state_revision: 6
-  orchestration_generation: 1  # Claude Fable 5 orchestrator, session of 2026-08-13..17
-  last_reconciled_main: b9c1c4f  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
-  last_reconciled_at: 2026-08-17T19:05:00+04:00
+  state_revision: 7
+  orchestration_generation: 2  # OpenAI Codex GPT-5 takeover, session 2026-08-18
+  last_reconciled_main: ad4df3f  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
+  last_reconciled_at: 2026-08-18T09:30:00+04:00
   charter_source: fs_goals.md (durable charters) + external_analysis.md (local requirements doc)
 
 goals:
@@ -43,17 +43,17 @@ goals:
   FS011:
     title: Symbology adapter + identity spine (fsym-seeded, typed resolution)
     scope_basis: EA WP2; D-020(b); MANIFEST identity_semantics
-    lifecycle: IN_VERIFICATION  # IMPLEMENTED 43e3b4f (PR 86; 73 tests; gates green; live battery VENDOR-BLOCKED per F-009 — post-restoration re-run is a bounded remediation step)
+    lifecycle: REMEDIATING  # IMPLEMENTED 43e3b4f (PR 86; 73 tests; CI 8/8 green); access restored per F-010, bounded live-battery rerun now precedes recovered dual review
     dependencies: [FS010 MERGED]
     branch: agent/fs-implementer/FS011-identity
     worktree: .worktrees/FS011
     owned_paths: ["src/lasr/data/providers/factset/identity*.py", "src/lasr/data/providers/factset/symbology_adapter*.py", "tests/unit/test_factset_identity*.py"]
     charter: fs_goals.md FS011 charter + VF-FS010-9 + RT-FS010-2
     lanes:
-      FS011-IMPLEMENT-01: {state: IMPLEMENTED_IDLE (43e3b4f), checkpoint: on branch}
-      FS011-VERIFY-01: {state: DISPATCHED, writes: docs/verification/FS011.md}
-      FS011-REDTEAM-01: {state: DISPATCHED, writes: docs/red_team/FS011.md + keepers}
-    next_action: collect dual verdicts; on PASS merge PR 86 (live battery completion rides post-restoration)
+      FS011-IMPLEMENT-01: {state: RESUME_DISPATCHED (from 43e3b4f), checkpoint: lanes/FS011-IMPLEMENT-01.md on branch, task: force-refresh bounded battery after F-010 access restoration; update durable evidence + PR}
+      FS011-VERIFY-01: {state: INTERRUPTED_NO_CHECKPOINT, writes: docs/verification/FS011.md, resume_after: FS011-IMPLEMENT-01 battery checkpoint}
+      FS011-REDTEAM-01: {state: INTERRUPTED_NO_CHECKPOINT, writes: docs/red_team/FS011.md + keepers, resume_after: FS011-IMPLEMENT-01 battery checkpoint}
+    next_action: collect bounded live-battery checkpoint; dispatch replacement verifier + red-team against the pinned revised SHA; remediate/reverify findings; merge PR 86 only after both gates pass
   FS024:
     title: Live metric-catalog + entitlement discovery + notebook scaffold (sections 1-4)
     scope_basis: EA WP3 + §6.1; adjudication (FS018 split)
@@ -62,8 +62,8 @@ goals:
     branch: agent/fs-implementer/FS024-discovery
     worktree: .worktrees/FS024
     owned_paths: ["src/lasr/data/providers/factset/discovery*.py", "tests/unit/test_factset_discovery*.py", "notebooks/factset_api_trial.ipynb", "docs/factset/entitlements.md", "configs/factset/trial.yaml (family enables — EXCLUSIVE)"]
-    lanes: {FS024-IMPLEMENT-01: {state: DISPATCHED, checkpoint: lanes/FS024-IMPLEMENT-01.md on branch}}
-    next_action: complete in OFFLINE shape per orchestrator directive (F-009 vendor blocker); live completion = bounded post-restoration re-run
+    lanes: {FS024-IMPLEMENT-01: {state: RESUME_DISPATCHED, checkpoint: lanes/FS024-IMPLEMENT-01.md on branch (stale at 37129f7; branch tip 9549755 wins), latest_proven_sha: 9549755, task: preserve offline hardening; complete bounded live entitlement/catalog discovery + notebook/docs/tests under restored access}}
+    next_action: resume from 9549755 (do not restart); inspect cache/manifests, execute bounded live discovery, finish docs/notebook, gates, checkpoint and PR
   FS012: {title: Fundamentals adapter (standard+PIT arms), scope_basis: EA WP4+WP5; ruling N1, lifecycle: BLOCKED, dependencies: [FS010, FS011], note: must fix VF-FS010-3 batch-poll budget bypass before batch live}
   FS013: {title: Prices+CA adapter + reconciliation battery, scope_basis: EA WP7; F-001/F-002, lifecycle: BLOCKED, dependencies: [FS010, FS011]}
   FS014: {title: Estimates adapter (NON-PIT labeled), scope_basis: EA WP6; ruling N2, lifecycle: BLOCKED, dependencies: [FS010, FS011]}
@@ -84,8 +84,10 @@ goals:
 
 blockers:
   VENDOR-1:
-    what: FactSet account authorization revoked/lapsed server-side (F-009)
+    status: RESOLVED_INTERMITTENT
+    what: Historical FactSet authorization failure (F-009); cause unproven; exact request restored to HTTP 200 in F-010
     since: 2026-08-17 between 12:45Z and 19:23Z
-    blocks: all live API work (FS011 battery completion, FS024 entitlement matrix, all adapter live tests, FS017 PIT gate live probes)
-    owner: USER (check trial status / key validity with FactSet)
-    on_restoration: FS011 battery --force-refresh (~10 req); FS024 entitlement re-run; then adapter wave proceeds
+    resolved_observed_at: 2026-08-18T05:25:27.369428+00:00
+    blocks: []
+    evidence: exact request_hash 8fbb04003b73ce265e1c35b423bbed145ccd05055132a394769a254f76c3d3aa force-refreshed via FS010 transport -> HTTP 200, 5/5 rows, 1 live call, 0 retries; run fs-takeover-access-probe-20260818
+    operational_rule: timestamp every entitlement claim; preserve 200 -> 403 -> 200 history and do not infer vendor-side cause

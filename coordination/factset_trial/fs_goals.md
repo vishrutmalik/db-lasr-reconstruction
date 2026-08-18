@@ -34,8 +34,8 @@ passing untouched.
 | FS007 | Doc review: RBICS v1 | researcher | — | DONE (PR #80) |
 | FS008 | Doc review: Benchmarks v1 | researcher | — | DONE (PR #82) |
 | FS009 | Manifest reconciliation + verification + binding rulings (N1/N2/N3 in MANIFEST.md) | verifier | FS002-8 | DONE (PR #83; ALL 9 docs PRs MERGED main 37ecf1b) |
-| FS010 | Shared transport + trial config (charter below) | implementer | FS002 (family models gated on FS009) | IN_PROGRESS |
-| FS011 | Symbology adapter + identity mapping (A-ARCH-01 bridge; adapters MUST route ids through normalize_id_list — VF-FS010-9; tickerRegion casing policy = RT-FS010-2) | implementer | FS010 | BLOCKED |
+| FS010 | Shared transport + trial config (charter below) | implementer | FS002 (family models gated on FS009) | DONE (PR #84; dual r2 gates) |
+| FS011 | Symbology adapter + identity mapping (A-ARCH-01 bridge; adapters MUST route ids through normalize_id_list — VF-FS010-9; tickerRegion casing policy = RT-FS010-2) | implementer | FS010 | REMEDIATING (bounded live battery after F-010; then replacement dual review) |
 | FS012 | Fundamentals adapter (standard + PIT arms, separated; MUST fix VF-FS010-3 batch-poll budget bypass before batch goes live) | implementer | FS010,FS011 | BLOCKED |
 | FS013 | Global Prices + CA adapter + reconciliation battery | implementer | FS010,FS011 | BLOCKED |
 | FS014 | Estimates adapter (NON-PIT labeled, exploratory arm) | implementer | FS010,FS011 | BLOCKED |
@@ -48,7 +48,7 @@ passing untouched.
 | FS021 | Phase-2 PIT-Estimates DATAFEED spec | researcher | — | DONE (PR #81) |
 | FS022 | Deterministic samples (discovery 30-50 / panel 250-400 / edge 20-50; anchors 2010/14/18/22/recent; PREDECLARED split 2010 warmup, 2011-15 train, 2016-19 val, 2020-25 test; rebalance-date vendor snapshots, no inferred membership) | implementer | FS011,FS016,FS024 | BLOCKED |
 | FS023 | FactSet DQ battery (ext §9: 20 checks + 7-way accounting) + benchmark/RBICS temporal-honesty gates (effective!=knowledge policy) | implementer | FS011-16 | BLOCKED |
-| FS024 | Live metric-catalog + entitlement discovery (PIT and non-PIT dictionaries SEPARATELY; entitlement matrix; ALL endpoint families sampled per the 3-tier rule; notebook scaffold + sections 1-4) | implementer | FS010 | BLOCKED |
+| FS024 | Live metric-catalog + entitlement discovery (PIT and non-PIT dictionaries SEPARATELY; entitlement matrix; ALL endpoint families sampled per the 3-tier rule; notebook scaffold + sections 1-4) | implementer | FS010 | IMPLEMENTING (resume proven tip 9549755) |
 
 ## Requirements reconciliation (external_analysis.md, arrived 2026-08-13 after wave-1 launch)
 Authoritative requirements input: /Users/admin/Documents/factset_api_resources/

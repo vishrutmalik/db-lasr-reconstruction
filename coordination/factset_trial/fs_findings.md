@@ -73,15 +73,29 @@ commit. Fence adequacy ruled safe (detect-and-serialize; zombie writers
 degrade to loud push conflicts bounded by one atomic unit). The continuous-
 recoverability invariant is ACTIVE from this point.
 
-## F-009 (2026-08-17, OBSERVED_LIVE — VENDOR/ACCOUNT BLOCKER) — authorization revoked mid-day
+## F-009 (2026-08-17, OBSERVED_LIVE — historical account blocker) — authorization failure observed mid-day
 FS011 live battery: every request (11 calls, 3 endpoints incl. a byte-identical
 replay of the FS010 smoke request) returns HTTP 403 plain-text "User
 Authorization Failed" (undocumented THIRD error-envelope shape — extends the
 dual-envelope catalog). The same request returned 200 at 12:45:37Z; 403 at
-19:23Z and 19:28Z; never a 401; ledger shows no other traffic. Conclusion:
-account-level authorization lapsed/revoked server-side — NOT code, NOT quota
-self-inflicted. ALL live FactSet work is blocked pending user/vendor action.
+19:23Z and 19:28Z; never a 401; ledger shows no other traffic. The
+then-recorded conclusion that account authorization lapsed/revoked server-side
+was an inference, not a proven cause. The request construction and quota-ledger
+evidence ruled out several project-side explanations, but did not establish why
+authorization changed. At that time all live FactSet work was blocked.
 Post-restoration remediation is a single bounded --force-refresh re-run
 (~10 requests for FS011's battery; FS024 entitlement matrix similarly
 re-runnable). Also OBSERVED_LIVE: entitlement is time-variable within one
 trial day — the trial evidence model must timestamp all entitlement claims.
+
+## F-010 (2026-08-18, OBSERVED_LIVE) — exact request restored; authorization is intermittent
+Generation-2 takeover probe at 2026-08-18T05:25:27.369428Z loaded credentials
+through the supported in-process `api_keys.txt` parser and force-refreshed the
+exact F-005/F-009 Symbology request through the merged FS010 transport. Request
+hash `8fbb04003b73ce265e1c35b423bbed145ccd05055132a394769a254f76c3d3aa`
+returned HTTP 200, 5/5 rows, 1 live call, 0 cache hits, 0 retries, 0 errors.
+Evidence: run manifest `fs-takeover-access-probe-20260818` under the external
+trial data root; raw capture remains outside git. VENDOR-1 is cleared as a
+current blocker. The complete observed sequence is 200 -> 403 -> 200, so every
+entitlement claim remains timestamped and per-family entitlement must still be
+measured; the cause of the transient failure remains UNRESOLVED.

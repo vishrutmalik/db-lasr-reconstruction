@@ -514,6 +514,7 @@ def _execute_probe(
 ) -> ProbeResult:
     rhash = request_hash(spec.request)
     hits_before = transport.stats.cache_hits
+    live_before = transport.stats.live_calls
     try:
         response = transport.execute(spec.request, force_refresh=force_refresh)
     except FactSetCacheMissError:
@@ -555,7 +556,7 @@ def _execute_probe(
             classification=EndpointClassification.UNAUTHORIZED,
             http_status=status,
             row_count=None,
-            from_cache=False,
+            from_cache=transport.stats.live_calls == live_before,
             request_hash=rhash,
             capture_id=capture_id,
             retrieval_time=retrieved,
@@ -1005,7 +1006,7 @@ def render_entitlements_markdown(
             lines.append(f"| {category} | {count} |")
         if summary.flag_counts:
             lines.append("")
-            lines.append("| Vendor flag | Count |")
+            lines.append("| Catalog measure | Count |")
             lines.append("|---|---|")
             for flag, count in summary.flag_counts.items():
                 lines.append(f"| {flag} | {count} |")

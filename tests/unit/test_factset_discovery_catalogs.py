@@ -108,6 +108,7 @@ class TestEstimatesCatalogParsing:
                         "subcategory": "INCOME_STATEMENT",
                         "factor": 1,
                         "OAurl": "https://example.invalid/eps",
+                        "package": "BASIC",
                     },
                     {
                         "metric": "PRICE_TGT",
@@ -123,9 +124,30 @@ class TestEstimatesCatalogParsing:
         assert [r.metric for r in rows] == ["EPS", "PRICE_TGT"]
         assert rows[0].oa_url == "https://example.invalid/eps"
         assert rows[0].factor == 1.0
+        assert rows[0].package == "BASIC"
         assert rows[1].oa_url is None
 
-    def test_duplicate_metric_refused(self) -> None:
+    def test_duplicate_metric_codes_in_distinct_namespaces_are_preserved(self) -> None:
+        rows = parse_estimates_metrics_response(
+            _body(
+                [
+                    {
+                        "metric": "CASH_COST",
+                        "category": "INDUSTRY_METRIC",
+                        "subcategory": "MINING",
+                    },
+                    {
+                        "metric": "CASH_COST",
+                        "category": "INDUSTRY_METRIC",
+                        "subcategory": "OIL_AND_GAS",
+                    },
+                ]
+            )
+        )
+        assert len(rows) == 2
+        assert {r.subcategory for r in rows} == {"MINING", "OIL_AND_GAS"}
+
+    def test_identical_typed_row_is_refused(self) -> None:
         row = {"metric": "EPS", "category": "FINANCIAL_STATEMENT"}
         with pytest.raises(FactSetIntegrityError, match="repeats"):
             parse_estimates_metrics_response(_body([row, dict(row)]))
@@ -190,6 +212,11 @@ class TestSummaries:
             "(uncategorized)": 1,
             "FINANCIAL_STATEMENT": 2,
             "OTHER": 1,
+        }
+        assert summary.flag_counts == {
+            "unique metric codes": 4,
+            "metric codes with multiple rows": 0,
+            "extra rows under repeated codes": 0,
         }
 
 

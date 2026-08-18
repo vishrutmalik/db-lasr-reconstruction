@@ -70,6 +70,10 @@ class FundamentalsMetricRow:
     data_type: str | None
     sdf_package: str | None
     base_code: str | None
+    description: str | None
+    description_addendum: str | None
+    oa_page_id: str | None
+    oa_url: str | None
 
     def as_record(self) -> dict[str, object]:
         return {
@@ -83,6 +87,10 @@ class FundamentalsMetricRow:
             "data_type": self.data_type,
             "sdf_package": self.sdf_package,
             "base_code": self.base_code,
+            "description": self.description,
+            "description_addendum": self.description_addendum,
+            "oa_page_id": self.oa_page_id,
+            "oa_url": self.oa_url,
         }
 
 
@@ -96,6 +104,7 @@ class EstimatesMetricRow:
     subcategory: str | None
     factor: float | None
     oa_url: str | None
+    package: str | None
 
     def as_record(self) -> dict[str, object]:
         return {
@@ -105,6 +114,7 @@ class EstimatesMetricRow:
             "subcategory": self.subcategory,
             "factor": self.factor,
             "oa_url": self.oa_url,
+            "package": self.package,
         }
 
 
@@ -233,34 +243,48 @@ def parse_fundamentals_metrics_response(
                 data_type=_opt_str(row, "dataType"),
                 sdf_package=_opt_str(row, "sdfPackage"),
                 base_code=_opt_str(row, "baseCode"),
+                description=_opt_str(row, "description"),
+                description_addendum=_opt_str(row, "descriptionAddendum"),
+                oa_page_id=_opt_str(row, "oaPageId"),
+                oa_url=_opt_str(row, "oaUrl"),
             )
         )
     return tuple(rows)
 
 
 def parse_estimates_metrics_response(body: bytes) -> tuple[EstimatesMetricRow, ...]:
-    """Parse the Estimates ``/metrics`` response (single dictionary)."""
+    """Parse the Estimates ``/metrics`` response (single dictionary).
+
+    OBSERVED_LIVE (2026-08-18): a metric code is not a row key.  The
+    vendor catalog legitimately repeats codes across category/subcategory
+    namespaces, and even repeats ``EPS_EX_XORD`` with distinct names.
+    Preserve every distinct typed row; refuse only an exact duplicate of
+    the full typed row, which would make counts non-reproducible.
+    """
     rows: list[EstimatesMetricRow] = []
-    seen: set[str] = set()
+    seen: set[EstimatesMetricRow] = set()
     for i, row in enumerate(_load_data_rows(body, endpoint="/metrics")):
         metric = _opt_str(row, "metric")
         if metric is None or not metric.strip():
             raise FactSetIntegrityError(
                 f"estimates catalog row {i} lacks the 'metric' request symbol"
             )
-        if metric in seen:
-            raise FactSetIntegrityError(f"estimates catalog repeats metric {metric!r}")
-        seen.add(metric)
-        rows.append(
-            EstimatesMetricRow(
-                metric=metric,
-                name=_opt_str(row, "name"),
-                category=_opt_str(row, "category"),
-                subcategory=_opt_str(row, "subcategory"),
-                factor=_opt_float(row, "factor"),
-                oa_url=_opt_str(row, "OAurl"),
-            )
+        parsed = EstimatesMetricRow(
+            metric=metric,
+            name=_opt_str(row, "name"),
+            category=_opt_str(row, "category"),
+            subcategory=_opt_str(row, "subcategory"),
+            factor=_opt_float(row, "factor"),
+            oa_url=_opt_str(row, "OAurl"),
+            package=_opt_str(row, "package"),
         )
+        if parsed in seen:
+            raise FactSetIntegrityError(
+                f"estimates catalog repeats an identical typed row for"
+                f" metric {metric!r}"
+            )
+        seen.add(parsed)
+        rows.append(parsed)
     return tuple(rows)
 
 
@@ -294,11 +318,18 @@ def summarize_fundamentals_catalog(
 def summarize_estimates_catalog(
     rows: Sequence[EstimatesMetricRow], *, catalog: str = "estimates"
 ) -> CatalogSummary:
+    counts: dict[str, int] = {}
+    for row in rows:
+        counts[row.metric] = counts.get(row.metric, 0) + 1
     return CatalogSummary(
         catalog=catalog,
         total=len(rows),
         by_category=_category_counts([r.category for r in rows]),
-        flag_counts={},
+        flag_counts={
+            "unique metric codes": len(counts),
+            "metric codes with multiple rows": sum(1 for n in counts.values() if n > 1),
+            "extra rows under repeated codes": sum(n - 1 for n in counts.values()),
+        },
     )
 
 

@@ -492,6 +492,7 @@ class TestLiveMode:
             by_id["rbics-entity-focus"].classification
             is EndpointClassification.UNAUTHORIZED  # error-cache policy, 0 quota
         )
+        assert by_id["rbics-entity-focus"].from_cache
         assert (
             by_id["symbology-identifier-resolution"].classification
             is EndpointClassification.WORKING  # cache hit, 0 quota

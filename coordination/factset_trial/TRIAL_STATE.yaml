@@ -4,10 +4,10 @@
 # Lifecycle + ownership + recovery rules: ORCHESTRATOR_BOOTSTRAP.md.
 meta:
   schema_version: 1
-  state_revision: 8
+  state_revision: 9
   orchestration_generation: 2  # OpenAI Codex GPT-5 takeover, session 2026-08-18
-  last_reconciled_main: e73acc7  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
-  last_reconciled_at: 2026-08-18T09:45:00+04:00
+  last_reconciled_main: a61b22f  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
+  last_reconciled_at: 2026-08-18T09:49:00+04:00
   charter_source: fs_goals.md (durable charters) + external_analysis.md (local requirements doc)
 
 goals:
@@ -51,9 +51,9 @@ goals:
     charter: fs_goals.md FS011 charter + VF-FS010-9 + RT-FS010-2
     lanes:
       FS011-IMPLEMENT-01: {state: IMPLEMENTED_IDLE, latest_sha: e149a9815ce02e9ef8b220826b5f86b708d1b4f8, remediation_sha: ad128000aaa2b05cae3452b9791c043aab82d615, checkpoint: lanes/FS011-IMPLEMENT-01.md on branch, evidence: restored battery 8 live calls -> 5 current 200 + 3 historical 403; typed classifier fixed; keeper suite 74 pass}
-      FS011-VERIFY-01: {state: REPLACEMENT_DISPATCHED, reviewed_sha: e149a9815ce02e9ef8b220826b5f86b708d1b4f8, role: fresh-context verifier, scope_basis: FS011 charter + EA WP2 + D-020(b) + MANIFEST identity semantics, writes: docs/verification/FS011.md + lane checkpoint, owned_paths: [docs/verification/FS011.md, coordination/factset_trial/lanes/FS011-VERIFY-01.md], start_sha: e149a98}
-      FS011-REDTEAM-01: {state: REPLACEMENT_DISPATCHED, reviewed_sha: e149a9815ce02e9ef8b220826b5f86b708d1b4f8, role: adversarial red-team, scope_basis: FS011 charter + identity/PIT/leakage gates, writes: docs/red_team/FS011.md + keepers + lane checkpoint, owned_paths: [docs/red_team/FS011.md, tests/leakage/test_red_team_fs011_identity_attacks.py, coordination/factset_trial/lanes/FS011-REDTEAM-01.md], start_sha: e149a98}
-    next_action: collect both independent verdicts at e149a98; adjudicate historical-endpoint entitlement gap under existing acceptance criteria; remediate/reverify findings; merge PR 86 only after both gates pass
+      FS011-VERIFY-01: {state: RUNNING_REPLACEMENT, reviewed_sha: e149a9815ce02e9ef8b220826b5f86b708d1b4f8, role: fresh-context verifier, scope_basis: FS011 charter + EA WP2 + D-020(b) + MANIFEST identity semantics, writes: docs/verification/FS011.md + lane checkpoint, owned_paths: [docs/verification/FS011.md, coordination/factset_trial/lanes/FS011-VERIFY-01.md], start_sha: e149a98}
+      FS011-REDTEAM-01: {state: DISPATCH_RECORDED_WAITING_RUNTIME_SLOT, reviewed_sha: e149a9815ce02e9ef8b220826b5f86b708d1b4f8, role: adversarial red-team, scope_basis: FS011 charter + identity/PIT/leakage gates, writes: docs/red_team/FS011.md + keepers + lane checkpoint, owned_paths: [docs/red_team/FS011.md, tests/leakage/test_red_team_fs011_identity_attacks.py, coordination/factset_trial/lanes/FS011-REDTEAM-01.md], start_sha: e149a98, launch_note: fresh-agent spawn attempted twice but runtime child-thread limit rejected it; route to independent FS024 worker as new task immediately after FS024 checkpoint/completion}
+    next_action: collect verifier at e149a98; launch mandatory independent red-team through the recorded replacement route; adjudicate historical-endpoint entitlement gap; remediate/reverify findings; merge PR 86 only after both gates pass
   FS024:
     title: Live metric-catalog + entitlement discovery + notebook scaffold (sections 1-4)
     scope_basis: EA WP3 + §6.1; adjudication (FS018 split)

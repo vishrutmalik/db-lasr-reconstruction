@@ -1,6 +1,6 @@
 # FactSet Trial — Current State (materialized view; canonical = TRIAL_STATE.yaml)
 
-- state_revision: 8 · generation 2 · reconciled 2026-08-18 after targeted
+- state_revision: 9 · generation 2 · reconciled 2026-08-18 after targeted
   unclean takeover at main `ad4df3f`
 - PHASE: live-data phase (identity + discovery wave)
 - MERGED (11): FS001-FS010, FS021 — docs/design phase + the shared transport
@@ -12,9 +12,11 @@
   produced no durable checkpoint and are INTERRUPTED. The implementation lane
   completed its bounded remediation at `e149a98`: the current endpoint is
   entitled while the historical endpoint is forbidden; the typed classifier
-  now preserves this as `PASS_WITH_UNRESOLVED`. Replacement verifier and
-  red-team lanes are pinned to that SHA. FS024 resumes from proven branch tip
-  `9549755` (substantial
+  now preserves this as `PASS_WITH_UNRESOLVED`. The replacement verifier is
+  running at that SHA. Red-team write-ahead is pinned there too, but runtime
+  launch hit the child-thread limit; the independent FS024 worker will take
+  that mandatory lane as a new task immediately after FS024 completion. FS024
+  resumes from proven branch tip `9549755` (substantial
   discovery runner/tests + offline hardening; lane checkpoint itself is stale)
   to complete live entitlement/catalog evidence, docs, notebook, and gates.
 - NEXT on FS011+FS024: adapters FS012/13/14/15/16 in parallel (disjoint

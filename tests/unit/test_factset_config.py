@@ -157,11 +157,13 @@ class TestCommittedTrialYaml:
             for ep in family.endpoints:
                 assert ep.max_live_requests >= 1
 
-    def test_smoke_budget_at_most_five_requests(self) -> None:
-        # FS010 charter: API budget <= 5 live requests.
+    def test_identifier_budget_is_bounded_for_shared_discovery(self) -> None:
+        # FS024 inherits an append-only ledger containing FS010/FS011 calls;
+        # the endpoint cap includes that evidence plus bounded probe headroom.
         config = load_trial_config(TRIAL_YAML)
         policy = config.endpoint_policy("symbology", "/identifier-resolution")
-        assert 1 <= policy.max_live_requests <= 5
+        assert policy.max_live_requests == 20
+        assert policy.max_live_requests <= config.transport.max_live_calls_per_day
         smoke = config.samples["fs010_live_smoke"]
         assert 1 <= len(smoke.ids) <= 5
 

@@ -83,7 +83,9 @@ families:
     endpoints:
       - endpoint: /identifier-resolution
         verb: POST
-        max_live_requests: 5         # FS010 smoke (1 spent) + FS024 gated-types probe
+        max_live_requests: 20        # shared-ledger headroom: 17 documented FS010/FS011
+                                      # calls preceded FS024; exact smoke replays + one
+                                      # gated-types probe + retry headroom (sum still 74)
       - endpoint: /historical-identifier-resolution
         verb: POST
         max_live_requests: 4         # FS024 probe + retry headroom

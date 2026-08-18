@@ -25,6 +25,7 @@ from lasr.data.providers.factset.discovery import (
 )
 from lasr.data.providers.factset.errors import FactSetConfigError
 from lasr.data.providers.factset.http import HttpResponse
+from lasr.data.providers.factset.ledger import LiveCallLedger
 from lasr.data.providers.factset.request_norm import request_hash
 from lasr.data.providers.factset.sanitize import (
     ENV_API_KEY,
@@ -229,6 +230,46 @@ class TestTrialConfigBudgets:
         # FS024 charter: live budget <=150 requests, enforced two ways
         assert endpoint_sum <= 150
         assert config.transport.max_live_calls_per_day <= 150
+
+    def test_shared_prior_calls_leave_room_for_fs024_unique_probe(
+        self, tmp_path: Path
+    ) -> None:
+        """The append-only ledger is shared with FS010/FS011.
+
+        Seventeen documented current-day identifier-resolution calls
+        preceded the FS024 run.  Its endpoint policy must accommodate
+        those immutable units plus the one unique gated-types probe;
+        resetting or deleting ledger evidence is never an option.
+        """
+        config = load_trial_config(TRIAL_YAML)
+        policy = config.endpoint_policy("symbology", "/identifier-resolution")
+        ledger = LiveCallLedger(tmp_path, now=lambda: _T0)
+        for i in range(17):
+            request_hash_value = f"{i:064x}"
+            reservation_id = ledger.reserve_live_call(
+                api_family="symbology",
+                endpoint="/identifier-resolution",
+                request_hash=request_hash_value,
+                max_live_calls_per_day=config.transport.max_live_calls_per_day,
+                max_endpoint_requests=policy.max_live_requests,
+            )
+            ledger.record_live_call(
+                api_family="symbology",
+                endpoint="/identifier-resolution",
+                request_hash=request_hash_value,
+                http_status=200,
+                reservation_id=reservation_id,
+            )
+
+        reservation_id = ledger.reserve_live_call(
+            api_family="symbology",
+            endpoint="/identifier-resolution",
+            request_hash="f" * 64,
+            max_live_calls_per_day=config.transport.max_live_calls_per_day,
+            max_endpoint_requests=policy.max_live_requests,
+        )
+        assert reservation_id
+        assert policy.max_live_requests == 20
 
     def test_async_batch_endpoints_are_never_live_enabled(self) -> None:
         """VF-FS010-3: batch live is prohibited until FS012 — the config

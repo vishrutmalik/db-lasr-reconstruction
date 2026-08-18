@@ -2,12 +2,12 @@
 
 - **Lane id:** FS011-IMPLEMENT-01 (implementer, single-writer file)
 - **Branch / worktree:** `agent/fs-implementer/FS011-identity` / `.worktrees/FS011`
-- **State:** IMPLEMENTED — live battery EXECUTED but blocked by a
-  vendor-side entitlement regression (see BLOCKER); code complete, all
-  gates green; handing off to verification
+- **State:** IMPLEMENTED — bounded post-restoration remediation complete;
+  current identity resolution is live-green, historical resolution remains
+  entitlement-UNRESOLVED; ready for replacement verifier + red-team review
 - **Start SHA (origin/main):** `e563404` (FS010 transport MERGED)
-- **Latest SHA:** see branch tip (pushed)
-- **PR:** "[FS011] Symbology adapter + identity spine"
+- **Remediation implementation SHA:** `ad128000aaa2b05cae3452b9791c043aab82d615`
+- **PR:** #86, "[FS011] Symbology adapter + identity spine"
 
 ## Charter summary (fs_goals.md FS011 durable charter)
 
@@ -35,7 +35,7 @@ FS024-exclusive — never touched by this lane.
    invalid_request, exhausted 5xx→vendor_api_failure; auth aborts);
    AmbiguousResolutionError lists candidates; identity-map build + legacy
    bridge (§5.1/§5.2).
-3. `identity_battery.py` (+10 tests): deterministic WP2 battery
+3. `identity_battery.py` (+11 tests): deterministic WP2 battery
    (public reference ids), in-process budget-capped config derivation
    (30+30 endpoint caps, 60/day; trial.yaml untouched), in-process
    credential parsing (values never printed/logged/persisted), checks:
@@ -45,38 +45,46 @@ FS024-exclusive — never touched by this lane.
    straddles, 7-way accounting, live-budget gate; report+manifest to
    FACTSET_TRIAL_DATA_ROOT; `force_refresh` threaded end-to-end
    (D-020(d) entitlement-remediation path, mini-repro test).
-4. Gates at tip: ruff format --check (330 files) / ruff check / mypy
-   strict (171 files) clean; `CI=1 pytest -q` full suite 2901+ passed /
-   23 skipped / 22 xfailed; FS011 keeper suite 73 tests.
-5. LIVE battery executed 2026-08-17 ~19:20Z through the FS010 transport,
-   cache-first, 11 live calls total (5 battery + 4 probes + 2 exact-smoke
-   force-refresh probes) — far under the 60 ceiling.
+4. Pre-remediation branch gates at `43e3b4f`: ruff format/check, strict mypy,
+   full `CI=1 pytest -q` (2902 passed / 23 skipped / 22 xfailed), and PR CI
+   8/8 green. Post-remediation narrow gates: ruff format/check clean; mypy
+   clean; FS011 keeper suite **74 passed**. The keeper includes the complete
+   replay battery with `live_calls == 0` and the new split-entitlement case.
+5. LIVE evidence (all via FS010 transport; raw captures external to git):
+   - 2026-08-17: exact request HTTP 200 at 12:45:37Z, then HTTP 403 at
+     19:23Z and 19:28Z; historical all-403 battery preserved under
+     `runs/fs011-identity-battery/`.
+   - 2026-08-18T05:25:29Z: exact request restored to HTTP 200 (F-010),
+     preserving the observed 200 -> 403 -> 200 sequence.
+   - 2026-08-18T05:33:24Z: single planned force-refresh battery under
+     `runs/fs011-identity-battery-restoration-20260818/`: **8 live calls**,
+     0 cache hits, 0 retries. Five `/identifier-resolution` calls returned
+     200; three `/historical-identifier-resolution` calls returned 403.
+     Current checks PASS: 8/8 active ids, GOOG/GOOGL share-class distinction,
+     2/3 inactive ids (AABA explicitly `not_covered`), and all four declared
+     CUSIP/ISIN/SEDOL cross-scheme join expectations. Seven-way accounting:
+     16 retrieved, 1 not_covered, 12 not_entitled, 0 unexplained.
+6. Genuine FS011 defect revealed and fixed at `ad12800`: endpoint-level
+   historical `not_entitled` was converted into false content booleans and
+   `FAIL`. It now remains typed `UNRESOLVED`; historical duplicate evidence
+   is also not overclaimed when hydration is forbidden. The observed run's
+   original report remains immutable evidence of the pre-fix classifier;
+   the keeper proves the same 5x200/3x403 shape becomes
+   `PASS_WITH_UNRESOLVED` without another live request.
 
-## BLOCKER (vendor-side; not code) — route: orchestrator/user
+## Remaining live evidence gap (not a code blocker)
 
-- ALL symbology requests now return HTTP 403 with the PLAIN-TEXT body
-  `User Authorization Failed` (a third, undocumented error shape — the
-  dual-envelope parser records it as `unparseable`, classification still
-  correct via status).
-- Decisive evidence: the BYTE-IDENTICAL FS010 smoke request (5 ids,
-  outputs fsymSecurityId/fsymRegionalId/tickerRegion) returned HTTP 200
-  at 2026-08-17T12:45:37Z and returns 403 at 19:23Z and again at 19:28Z
-  (force-refresh, same credentials file, same machine, same transport).
-  401 never seen → credentials AUTHENTICATE; authorization was revoked/
-  lapsed server-side between 12:45Z and 19:20Z.
-- Shared ledger shows ZERO other traffic in the window (12 calls total
-  today: 1×200 + 11×403) — not self-inflicted rate/abuse limiting.
-- Consequences: WP2 live checks all UNRESOLVED/blocked; battery report
-  (data root, runs/fs011-identity-battery/) records overall FAIL with
-  17/17 ids explained as not_entitled — mapped-or-explained held.
-- Remediation path READY: after entitlement restoration re-run
-  `python -m lasr.data.providers.factset.identity_battery
-  --trial-config configs/factset/trial.yaml --repo-root .
-  --credentials-file <path> --force-refresh` (error-cache policy
-  otherwise blocks re-attempts for 24h by design).
-- FS-VQ-02 (CUSIP/SEDOL/ISIN input entitlement) remains UNRESOLVED —
-  masked by the account-level refusal; do NOT read today's 403s on
-  those schemes as scheme-specific evidence.
+- **OBSERVED:** `/identifier-resolution` was ENTITLED at 05:33Z, including
+  typed CUSIP/ISIN/SEDOL inputs (FS-VQ-02 resolved for that timestamp).
+- **OBSERVED:** `/historical-identifier-resolution` returned HTTP 403 for
+  full-history and both as-of requests at 05:33Z. Historical intervals,
+  META/FB ticker-change content, and full-history duplicate claims therefore
+  remain UNRESOLVED/not_entitled.
+- **INFERENCE STATUS:** the cause of the earlier account-wide 403 window and
+  the current per-endpoint split is unknown. No claim of revocation, lapse,
+  rate limiting, or project-side cause is established by this lane.
+- No further force-refresh is planned. The historical endpoint's observed 403
+  is entitlement evidence for verifier/red-team and vendor follow-up.
 
 ## Register candidates (A-FS011-xx)
 
@@ -100,6 +108,6 @@ FS024-exclusive — never touched by this lane.
 
 ## Next atomic action
 
-Verification + red-team per charter. On entitlement restoration:
-force-refresh battery re-run (expected ~10 live requests), then update
-the battery section of the PR + this checkpoint with live results.
+Replacement verifier + red-team review per charter. They must independently
+assess the identity implementation and the remaining historical-entitlement
+gap; this implementer does not self-certify either gate.

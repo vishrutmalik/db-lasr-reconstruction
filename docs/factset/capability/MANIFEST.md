@@ -12,9 +12,10 @@ Sections N1–N3 are **NORMATIVE** (binding design rulings assigned to FS009 by
 trial's consolidated vendor-question / live-probe register (FS-VQ-01..75) —
 the FS010/FS024 probe checklist.
 
-Conventions: evidence tags per FS002 §7.1; entitlement is **UNKNOWN/UNRESOLVED
-for all 95 operations** (offline doc phase — no live call has ever been made);
-`implementation_status=NOT_STARTED`, `test_status=NONE` everywhere. Bulk
+Conventions: evidence tags per FS002 §7.1. The documentation baseline set all
+95 operations to `UNKNOWN/UNRESOLVED`, `implementation_status=NOT_STARTED`,
+and `test_status=NONE`; bounded later lifecycle updates are recorded in §1.1
+and the machine twin, while every unsampled operation retains that baseline. Bulk
 sub-blocks (full schemas, enums, parameter tables) live in the per-family
 JSONs and are incorporated into `manifest.json` by pointer — nothing is
 duplicated, nothing is lost.
@@ -38,13 +39,19 @@ duplicated, nothing is lost.
 This is a bounded sample, not a family-wide grant. Unprobed operations remain
 `UNKNOWN`; each claim below is timestamped in
 `docs/factset/entitlements.md`, with full request/capture hashes. Acquisition
-used 14 live calls plus one exact-request cache hit; the final fold-in replay
-used zero live calls. Async-batch surfaces remained deferred under
-VF-FS010-3/RT-FS010-4.
+used 14 live calls plus one exact-request cache hit. Remediation then preserved
+one malformed-auth HTTP 401 abort and made three correctly authenticated,
+separately hashed CUSIP/ISIN/SEDOL calls. The immutable remediation acquisition
+manifest (`fs024-remediation-acquisition-20260818-8c4c917`) records those three
+calls; the distinct complete replay manifest
+(`fs024-remediation-replay-20260818-8c4c917`) records 17 probe identities,
+17 capture hashes, 14 success-cache hits, and zero live calls. The overwritten
+initial acquisition manifest is not claimed recovered. Async-batch surfaces
+remained deferred under VF-FS010-3/RT-FS010-4.
 
 | Family | OBSERVED_LIVE probes | Lifecycle evidence |
 |---|---|---|
-| Symbology | current identifier resolution **Working**; CUSIP/ISIN/SEDOL output-types probe **Unauthorized (403)**; historical resolution **Unauthorized (403)** | POST probes implemented/tested in FS024; current result does not override output-type/endpoint-specific denials |
+| Symbology | current identifier resolution **Working**; separately hashed CUSIP **Unauthorized (403)**, ISIN **Unauthorized (403)**, and SEDOL **Unauthorized (403)** probes; historical resolution **Unauthorized (403)** | POST probes implemented/tested in FS024; each output-type conclusion is supported only by its own request/capture pair |
 | Fundamentals | `/metrics` non-PIT **Working (2,246)** and PIT **Working (439)**, pulled separately; `/fundamentals` **Working** | catalogs persisted outside git; overlap 422, PIT-only 17, non-PIT-only 1,824 |
 | Global Prices | `/prices` **Working** (UNSPLIT pinned); `/corporate-actions` **Working** | POST discovery probes implemented/tested in FS024 |
 | Estimates | `/metrics` **Working (710 rows / 692 unique codes)**; `/fixed-consensus` **Working** | 18 codes have two distinct catalog rows; full typed row identity is retained; API remains NON-PIT |
@@ -53,7 +60,8 @@ VF-FS010-3/RT-FS010-4.
 
 ## 2. Capability matrix (per endpoint; full §3.3 detail per row in `manifest.json`)
 
-Legend: G/P = GET+POST pair. Ent = entitlement (all UNRESOLVED). Async
+Legend: G/P = GET+POST pair. Ent = operation/request-specific entitlement;
+unsampled operations remain UNRESOLVED. Async
 `202` = opt-in batch; `A` = always-async. Pagination `—` = none exists.
 
 ### 2.1 Symbology (4 ops; 10 rps / 10 conc; 29s→400; 8KB GET cap; BasicAuth-only spec)

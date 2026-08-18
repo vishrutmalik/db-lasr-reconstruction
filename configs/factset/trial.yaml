@@ -83,13 +83,13 @@ families:
     endpoints:
       - endpoint: /identifier-resolution
         verb: POST
-        max_live_requests: 24        # shared ledger has 18 completed calls;
-                                      # three distinct FS-VQ-02 type probes
-                                      # plus bounded headroom (policy sum 82)
+        max_live_requests: 24        # shared ledger has 22 completed calls
+                                      # after the separate FS-VQ-02 probes;
+                                      # two-call headroom (policy sum 82)
       - endpoint: /historical-identifier-resolution
         verb: POST
-        max_live_requests: 8         # 4 shared-ledger calls preceded FS024;
-                                      # one planned probe + retry headroom
+        max_live_requests: 8         # shared ledger has 5 completed calls;
+                                      # no remediation call; 3-call headroom
   fundamentals:
     api_version: v2
     path_prefix: /factset-fundamentals/v2   # FS012 re-verifies after FS009

@@ -8,8 +8,9 @@ tests + catalogs; discovery-sample data pulls belong to the adapters).
 
 Execution model:
 
-- ONE probe per canonical-tier endpoint operation across all six
-  families, minimal request bodies, known-good ids only (the FS008
+- One or more bounded probes per sampled canonical-tier operation across all
+  six families (FS-VQ-02 has one request per gated output type), minimal
+  request bodies, known-good ids only (the FS008
   invalid-vs-unentitled error-body ambiguity is disambiguated by
   construction: every id was proven to resolve live in F-005 or is a
   vendor-documented example id, so a 4xx cannot be an id typo);
@@ -660,10 +661,10 @@ def run_discovery(
 ) -> DiscoveryReport:
     """Execute the FS024 probe plan + catalog pulls; return the report.
 
-    ``force_refresh=True`` is the SINGLE BOUNDED post-restoration re-run
+    ``force_refresh=True`` is the complete bounded post-restoration re-run
     path (F-009/VENDOR-1): it bypasses both the success cache and the
-    error-cache block, so one live re-run refreshes every probe after
-    the user restores account authorization. Budgets still apply.
+    error-cache block. ``force_refresh_probe_ids`` is the narrower remediation
+    path for named request identities. Budgets still apply to both.
 
     ``live=True`` flips the loaded config's ``transport.live`` (the human
     invoking discovery IS the config half of the consent — same pattern
@@ -1032,7 +1033,7 @@ def render_entitlements_markdown(
     lines.append("")
     lines.append("## 1. Family summary")
     lines.append("")
-    lines.append("| Family | Probed ops | Family status | Ops in manifest |")
+    lines.append("| Family | Probes | Family status | Ops in manifest |")
     lines.append("|---|---|---|---|")
     for family, total in FAMILY_OPERATION_TOTALS.items():
         probed = [r for r in report.probes if r.spec.family == family]

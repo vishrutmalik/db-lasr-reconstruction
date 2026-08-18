@@ -4,7 +4,7 @@
  "generated": "2026-08-17",
  "note": "Reconciled SHARED capability manifest for the six FactSet API trial families. Human capability matrix + NORMATIVE design rulings: docs/factset/capability/MANIFEST.md. Verification: docs/verification/FS009.md. Bulk sub-blocks (schemas/enums/full parameter tables) are pointers into the per-family JSONs committed by PRs #75-#82; pointer targets are part of this manifest by reference.",
  "operations_total": 95,
- "entitlement_status_all_operations": "PARTIAL (FS024 sampled 13 operation shapes / 15 probes on 2026-08-18; unprobed operations remain UNKNOWN)",
+ "entitlement_status_all_operations": "PARTIAL (FS024 sampled 13 operation shapes / 17 probes on 2026-08-18; unprobed operations remain UNKNOWN)",
  "cross_family_consistency": [
   {
    "id": "CFC-1",
@@ -324,7 +324,7 @@
      "path": "/symbology/v3/identifier-resolution",
      "method": "POST",
      "purpose": "Same as GET; preferred for large id lists (no 8KB URL cap).",
-     "entitlement_status": "PARTIAL (OBSERVED_LIVE 2026-08-18: fsym/tickerRegion outputs Working; CUSIP/ISIN/SEDOL outputs HTTP 403)",
+     "entitlement_status": "PARTIAL (OBSERVED_LIVE 2026-08-18: fsym/tickerRegion outputs Working; three separately hashed probes show CUSIP HTTP 403, ISIN HTTP 403, SEDOL HTTP 403)",
      "identity": {
       "accepted_id_types": "31-value input enum (see symbology.json#enums)",
       "primary_only": null,
@@ -12047,11 +12047,16 @@
   "observed_at": "2026-08-18",
   "evidence": "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations",
   "sampled_operation_shapes": 13,
-  "probe_count": 15,
+  "probe_count": 17,
   "acquisition_live_calls": 14,
   "acquisition_exact_request_cache_hits": 1,
   "final_fold_in_live_calls": 0,
   "final_fold_in_success_cache_hits": 14,
+  "remediation_malformed_auth_abort_live_calls": 1,
+  "remediation_separate_output_type_live_calls": 3,
+  "remediation_acquisition_run_id": "fs024-remediation-acquisition-20260818-8c4c917",
+  "remediation_replay_run_id": "fs024-remediation-replay-20260818-8c4c917",
+  "remediation_replay_capture_count": 17,
   "async_batch_live_calls": 0,
   "unsampled_operations": "UNKNOWN",
   "warning": "Observed entitlement is endpoint/request-family/time specific; never infer a family-wide or account-wide grant/denial."

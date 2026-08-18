@@ -272,11 +272,11 @@ class TestTrialConfigBudgets:
     @pytest.mark.parametrize(
         ("endpoint", "prior_calls", "expected_limit"),
         [
-            ("/identifier-resolution", 18, 24),
-            ("/historical-identifier-resolution", 4, 8),
+            ("/identifier-resolution", 22, 24),
+            ("/historical-identifier-resolution", 5, 8),
         ],
     )
-    def test_shared_prior_calls_leave_room_for_fs024_unique_probe(
+    def test_shared_completed_calls_leave_bounded_headroom(
         self,
         tmp_path: Path,
         endpoint: str,
@@ -285,9 +285,8 @@ class TestTrialConfigBudgets:
     ) -> None:
         """The append-only ledger is shared with FS010/FS011.
 
-        Eighteen completed current-day identifier-resolution calls
-        precede remediation.  Its endpoint policy must accommodate
-        those immutable units plus all three unique one-type probes;
+        The post-remediation append-only counts (22 current, 5 historical)
+        must remain below their endpoint caps with small explicit headroom;
         resetting or deleting ledger evidence is never an option.
         """
         config = load_trial_config(TRIAL_YAML)
@@ -310,8 +309,7 @@ class TestTrialConfigBudgets:
                 reservation_id=reservation_id,
             )
 
-        new_probe_count = 3 if endpoint == "/identifier-resolution" else 1
-        for offset in range(new_probe_count):
+        for offset in range(expected_limit - prior_calls):
             reservation_id = ledger.reserve_live_call(
                 api_family="symbology",
                 endpoint=endpoint,

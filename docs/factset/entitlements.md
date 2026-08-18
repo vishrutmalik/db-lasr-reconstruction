@@ -1,14 +1,14 @@
 # FactSet Trial — Entitlement Matrix + Live Metric Catalogs (FS024)
 
-Generated 2026-08-18T05:46:32.546016+00:00 · run `fs024-live-discovery-20260818` · code `9957556d3c0d1c0ae233a16db4e17224c5d794b1` · mode LIVE · live calls 0 · cache hits 14
+Generated 2026-08-18T06:43:11.359995+00:00 · run `fs024-remediation-replay-20260818-8c4c917` · code `8c4c9171a3e467878b5c4958b73efa61399c4b52` · mode REPLAY · live calls 0 · cache hits 14
 
 Classification vocabulary is the EA Step-1 exit condition (Working / Partially working / Unauthorized / Unavailable / Requires clarification), plus two honest non-answers: `Not captured` (replay miss — an absence, not evidence) and `Deferred` (deliberately not probed, reason given). Evidence precedence: everything here is OBSERVED_LIVE against verbatim captures addressed by the full request hash + capture sha256 under `$FACTSET_TRIAL_DATA_ROOT/raw/` (outside git). All entitlement claims are TIMESTAMPED: F-009 proved entitlement is time-variable within a single trial day.
 
 ## 1. Family summary
 
-| Family | Probed ops | Family status | Ops in manifest |
+| Family | Probes | Family status | Ops in manifest |
 |---|---|---|---|
-| symbology | 3 | Mixed — see rows | 4 |
+| symbology | 5 | Mixed — see rows | 4 |
 | fundamentals | 3 | Working | 12 |
 | global_prices | 2 | Working | 24 |
 | estimates | 2 | Working | 30 |
@@ -22,8 +22,10 @@ Unprobed operations remain UNRESOLVED and are owned by the family adapters (FS01
 | Probe | Family | Endpoint | Verb | Classification | HTTP | Rows | Cache | Retrieved (UTC) | Detail |
 |---|---|---|---|---|---|---|---|---|---|
 | symbology-identifier-resolution | symbology | `/identifier-resolution` | POST | **Working** | 200 | 5 | hit | 2026-08-18T05:25:29.286476+00:00 | — |
-| symbology-identifier-resolution-gated-types | symbology | `/identifier-resolution` | POST | **Unauthorized** | 403 | — | hit | 2026-08-18T05:40:07.030246+00:00 | cached entitlement failure (HTTP 403, capture 4fe1b144733425c483c2f9a59d5d9867a198cdafe10745b11944d5635bc09826) is fresh evidence for this request; re-attempt requires force_refresh=True after fixing credentials/entitlements (error-cache policy, D-020(d)) |
-| symbology-historical-identifier-resolution | symbology | `/historical-identifier-resolution` | POST | **Unauthorized** | 403 | — | hit | 2026-08-18T05:41:27.968442+00:00 | cached entitlement failure (HTTP 403, capture a847261d4942d262d2c550e225983c0e6939a936283aa118eaf92282f4f12f80) is fresh evidence for this request; re-attempt requires force_refresh=True after fixing credentials/entitlements (error-cache policy, D-020(d)) |
+| symbology-identifier-resolution-cusip | symbology | `/identifier-resolution` | POST | **Unauthorized** | 403 | — | hit | 2026-08-18T06:42:12.043656+00:00 | cached ERROR evidence (HTTP 403) served in replay — evidence display only, never replayed as success |
+| symbology-identifier-resolution-isin | symbology | `/identifier-resolution` | POST | **Unauthorized** | 403 | — | hit | 2026-08-18T06:42:12.298656+00:00 | cached ERROR evidence (HTTP 403) served in replay — evidence display only, never replayed as success |
+| symbology-identifier-resolution-sedol | symbology | `/identifier-resolution` | POST | **Unauthorized** | 403 | — | hit | 2026-08-18T06:42:12.554286+00:00 | cached ERROR evidence (HTTP 403) served in replay — evidence display only, never replayed as success |
+| symbology-historical-identifier-resolution | symbology | `/historical-identifier-resolution` | POST | **Unauthorized** | 403 | — | hit | 2026-08-18T05:41:27.968442+00:00 | cached ERROR evidence (HTTP 403) served in replay — evidence display only, never replayed as success |
 | fundamentals-metrics-non-pit | fundamentals | `/metrics` | GET | **Working** | 200 | 2246 | hit | 2026-08-18T05:41:32.065621+00:00 | — |
 | fundamentals-metrics-pit | fundamentals | `/metrics` | GET | **Working** | 200 | 439 | hit | 2026-08-18T05:41:32.365448+00:00 | — |
 | fundamentals-fundamentals | fundamentals | `/fundamentals` | POST | **Working** | 200 | 2 | hit | 2026-08-18T05:41:32.780333+00:00 | — |
@@ -34,15 +36,17 @@ Unprobed operations remain UNRESOLVED and are owned by the family adapters (FS01
 | rbics-structure | rbics | `/structure` | POST | **Working** | 200 | 14 | hit | 2026-08-18T05:41:34.359332+00:00 | — |
 | rbics-entity-focus | rbics | `/entity-focus` | POST | **Working** | 200 | 2 | hit | 2026-08-18T05:41:34.615007+00:00 | — |
 | benchmarks-id-list | benchmarks | `/id-list` | POST | **Working** | 200 | 11050 | hit | 2026-08-18T05:41:34.893513+00:00 | — |
-| benchmarks-constituents | benchmarks | `/constituents` | POST | **Unauthorized** | 403 | — | hit | 2026-08-18T05:41:35.214104+00:00 | cached entitlement failure (HTTP 403, capture 727048d1390389476ba9450ca76cadca37c272013d0e10726c723b132e002899) is fresh evidence for this request; re-attempt requires force_refresh=True after fixing credentials/entitlements (error-cache policy, D-020(d)) |
-| benchmarks-index-snapshot | benchmarks | `/index-snapshot` | POST | **Unauthorized** | 403 | — | hit | 2026-08-18T05:41:35.443277+00:00 | cached entitlement failure (HTTP 403, capture 121e74d1c3b4b38d4a46ef8c1787ab4a02930d6e563af921e07edd8e1688a33d) is fresh evidence for this request; re-attempt requires force_refresh=True after fixing credentials/entitlements (error-cache policy, D-020(d)) |
+| benchmarks-constituents | benchmarks | `/constituents` | POST | **Unauthorized** | 403 | — | hit | 2026-08-18T05:41:35.214104+00:00 | cached ERROR evidence (HTTP 403) served in replay — evidence display only, never replayed as success |
+| benchmarks-index-snapshot | benchmarks | `/index-snapshot` | POST | **Unauthorized** | 403 | — | hit | 2026-08-18T05:41:35.443277+00:00 | cached ERROR evidence (HTTP 403) served in replay — evidence display only, never replayed as success |
 
 Capture lineage (full hashes; raw bytes live under the data root):
 
 | Probe | request_hash | capture_id |
 |---|---|---|
 | symbology-identifier-resolution | `8fbb04003b73ce265e1c35b423bbed145ccd05055132a394769a254f76c3d3aa` | `d4cfc3bd01c619800549389926dac6b24e59634572948864313a99ad5c282f1e` |
-| symbology-identifier-resolution-gated-types | `a1f4971ca4f129e3ee3d77abb5c48e50cb16ddb9dab287118800a4c20d038b0c` | `4fe1b144733425c483c2f9a59d5d9867a198cdafe10745b11944d5635bc09826` |
+| symbology-identifier-resolution-cusip | `791688632500a4f5e54e569003b2a8e06fc739a26697a84744e8fa4a3f3d97f7` | `9e7ab3c417acd15beaaa21bff0d3bed2c68a7f7c5739ad9ee517305a0c0c3948` |
+| symbology-identifier-resolution-isin | `cf45c8be0448501e3acd697ba34c936d30635c8476f4520c545f21ff7e5dd84c` | `69195dd010e582625b65230c2410d0fe7ca7f0a1d7e5540bd23f2a1c16681dc7` |
+| symbology-identifier-resolution-sedol | `3cbe3d6f19dcea4d7fdc0c7797177e9271bf9ef3ee66e3d239776b82204fdaa6` | `d25f84248284e0f28979d9b3070695159880b2cd4a70dbf4680a0fba4442d534` |
 | symbology-historical-identifier-resolution | `c2d265ca8f81648066996eda1d0239123793c53b1fe5795b3f5dd6451f7cadee` | `a847261d4942d262d2c550e225983c0e6939a936283aa118eaf92282f4f12f80` |
 | fundamentals-metrics-non-pit | `98cd998abb2ba3757f99d246fc6fa1fbd0388c38819317fc11113c8688ae26cc` | `57a6d0986877e9bf94f3b91c3b7ce5f8ef0025be47d1e3a9dbb9bd0d38ff80f0` |
 | fundamentals-metrics-pit | `b6e7ee59a74f683b03cdb28eab760d5319752e6cb12a912fcdf84dad6915ccf2` | `07f56a141229dadda77845cc8aabb2f72206db8f6219b77ae20c0c3b6f28b7ea` |
@@ -156,7 +160,20 @@ The dictionaries were pulled SEPARATELY (`pitDataItems=true` and `=false`) and a
 
 ## 5. Notes
 
-- Acquisition lifecycle (shared ledger, 2026-08-18): 14 bounded FS024 live calls plus 1 exact-request success-cache hit populated the captures; this final deterministic fold-in pass made 0 live calls and 14 success-cache hits (including three catalog re-reads).
-- Four probe-specific HTTP 403 captures are preserved as timestamped evidence: subscription-gated Symbology output types, historical Symbology, benchmark constituents, and benchmark index snapshot. They do not imply family-wide or account-wide denial.
-- OBSERVED_LIVE Estimates /metrics returned 710 rows but 692 unique metric codes: 18 codes legitimately have two distinct catalog rows. Persistence retains the full typed row identity; metric code alone is not a catalog row key.
-
+- Acquisition lifecycle (shared ledger, 2026-08-18): the initial FS024 run made
+  14 bounded live calls plus one exact-request success-cache hit. Remediation
+  then preserved one malformed-auth HTTP 401 abort and made three correctly
+  authenticated, separately hashed CUSIP/ISIN/SEDOL calls.
+- Immutable remediation acquisition
+  `fs024-remediation-acquisition-20260818-8c4c917` records the three corrected
+  HTTP 403 calls. Distinct complete replay
+  `fs024-remediation-replay-20260818-8c4c917` records 17 probe identities, 17
+  capture hashes, zero live calls, and 14 success-cache hits. The overwritten
+  initial acquisition manifest is not claimed recovered.
+- HTTP 403 conclusions are request-specific and never imply a family-wide or
+  account-wide denial. Cached HTTP 401 is an account-auth abort and cannot
+  produce endpoint entitlement claims.
+- OBSERVED_LIVE Estimates `/metrics` returned 710 rows but 692 unique metric
+  codes: 18 codes legitimately have two distinct catalog rows. Persistence
+  retains the full typed row identity; metric code alone is not a row key.
+- Replay-mode `NOT_CAPTURED` rows are absences, not evidence.

@@ -3,15 +3,19 @@
 - **Lane id:** FS011-REMEDIATE-01 (implementer remediation)
 - **Branch / worktree:** `agent/fs-implementer/FS011-identity` / `.worktrees/FS011`
 - **Start SHA:** `47d4bd93a5bfcd69cfcf28c502134b6b874a0973`
-- **Remediation code SHA:** `b1ac80cd1a81d876a8bc3642407e908a1adda17e`
-- **State:** REMEDIATED — focused gates green; full gates pending
+- **Remediation code SHAs:** `b1ac80cd1a81d876a8bc3642407e908a1adda17e`
+  (VF-FS011-1..5 + duplicate hardening),
+  `5f5033765f16f0107a01f30bdc2deb039696e6f1` (RT-FS011-07)
+- **State:** REMEDIATED — focused and full gates green; ready for fresh
+  independent reverification + red-team reattack
 - **PR:** #86
 
 ## Scope
 
-Exactly the five blocking findings in `docs/verification/FS011.md`, plus the
-cheap/safe exact-duplicate payload observation. No live API call was made and
-no credential file was read. The independently observed historical endpoint
+Exactly the five blocking findings in `docs/verification/FS011.md`, the two
+independently reported red-team blockers RT-FS011-06/07, plus the cheap/safe
+exact-duplicate payload observation. No live API call was made and no
+credential file was read. The independently observed historical endpoint
 entitlement gap remains separate and UNRESOLVED; this code remediation does
 not waive or relabel that acceptance blocker.
 
@@ -41,6 +45,14 @@ not waive or relabel that acceptance blocker.
 6. **Nonblocking duplicate observation.** Exact duplicate current-response
    payloads are deduplicated to one output row; any differing repeated row is
    still an `AmbiguousResolutionError`.
+7. **RT-FS011-06 — exact historical output request set.** Covered by the
+   VF-FS011-2 response boundary: a documented output type is still refused if
+   it was not in this exact request's `output_symbol_types`, preventing cache-
+   identity/output injection.
+8. **RT-FS011-07 — ambiguous bridge history.** If distinct tickerRegion
+   values cover the bridge date, the bridge returns the typed
+   `FALLBACK_CROSSCHECK_DISAGREE`/v1 outcome even when one value matches. One
+   matching row can no longer override contradictory covering evidence.
 
 ## Keeper evidence
 
@@ -48,12 +60,15 @@ not waive or relabel that acceptance blocker.
   entity-only/no-security seed, wrong/missing scheme echo, wrong fsym level,
   lower/upper historical ticker collision, malformed scheme/value, inverted
   interval, conflicting re-seed, and exact duplicate payload cases.
-- Focused gates at `b1ac80c`: ruff clean; strict mypy clean; FS011 unit suite
-  **89 passed**.
+- Focused gates at `5f50337`: ruff clean; strict mypy clean; FS011 unit suite
+  **90 passed**.
+- Full gates at `5f50337`: ruff format check **330 files**, ruff check clean,
+  strict mypy **171 source files**, `CI=1 pytest -q` **2,919 passed / 23
+  skipped / 22 xfailed** in 38.94s.
 
 ## Remaining / next atomic action
 
-Run full repository format/lint/strict-mypy/pytest gates, then checkpoint the
-exact results and push the coherent remediation for fresh independent
-reverification and red-team reattack. This lane does not self-certify either
-gate.
+Push the coherent remediation and dispatch fresh independent reverification +
+red-team reattack pinned to the final branch SHA. This lane does not
+self-certify either gate. Historical content acceptance remains separately
+blocked until observed green or the charter is explicitly amended.

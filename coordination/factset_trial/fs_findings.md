@@ -174,7 +174,8 @@ counts 2246/439/710. PR #87 is not merge-ready; remediation and fresh
 reverification are mandatory.
 
 ## F-016 (2026-08-18, PROVEN — FS011 red-team round 2) — casefold response-key collision
-At exact remediation checkpoint `0cf711c`, the expanded independent red-team
+At exact remediation checkpoint `0cf711c`, red-team checkpoint `17b66d4`
+recorded an expanded independent suite of
 suite ran 28 cases: 26 passed and two deliberate attacks still succeeded.
 RT-FS011-09 proves the response parser silently applies last-wins semantics when
 two keys differ only by case but carry conflicting values, including both
@@ -182,5 +183,8 @@ non-null/non-null and null/non-null variants (for example canonical and
 upper-case forms of `fsymSecurityId`). Equivalent case variants collapse
 safely. The code gate remains FAIL pending a narrow fail-closed collision check,
 permanent keepers, a new immutable implementation checkpoint, and fresh dual
-verification. The historical live-content 403 is tracked separately and remains
-an independent FS011 acceptance blocker.
+verification. The narrow fix is now pushed at immutable implementation
+checkpoint `400f28a` (code `10073f4`) with permanent conflicting/equivalent
+casefold keepers; independent rechecks remain in progress. The historical live-
+content 403 is tracked separately and remains an independent FS011 acceptance
+blocker.

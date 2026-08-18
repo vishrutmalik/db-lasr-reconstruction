@@ -1,6 +1,6 @@
 # FactSet Trial — Current State (materialized view; canonical = TRIAL_STATE.yaml)
 
-- state_revision: 12 · generation 2 · reconciled 2026-08-18 after targeted
+- state_revision: 13 · generation 2 · reconciled 2026-08-18 after targeted
   unclean takeover at main `ad4df3f`
 - PHASE: live-data phase (identity + discovery wave)
 - MERGED (11): FS001-FS010, FS021 — docs/design phase + the shared transport
@@ -17,7 +17,9 @@
   #86 must not merge. Remediation of verifier and red-team round-1 findings is
   complete at checkpoint `0cf711c`, but red-team round 2 found RT-FS011-09:
   conflicting response keys that differ only by case are silently last-wins.
-  A narrow second remediation is dispatched before fresh dual rechecks. FS024
+  That narrow defect is fixed at checkpoint `400f28a` with 109 focused and
+  2,923 full-suite tests passing; red-team reattack is running and the fresh
+  verifier is queued at that exact SHA. FS024
   implementation is complete at `3f15d04`,
   checkpointed at `087edc6`, and open as PR #87. Notebook sections 1-4 replayed
   top-to-bottom from real captures with zero live calls; full gates are green.
@@ -43,7 +45,8 @@
   preserved without family-wide or causal inference (F-012).
 - FS011 blockers: VF-FS011-1..5 require code remediation + fresh reverification;
   RT-FS011-01..07 were independently attacked; code remediation is now under
-  second-round repair for RT-FS011-09 before dual recheck. Historical Symbology content remains unverified because the
+  second-round repair for RT-FS011-09 is at `400f28a` under dual recheck.
+  Historical Symbology content remains unverified because the
   endpoint is 403, which both reviews rule does not satisfy the unchanged charter.
 - FS024 blockers: gated CUSIP/ISIN/SEDOL evidence must be separated; cached
   HTTP 401 must remain an account-auth abort; the acquisition manifest must be

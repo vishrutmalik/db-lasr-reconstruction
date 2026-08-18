@@ -231,8 +231,19 @@ class TestTrialConfigBudgets:
         assert endpoint_sum <= 150
         assert config.transport.max_live_calls_per_day <= 150
 
+    @pytest.mark.parametrize(
+        ("endpoint", "prior_calls", "expected_limit"),
+        [
+            ("/identifier-resolution", 17, 20),
+            ("/historical-identifier-resolution", 4, 8),
+        ],
+    )
     def test_shared_prior_calls_leave_room_for_fs024_unique_probe(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
+        endpoint: str,
+        prior_calls: int,
+        expected_limit: int,
     ) -> None:
         """The append-only ledger is shared with FS010/FS011.
 
@@ -242,20 +253,20 @@ class TestTrialConfigBudgets:
         resetting or deleting ledger evidence is never an option.
         """
         config = load_trial_config(TRIAL_YAML)
-        policy = config.endpoint_policy("symbology", "/identifier-resolution")
-        ledger = LiveCallLedger(tmp_path, now=lambda: _T0)
-        for i in range(17):
+        policy = config.endpoint_policy("symbology", endpoint)
+        ledger = LiveCallLedger(tmp_path / endpoint.removeprefix("/"), now=lambda: _T0)
+        for i in range(prior_calls):
             request_hash_value = f"{i:064x}"
             reservation_id = ledger.reserve_live_call(
                 api_family="symbology",
-                endpoint="/identifier-resolution",
+                endpoint=endpoint,
                 request_hash=request_hash_value,
                 max_live_calls_per_day=config.transport.max_live_calls_per_day,
                 max_endpoint_requests=policy.max_live_requests,
             )
             ledger.record_live_call(
                 api_family="symbology",
-                endpoint="/identifier-resolution",
+                endpoint=endpoint,
                 request_hash=request_hash_value,
                 http_status=200,
                 reservation_id=reservation_id,
@@ -263,13 +274,13 @@ class TestTrialConfigBudgets:
 
         reservation_id = ledger.reserve_live_call(
             api_family="symbology",
-            endpoint="/identifier-resolution",
+            endpoint=endpoint,
             request_hash="f" * 64,
             max_live_calls_per_day=config.transport.max_live_calls_per_day,
             max_endpoint_requests=policy.max_live_requests,
         )
         assert reservation_id
-        assert policy.max_live_requests == 20
+        assert policy.max_live_requests == expected_limit
 
     def test_async_batch_endpoints_are_never_live_enabled(self) -> None:
         """VF-FS010-3: batch live is prohibited until FS012 — the config

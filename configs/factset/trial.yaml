@@ -88,7 +88,8 @@ families:
                                       # gated-types probe + retry headroom (sum still 74)
       - endpoint: /historical-identifier-resolution
         verb: POST
-        max_live_requests: 4         # FS024 probe + retry headroom
+        max_live_requests: 8         # 4 shared-ledger calls preceded FS024;
+                                      # one planned probe + retry headroom
   fundamentals:
     api_version: v2
     path_prefix: /factset-fundamentals/v2   # FS012 re-verifies after FS009

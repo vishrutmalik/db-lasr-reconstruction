@@ -164,6 +164,10 @@ class TestCommittedTrialYaml:
         policy = config.endpoint_policy("symbology", "/identifier-resolution")
         assert policy.max_live_requests == 20
         assert policy.max_live_requests <= config.transport.max_live_calls_per_day
+        historical = config.endpoint_policy(
+            "symbology", "/historical-identifier-resolution"
+        )
+        assert historical.max_live_requests == 8
         smoke = config.samples["fs010_live_smoke"]
         assert 1 <= len(smoke.ids) <= 5
 

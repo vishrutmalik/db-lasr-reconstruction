@@ -26,6 +26,24 @@ never hardcode them (HARD RULE).
 
 ---
 
+## 0.1 D-021 subscription-gap execution overlay (2026-08-18)
+
+The trial now distinguishes OBSERVED endpoint evidence from an explicit,
+versioned planning disposition. Request capabilities may be
+`AVAILABLE`, `ASSUMED_NOT_PROVISIONED`, `UNASSESSED` or `DEFERRED`; a 403 never
+creates policy automatically and a 401 always aborts. FS026 binds the plan to
+run manifests and short-circuits exclusions before cache/network.
+
+For the current trial, identity is fsym-native and current-only when history is
+excluded: current typed identifiers may seed fsym, but no current alias becomes
+an as-of alias and no validity dates are invented. Benchmark membership is
+unavailable; `/id-list` is catalog-only, while any explicit cohort/PIT screen
+uses `SCREEN_RULE` and diagnostic/proxy naming. Missing historical aliases,
+vendor membership and delisting completeness prevent purchase-grade performance
+claims, not engineering or purchase-decision completion. The precise six
+capabilities and downstream rules are in `docs/factset/subscription_gaps.md`;
+D-021 governs conflicts with the original sections below.
+
 ## 1. Topology ruling: D-018 RATIFIED, with three binding clarifications
 
 ### 1.1 The ruling

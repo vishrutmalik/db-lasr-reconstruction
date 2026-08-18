@@ -58,6 +58,18 @@ remained deferred under VF-FS010-3/RT-FS010-4.
 | RBICS | `/structure` **Working**; `/entity-focus` **Working** | POST discovery probes implemented/tested in FS024; effective dates remain distinct from knowledge time (§N3) |
 | Benchmarks | `/id-list` **Working**; `/constituents` and `/index-snapshot` **Unauthorized (403)** | sample-list access does not imply data-endpoint entitlement; §N3 remains binding |
 
+### 1.2 D-021 planning overlay (does not alter evidence tags)
+
+The explicit user policy in D-021 treats six tested request capabilities as
+`ASSUMED_NOT_PROVISIONED` for this trial: historical Symbology POST, current
+CUSIP/ISIN/SEDOL output variants, and the sampled SP50 constituents/snapshot
+POST variants. They become typed zero-call exclusions. Current typed market-ID
+**inputs** to fsym remain available; benchmark `/id-list` remains catalog-only.
+All unsampled GET twins and other operations remain `UNKNOWN`, not absent.
+Machine-executable access-plan state lands in FS026; the authoritative evidence
+inventory, fallback semantics and revalidation protocol are in
+`docs/factset/subscription_gaps.md`.
+
 ## 2. Capability matrix (per endpoint; full §3.3 detail per row in `manifest.json`)
 
 Legend: G/P = GET+POST pair. Ent = operation/request-specific entitlement;

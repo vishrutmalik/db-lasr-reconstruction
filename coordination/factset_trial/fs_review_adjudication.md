@@ -103,3 +103,15 @@ zero-work — INTERRUPTED_DEPRIORITIZED per §11.6, resumed when slots idle).
 - Mechanical FS018A/FS018B / FS022A/FS022B naming (replaced by FS024 + FS022
   re-scope — same substance, better traceability).
 - No other finding rejected; none NOT_SUBSTANTIATED.
+
+## 2026-08-18 addendum — D-021 subscription-gap posture
+
+The user explicitly directed the trial to continue around API datasets that
+remain unavailable after bounded diagnosis. D-021 therefore supersedes only
+the earlier assumption that historical Symbology or benchmark membership must
+stall the whole DAG. It does not weaken temporal honesty: current identifiers
+cannot become historical aliases, screen proxies cannot become vendor
+membership, and missing delistings/universe breadth prevent purchase-grade
+performance claims. PIT Fundamentals remains a hard gate for the strict PIT
+arm. Evidence scope and the complete fallback map live in
+`docs/factset/subscription_gaps.md`.

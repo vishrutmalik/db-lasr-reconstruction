@@ -23,6 +23,15 @@ git (data/ gitignored); no local resource paths hardcoded in reusable
 modules; PIT gate failures block regardless of IC; synthetic slice must keep
 passing untouched.
 
+D-021 SUBSCRIPTION-GAP RULE (user directive 2026-08-18): after bounded request
+validation, an explicit planning overlay may mark a request capability
+`ASSUMED_NOT_PROVISIONED`. Evidence remains request-specific; 401 aborts and
+403 never creates policy automatically. Excluded surfaces make zero transport
+calls and return typed skips/refusals. Unknown surfaces remain unknown. No
+historical alias, vendor membership, delisting interval or purchase-grade
+performance claim may be fabricated from a fallback. Governing report:
+`docs/factset/subscription_gaps.md` and D-021.
+
 | ID | Objective | Agent | Deps | Status |
 |----|-----------|-------|------|--------|
 | FS001 | Safety scaffolding: .gitignore, control surface, D-018 provisional | orchestrator | — | DONE (this commit) |
@@ -35,20 +44,21 @@ passing untouched.
 | FS008 | Doc review: Benchmarks v1 | researcher | — | DONE (PR #82) |
 | FS009 | Manifest reconciliation + verification + binding rulings (N1/N2/N3 in MANIFEST.md) | verifier | FS002-8 | DONE (PR #83; ALL 9 docs PRs MERGED main 37ecf1b) |
 | FS010 | Shared transport + trial config (charter below) | implementer | FS002 (family models gated on FS009) | DONE (PR #84; dual r2 gates) |
-| FS011 | Symbology adapter + identity mapping (A-ARCH-01 bridge; adapters MUST route ids through normalize_id_list — VF-FS010-9; tickerRegion casing policy = RT-FS010-2) | implementer | FS010 | REMEDIATING (bounded live battery after F-010; then replacement dual review) |
-| FS012 | Fundamentals adapter (standard + PIT arms, separated; MUST fix VF-FS010-3 batch-poll budget bypass before batch goes live) | implementer | FS010,FS011 | BLOCKED |
-| FS013 | Global Prices + CA adapter + reconciliation battery | implementer | FS010,FS011 | BLOCKED |
-| FS014 | Estimates adapter (NON-PIT labeled, exploratory arm) | implementer | FS010,FS011 | BLOCKED |
-| FS015 | RBICS adapter (historical intervals) | implementer | FS010,FS011 | BLOCKED |
-| FS016 | Benchmarks adapter (membership/history) | implementer | FS010,FS011 | BLOCKED |
+| FS011 | Symbology adapter + limited current/fsym identity mapping (D-021; historical capability retained but policy-disabled) | implementer | FS010,FS026 | AMENDED-CHARTER REMEDIATION |
+| FS012 | Fundamentals adapter (standard + PIT arms, separated; MUST fix VF-FS010-3 batch-poll budget bypass before batch goes live) | implementer | FS010,FS011,FS026 | BLOCKED |
+| FS013 | Global Prices + CA adapter + reconciliation battery | implementer | FS010,FS011,FS026 | BLOCKED |
+| FS014 | Estimates adapter (NON-PIT labeled, exploratory arm) | implementer | FS010,FS011,FS026 | BLOCKED |
+| FS015 | RBICS adapter (historical intervals) | implementer | FS010,FS011,FS026 | BLOCKED |
+| FS016 | Benchmarks adapter (`/id-list` + typed unavailable membership/snapshot surfaces under D-021) | implementer | FS010,FS011,FS026 | BLOCKED |
 | FS017 | Fundamentals PIT gate: 12-step WP5 battery + adversarial red-team (HARD GATE; gaps measured never assumed) | red-team | FS011,FS012 | BLOCKED |
 | FS018 | Metric PROFILING + feature register (catalogued->profiled->model-ready; inclusion/exclusion register) | researcher | FS024,FS012-16 | BLOCKED |
 | FS019 | Real-data model panel: baseline + core N-LASR + PIT-safe config + labeled sensitivities | implementer | FS017,FS018 | BLOCKED |
 | FS020 | E2E real-data slice + notebook completion + purchase-decision memo (5-dim framework) | implementer | FS019,FS023,FS021 | BLOCKED |
 | FS021 | Phase-2 PIT-Estimates DATAFEED spec | researcher | — | DONE (PR #81) |
-| FS022 | Deterministic samples (discovery 30-50 / panel 250-400 / edge 20-50; anchors 2010/14/18/22/recent; PREDECLARED split 2010 warmup, 2011-15 train, 2016-19 val, 2020-25 test; rebalance-date vendor snapshots, no inferred membership) | implementer | FS011,FS016,FS024 | BLOCKED |
+| FS022 | Deterministic samples + D-021 explicit cohort/PIT screen fallback; original sample-size shortfall remains a declared limitation | implementer | FS011,FS013,FS024,FS026,explicit seed source | BLOCKED |
 | FS023 | FactSet DQ battery (ext §9: 20 checks + 7-way accounting) + benchmark/RBICS temporal-honesty gates (effective!=knowledge policy) | implementer | FS011-16 | BLOCKED |
-| FS024 | Live metric-catalog + entitlement discovery (PIT and non-PIT dictionaries SEPARATELY; entitlement matrix; ALL endpoint families sampled per the 3-tier rule; notebook scaffold + sections 1-4) | implementer | FS010 | IMPLEMENTING (resume proven tip 9549755) |
+| FS024 | Live metric-catalog + entitlement discovery (PIT and non-PIT dictionaries SEPARATELY; entitlement matrix; ALL endpoint families sampled per the 3-tier rule; notebook scaffold + sections 1-4) | implementer | FS010 | DONE (PR #87; reverify PASS) |
+| FS026 | FactSet access-plan registry + zero-call fail-soft guards + run-manifest binding (D-021) | implementer | FS010,FS024 | READY |
 
 ## Requirements reconciliation (external_analysis.md, arrived 2026-08-13 after wave-1 launch)
 Authoritative requirements input: /Users/admin/Documents/factset_api_resources/
@@ -130,6 +140,19 @@ trial.yaml family enables (FS024 exclusive). Gates: full repo suite +
 verifier + red-team (identity is quantitatively sensitive). Complete =
 battery green + reports.
 
+### FS011 D-021 amendment (2026-08-18, user-authorized)
+
+Complete = `PASS_LIMITED_CURRENT_IDENTITY`: current tickerRegion and typed
+CUSIP/ISIN/SEDOL inputs resolve consistently to fsym; share-class and seven-way
+accounting gates pass; fsym-based security IDs mint deterministically; and the
+policy-disabled historical surface makes zero cache/network calls. Historical
+ticker-change, dated-alias, live historical duplicate and legacy dated-bridge
+checks report `NOT_APPLICABLE_ASSUMED_NOT_PROVISIONED`, never PASS. The legacy
+bridge keeps legacy-v1 rather than approving an undated cross-provider join.
+All synthetic historical parsing, interval, collision and red-team keepers
+remain mandatory. `supports_delistings=false`; no historical output rows or
+invented validity dates. Fresh verifier + red-team review this amended charter.
+
 ## FS024 durable charter (dispatched 2026-08-17)
 Objective: entitlement matrix + complete live metric catalogs + notebook
 scaffold. scope_basis: EA WP3 + §6.1 + §13; adjudication FS018-split. Owned
@@ -148,3 +171,21 @@ sections 5-18 (later goals populate). Gates: full suite + verifier (red-team
 not required — no quantitative transformation; entitlement tables are
 evidence displays). Complete = entitlement matrix + catalogs + scaffold
 running top-to-bottom in replay mode.
+
+## FS026 durable charter (dispatched 2026-08-18)
+
+Objective: make D-021 executable. Add a versioned FactSet access-plan model
+with `AVAILABLE|ASSUMED_NOT_PROVISIONED|UNASSESSED|DEFERRED` plus
+`CORE_REQUIRED|ARM_REQUIRED|OPTIONAL`, keyed by family/method/path/request
+variant; load it from trial config; hash/snapshot it into every run manifest;
+and expose a typed preflight guard. An exclusion must short-circuit before
+cache/network even under force refresh. A 403 cannot create policy; a 401
+aborts; later success conflicts loudly. Initial policy is exactly the six
+capabilities in `docs/factset/subscription_gaps.md`. Tests cover zero sender/
+cache activity, direction-specific CUSIP behavior, policy/evidence separation,
+run-manifest binding and config validation. Owned paths:
+`src/lasr/data/providers/factset/capabilities.py`, factset config/run-manifest/
+transport modules, `configs/factset/trial.yaml`, focused tests, MANIFEST/
+entitlements/architecture planning overlays. No live calls. Gates: focused +
+full + Ruff + strict mypy + verifier + red-team (access-policy state is
+quantitatively sensitive).

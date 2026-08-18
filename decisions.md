@@ -199,3 +199,32 @@
   manifests; docs/architecture/factset_integration.md.
 - **Reversibility:** MODERATE. **Date:** 2026-08-17. **Agent:** orchestrator.
   **Goals:** FS009-FS024.
+
+## D-021 — Subscription gaps are explicit fail-soft planning inputs
+- **Decision:** Per the user's 2026-08-18 directive, bounded authenticated API
+  capabilities that remain refused after request validation may be marked
+  `ASSUMED_NOT_PROVISIONED` for this trial. This is a reversible planning
+  overlay separate from OBSERVED HTTP evidence; no 403 creates it
+  automatically. Capability identity includes method, path, and request
+  variant. The initial overlay is the six capabilities in
+  `docs/factset/subscription_gaps.md`.
+- **Runtime rule:** excluded capabilities short-circuit before cache/network,
+  including under force refresh, and return typed evidenced skips/refusals.
+  Unknown operations stay unknown. HTTP 401 always aborts. Later success is a
+  loud policy conflict requiring a new decision.
+- **Identity consequence:** FS011 may complete as limited current/fsym identity.
+  Current tickerRegion and typed CUSIP/ISIN/SEDOL inputs may resolve to fsym;
+  outward gated IDs and historical aliases are omitted. No current identifier
+  establishes an as-of join; `supports_delistings=false`.
+- **Universe consequence:** trial FactSet `supports_index_membership=false`.
+  Vendor membership/snapshot outputs are absent. Explicit source-cited cohorts
+  and PIT-filtered `SCREEN_RULE` proxies are diagnostic only and never labeled
+  `index_vendor` or official benchmark data.
+- **Quality consequence:** unavailable required data fails only its analysis
+  arm; optional data becomes an evidenced skip. Missing universe/delisting
+  coverage prevents purchase-grade performance claims but not engineering and
+  purchase-decision completion.
+- **Evidence:** F-011/F-012/F-018/F-019; immutable external ledgers/captures;
+  `docs/factset/subscription_gaps.md`.
+- **Reversibility:** MODERATE. **Date:** 2026-08-18. **Agent:** orchestrator
+  implementing explicit user policy. **Goals:** FS011-FS026.

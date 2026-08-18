@@ -1,10 +1,10 @@
 # FactSet Trial — Current State (materialized view; canonical = TRIAL_STATE.yaml)
 
-- state_revision: 15 · generation 2 · reconciled 2026-08-18 after targeted
+- state_revision: 16 · generation 2 · reconciled 2026-08-18 after targeted
   unclean takeover at main `ad4df3f`
 - PHASE: live-data phase (identity + discovery wave)
-- MERGED (11): FS001-FS010, FS021 — docs/design phase + the shared transport
-  (dual r2 gates; live smoke: auth ACCEPTED, symbology ENTITLED, F-005).
+- MERGED (12): FS001-FS010, FS021, FS024 — docs/design, shared transport,
+  entitlement/catalog discovery and notebook scaffold.
 - VERIFIED: FS025 portability control plane — cold-start gate RECOVERABLE
   (F-008); continuous-recoverability invariant ACTIVE.
 - ACTIVE (write-ahead recorded): FS011 identity spine is IMPLEMENTED at
@@ -19,18 +19,16 @@
   conflicting response keys that differ only by case are silently last-wins.
   That narrow defect is fixed at checkpoint `400f28a`. Fresh verifier `f7b12d1`
   and red-team `49631a8` both PASS the code gate: 138 combined keepers and
-  2,923 full-suite tests pass, with static gates clean. Overall FS011 remains
-  BLOCKED solely because the historical endpoint's 403 leaves the unchanged
-  live-content acceptance arm unassessed; PR #86 and dependents stay blocked.
-  FS024
-  implementation is complete at `3f15d04`,
-  checkpointed at `087edc6`, and open as PR #87. Notebook sections 1-4 replayed
-  top-to-bottom from real captures with zero live calls; full gates are green.
-  Independent FS024 verification returned FAIL at `0c0ae86` with three evidence-
-  integrity blockers. All three are remediated at `45eae8d`: separately hashed
-  gated-type evidence, account-level 401 abort semantics, and immutable distinct
-  acquisition/replay manifests with full lineage. Fresh reverification is
-  running there (no red-team required by charter).
+  2,923 full-suite tests pass, with static gates clean. D-021 now replaces the
+  historical-entitlement stop with `PASS_LIMITED_CURRENT_IDENTITY`: FS011 must
+  add zero-call access-plan guards, preserve fsym-native temporal honesty and
+  pass fresh amended verifier/red-team gates before PR #86 merges. FS024 closed
+  VF-FS024-1..3, passed reverify at `ee8cbf5`, CI 8/8, and merged as PR #87 at
+  main `8398f7c`.
+- ACTIVE: FS026 access-plan registry and zero-call fail-soft guards are
+  write-ahead recorded. It binds the six request capabilities in
+  `docs/factset/subscription_gaps.md` without turning 76 unprobed operations
+  into assumed absences.
 - NEXT on FS011+FS024: adapters FS012/13/14/15/16 in parallel (disjoint
   paths), then gates FS017 (PIT, HARD) + FS023 (DQ), FS022 samples, FS018
   features, FS019 models, FS020 close-out. LASR wave stays PAUSED.
@@ -41,18 +39,18 @@
   intermittent authorization condition. All captures remain request-hash
   addressed under $FACTSET_TRIAL_DATA_ROOT.
 - Vendor questions: FS-VQ-01..75 (register in docs/factset/capability/
-  MANIFEST.md). Current blockers: no global external blocker; the historical
-  Symbology endpoint is currently not entitled and its impact is under FS011
-  dual review.
+  MANIFEST.md). No global external blocker. D-021 treats the tested historical,
+  outward-ID and benchmark membership/snapshot gaps as accepted subscription
+  limitations with typed fallbacks.
 - FS024 entitlement snapshot (2026-08-18): Fundamentals, Global Prices,
   Estimates, and RBICS working on bounded probes; Symbology and Benchmarks
   mixed. Metric catalogs: Fundamentals non-PIT 2246 / PIT 439 / overlap 422;
   Estimates 710 rows / 692 unique codes. Four endpoint-specific 403s are
   preserved without family-wide or causal inference (F-012).
-- FS011 blocker: all VF-FS011-1..5 and RT-FS011-01..09 code findings are closed
+- FS011 amendment: all VF-FS011-1..5 and RT-FS011-01..09 code findings are closed
   under independent dual review at exact `400f28a`. Historical Symbology
-  content remains unverified because the endpoint is 403, which both reviews
-  rule does not satisfy the unchanged charter.
-- FS024 recheck: remediation produced three separate CUSIP/ISIN/SEDOL 403
-  captures, preserves 401 as an account-auth abort, and keeps immutable distinct
-  acquisition/replay manifests. Fresh verifier is checking F-015 at `45eae8d`.
+  is now policy-disabled; zero-call seed-only behavior and the amended limited-
+  current acceptance class require fresh dual review.
+- FS024: MERGED. Three separate CUSIP/ISIN/SEDOL output 403 captures, correct
+  401 account-abort semantics and immutable acquisition/replay manifests passed
+  independent reverify.

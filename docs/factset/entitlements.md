@@ -4,15 +4,23 @@ Generated 2026-08-18T06:43:11.359995+00:00 · run `fs024-remediation-replay-2026
 
 Classification vocabulary is the EA Step-1 exit condition (Working / Partially working / Unauthorized / Unavailable / Requires clarification), plus two honest non-answers: `Not captured` (replay miss — an absence, not evidence) and `Deferred` (deliberately not probed, reason given). Evidence precedence: everything here is OBSERVED_LIVE against verbatim captures addressed by the full request hash + capture sha256 under `$FACTSET_TRIAL_DATA_ROOT/raw/` (outside git). All entitlement claims are TIMESTAMPED: F-009 proved entitlement is time-variable within a single trial day.
 
+D-021 adds a separate planning overlay; it does not rewrite the HTTP evidence
+classification below. Six request capabilities are
+`ASSUMED_NOT_PROVISIONED` and will be zero-call typed exclusions. Full scope,
+unknown/deferred inventory and downstream fallbacks:
+`docs/factset/subscription_gaps.md`. `Unauthorized` here means the sampled
+request returned authenticated HTTP 403; it does not mean account-auth failure
+or a family-wide denial.
+
 ## 1. Family summary
 
 | Family | Probes | Family status | Ops in manifest |
 |---|---|---|---|
 | symbology | 5 | Mixed — see rows | 4 |
-| fundamentals | 3 | Working | 12 |
-| global_prices | 2 | Working | 24 |
-| estimates | 2 | Working | 30 |
-| rbics | 2 | Working | 11 |
+| fundamentals | 3 | All sampled probes working; 9 ops unknown | 12 |
+| global_prices | 2 | All sampled probes working; 22 ops unknown | 24 |
+| estimates | 2 | All sampled probes working; 28 ops unknown | 30 |
+| rbics | 2 | All sampled probes working; 9 ops unknown | 11 |
 | benchmarks | 3 | Mixed — see rows | 14 |
 
 Unprobed operations remain UNRESOLVED and are owned by the family adapters (FS012-FS016) under the three-tier rule; the async-batch deferrals are listed in §3.

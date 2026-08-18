@@ -167,6 +167,22 @@ LT-005 world-native pool (07).
 - `lasr` console script targets lasr.cli:main which lands at G029 (metadata-only
   until then). TID251 banned-api list non-exhaustive — G017 policy call queued.
 
+### A-FS-01 — Explicit current/fsym cohort without historical alias coverage
+- Under D-021, a source-cited configured seed cohort may be resolved through
+  current typed Symbology into fsymSecurityIds. The cohort is ASSUMED suitable
+  for engineering diagnostics only; it is not representative, delisting-
+  complete, or survivorship-safe. Sensitivity: rerun results across alternative
+  disclosed seed sources; no purchase-grade performance claim is permitted.
+
+### A-FS-02 — Screen-rule universe is a proxy, never vendor membership
+- When FactSet benchmark constituents/snapshots are not provisioned, FS022 may
+  build a point-in-time screen over an explicit seed using only rows with
+  `knowledge_time <= as_of`. Basis is `SCREEN_RULE`; names, manifests and plots
+  must say proxy/diagnostic and may not use `index_vendor` or an official index
+  identity. Sensitivity: equal-weight vs cap-weight proxy and seed-source
+  coverage. Missing seed breadth remains a limitation rather than silent
+  sample-size reduction.
+
 ### Field-mapping assumptions (G013, merged PR #52)
 Defined in docs/data/field_mapping.md rows: FM-35 country concept (HQ vs
 exchange listing), FM-18 dividend timing in total-return assembly, FM-31

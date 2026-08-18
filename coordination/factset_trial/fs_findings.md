@@ -217,4 +217,28 @@ temporary parsing of the authorized labeled credential-file format and returned
 output, and that ledger/capture evidence remains preserved. Total remediation
 usage was therefore four live calls. The original overwritten acquisition
 manifest is explicitly not claimed recovered. Keeper/full/static/notebook gates
-are green; fresh independent reverification remains required before PR #87.
+are green. Fresh verifier `ee8cbf5` closed VF-FS024-1..3; PR #87 merged at
+main `8398f7c`.
+
+## F-019 (2026-08-18, PROVEN inventory + USER_POLICY) — bounded failures become explicit subscription gaps, not a global stop
+The reconciled shared ledger contains 39 completed live calls: 17 HTTP 200,
+one operator-caused HTTP 401, and 21 HTTP 403; no 400/404/429/5xx, timeout or
+async failure. Eleven 403s belong to the recovered broad transient window
+(`200→403→200`). The 401 was fixed by parsing the authorized labeled credential
+file correctly and never became entitlement evidence. Ten authenticated 403s
+support the request-specific persistent set: four historical Symbology POST
+variants, one bundled plus three separate outward CUSIP/ISIN/SEDOL output
+requests, and two vendor-example SP50 benchmark POSTs. Current market-ID inputs
+to fsym and benchmark `/id-list` remain working. Seventy-six operations are
+merely unprobed and six are deliberately deferred; neither class is absent.
+
+By explicit user directive, D-021 marks exactly six request capabilities
+`ASSUMED_NOT_PROVISIONED` for planning: historical Symbology POST, three current
+outward identifier output variants, SP50 constituents POST and SP50 snapshot
+POST. This is not a new evidence tag or vendor-cause claim. The implementation
+must short-circuit them before cache/network, preserve typed/synthetic behavior,
+and continue with fsym-native identity, explicit cohorts and PIT-filtered screen
+proxies. Missing historical aliases, vendor membership and delisting coverage
+bar purchase-grade performance claims but do not halt engineering or the
+purchase-decision memo. Full evidence and fallback rules:
+`docs/factset/subscription_gaps.md`.

@@ -4,10 +4,10 @@
 # Lifecycle + ownership + recovery rules: ORCHESTRATOR_BOOTSTRAP.md.
 meta:
   schema_version: 1
-  state_revision: 15
+  state_revision: 16
   orchestration_generation: 2  # OpenAI Codex GPT-5 takeover, session 2026-08-18
-  last_reconciled_main: 7d1f3ce  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
-  last_reconciled_at: 2026-08-18T10:53:13+04:00
+  last_reconciled_main: 8398f7c  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
+  last_reconciled_at: 2026-08-18T11:00:32+04:00
   charter_source: fs_goals.md (durable charters) + external_analysis.md (local requirements doc)
 
 goals:
@@ -43,8 +43,8 @@ goals:
   FS011:
     title: Symbology adapter + identity spine (fsym-seeded, typed resolution)
     scope_basis: EA WP2; D-020(b); MANIFEST identity_semantics
-    lifecycle: BLOCKED  # code gates PASS at exact 400f28a (verifier f7b12d1 + red-team 49631a8); unchanged live-content acceptance remains blocked solely by historical endpoint 403
-    dependencies: [FS010 MERGED]
+    lifecycle: AMENDED_CHARTER_REMEDIATING  # D-021 replaces the external stop with limited-current acceptance; code gates already PASS at 400f28a; zero-call access-plan guards + fresh amended reviews required
+    dependencies: [FS010 MERGED, FS026]
     branch: agent/fs-implementer/FS011-identity
     worktree: .worktrees/FS011
     owned_paths: ["src/lasr/data/providers/factset/identity*.py", "src/lasr/data/providers/factset/symbology_adapter*.py", "tests/unit/test_factset_identity*.py"]
@@ -56,11 +56,12 @@ goals:
       FS011-REMEDIATE-02: {state: REMEDIATED_IDLE, role: implementer remediation, scope_basis: red-team round-2 finding RT-FS011-09 at 0cf711c, branch: agent/fs-implementer/FS011-identity, worktree: .worktrees/FS011, start_sha: 0cf711c71dc369158bc08a18d2a104079222e3b6, code_sha: 10073f4d8c5beeb86a9e1dc0f47034e30a252267, checkpoint_sha: 400f28a36701db76fc7954654487e3a2390c421f, evidence: conflicting non-null/non-null and null/non-null casefold keys fail closed; equivalent values collapse safely; 109 focused pass; full 2923/23/22; ruff/mypy clean; no live calls}
       FS011-REVERIFY-01: {state: VERDICT_CODE_PASS_OVERALL_BLOCKED, role: fresh verifier remediation recheck, reviewed_sha: 400f28a36701db76fc7954654487e3a2390c421f, verdict_sha: f7b12d1dbf2c5e6b0f093817724aaf43c87b3816, closed: [VF-FS011-1, VF-FS011-2, VF-FS011-3, VF-FS011-4, VF-FS011-5, RT-FS011-06, RT-FS011-07, RT-FS011-09], tests: 109 FS011 + 29 red-team = 138 combined; full 2923/23/22; ruff/mypy clean; no live calls, external_gate: historical live-content unassessed because endpoint 403}
       FS011-REDTEAM-01: {state: VERDICT_CODE_PASS_OVERALL_BLOCKED, round1_verdict: FAIL, round1_sha: 312bd31047981ad09c8182017a8fb0eb3874de3d, findings: [RT-FS011-01, RT-FS011-02, RT-FS011-03, RT-FS011-04, RT-FS011-05, RT-FS011-06, RT-FS011-07, RT-FS011-08 nonblocking, RT-FS011-09], round2_target: 0cf711c71dc369158bc08a18d2a104079222e3b6, round2_verdict_sha: 17b66d448d8e2052aa0817c51bd9c63ab2fb3903, round3_target: 400f28a36701db76fc7954654487e3a2390c421f, round3_verdict_sha: 49631a84b466409e09c75c07aa4ef9e36491a543, round3_tests: 29/29 adversarial + 109 focused + full 2923/23/22; ruff/mypy clean; no live calls, external_gate: historical live-content unassessed because endpoint 403}
-    next_action: obtain/confirm entitlement for POST /symbology/v3/historical-identifier-resolution, then rerun the bounded historical battery and fresh acceptance-only reviews; do not merge PR 86 or unblock dependents while the unchanged live-content gate remains unsatisfied
+      FS011-POLICY-01: {state: DISPATCH_RECORDED_WAITING_FS026, role: D-021 adapter amendment, start_sha: f7b12d1dbf2c5e6b0f093817724aaf43c87b3816, acceptance: access plan disables historical transport preflight; seed-only fsym map; legacy bridge refuses dated approval; battery PASS_LIMITED_CURRENT_IDENTITY with policy N/A checks; all historical synthetic keepers retained; focused/full/static + fresh verifier/red-team; no live calls}
+    next_action: land FS026 access-plan schema, rebase/update PR 86 with zero-call limited-current guards, then fresh verifier + red-team under amended charter; merge only after dual PASS
   FS024:
     title: Live metric-catalog + entitlement discovery + notebook scaffold (sections 1-4)
     scope_basis: EA WP3 + §6.1; adjudication (FS018 split)
-    lifecycle: REVERIFYING  # VF-FS024-1..3 remediated at final evidence checkpoint 45eae8d; fresh independent reverification dispatched; PR 87 remains blocked meanwhile
+    lifecycle: MERGED  # fresh reverify PASS ee8cbf5 at exact 45eae8d; PR 87 CI 8/8; merged main 8398f7c
     dependencies: [FS010 MERGED]
     branch: agent/fs-implementer/FS024-discovery
     worktree: .worktrees/FS024
@@ -70,18 +71,18 @@ goals:
       FS024-IMPLEMENT-01: {state: IMPLEMENTED_IDLE, implementation_sha: 3f15d04fa9e52e049a5dd80b6abe39ac881c54de, checkpoint_sha: 087edc61b4c8ce766d7180e2442fbe4423f9dd39, checkpoint: lanes/FS024-IMPLEMENT-01.md, evidence: bounded discovery 14 live + 1 hit; final fold 14 hits/0 live; notebook sections 1-4 replayed; ruff/mypy clean; full pytest 2886/23/22}
       FS024-VERIFY-01: {state: VERDICT_FAIL, reviewed_sha: 087edc61b4c8ce766d7180e2442fbe4423f9dd39, verdict_sha: 0c0ae8670cab681a0dedab155abc566a260d91e2, report: docs/verification/FS024.md, findings: [VF-FS024-1, VF-FS024-2, VF-FS024-3], tests: 73 targeted pass; full 2886/23/22; notebook replay 15 probes/0 live/14 hits; PR CI 8/8}
       FS024-REMEDIATE-01: {state: REMEDIATED_IDLE, role: implementer remediation, scope_basis: verifier findings VF-FS024-1..3 at 0c0ae86, branch: agent/fs-implementer/FS024-discovery, worktree: .worktrees/FS024, start_sha: 0c0ae8670cab681a0dedab155abc566a260d91e2, code_shas: [55cf788fc0ccebe05e9398ae834b0d15d86bc27c, 8c4c9171a3e467878b5c4958b73efa61399c4b52], checkpoint_sha: 45eae8dcc9f95f33a9a4812321de1b8a8117eaa6, evidence: acquisition 3 separately hashed live 403 captures + distinct 17-probe/0-live replay with 17 capture hashes; cached 401 account-aborts; run IDs preflighted and immutable; original overwritten manifest not claimed recovered; total remediation live 4 incl. one preserved malformed-auth 401, tests: 103 focused; full 2891/23/22; notebook 17 probes/0 live/14 hits/0 errors; ruff/mypy clean; PR CI 8/8}
-      FS024-REVERIFY-01: {state: DISPATCHED, role: fresh independent verifier, reviewed_sha: 45eae8dcc9f95f33a9a4812321de1b8a8117eaa6, scope_basis: prior verifier report 0c0ae86 + FS024 charter + remediation evidence, branch: agent/fs-implementer/FS024-discovery, worktree: .worktrees/FS024, owned_paths: [docs/verification/FS024.md, coordination/factset_trial/lanes/FS024-REVERIFY-01.md], acceptance: independently re-probe VF-FS024-1..3, external manifest/capture lineage, cache-only notebook replay, focused/full/static gates; no live calls}
-    next_action: collect fresh independent FS024 reverification at exact 45eae8d; merge PR 87 only after PASS (red-team not required by charter)
-  FS012: {title: Fundamentals adapter (standard+PIT arms), scope_basis: EA WP4+WP5; ruling N1, lifecycle: BLOCKED, dependencies: [FS010, FS011], note: must fix VF-FS010-3 batch-poll budget bypass before batch live}
-  FS013: {title: Prices+CA adapter + reconciliation battery, scope_basis: EA WP7; F-001/F-002, lifecycle: BLOCKED, dependencies: [FS010, FS011]}
-  FS014: {title: Estimates adapter (NON-PIT labeled), scope_basis: EA WP6; ruling N2, lifecycle: BLOCKED, dependencies: [FS010, FS011]}
-  FS015: {title: RBICS adapter (effective-dated), scope_basis: EA WP8; ruling N3, lifecycle: BLOCKED, dependencies: [FS010, FS011]}
-  FS016: {title: Benchmarks adapter (snapshot membership + entitlement table), scope_basis: EA WP9; ruling N3; D-020(f), lifecycle: BLOCKED, dependencies: [FS010, FS011]}
+      FS024-REVERIFY-01: {state: VERDICT_PASS, reviewed_sha: 45eae8dcc9f95f33a9a4812321de1b8a8117eaa6, verdict_sha: ee8cbf5e719fab46feb7eb24958438750b1a1737, closed: [VF-FS024-1, VF-FS024-2, VF-FS024-3], tests: 83 focused; full 2891/23/22; notebook 17 probes/0 live/14 hits/0 errors; ruff/mypy clean; no live calls, notes: [run finished stamp precedes acquisition retrievals, replay needs writable telemetry copy]}
+    next_action: DONE
+  FS012: {title: Fundamentals adapter (standard+PIT arms), scope_basis: EA WP4+WP5; ruling N1; D-021, lifecycle: BLOCKED, dependencies: [FS010, FS011, FS026], note: must fix VF-FS010-3 batch-poll budget bypass before batch live}
+  FS013: {title: Prices+CA adapter + reconciliation battery, scope_basis: EA WP7; F-001/F-002; D-021, lifecycle: BLOCKED, dependencies: [FS010, FS011, FS026]}
+  FS014: {title: Estimates adapter (NON-PIT labeled), scope_basis: EA WP6; ruling N2; D-021, lifecycle: BLOCKED, dependencies: [FS010, FS011, FS026]}
+  FS015: {title: RBICS adapter (effective-dated), scope_basis: EA WP8; ruling N3; D-021, lifecycle: BLOCKED, dependencies: [FS010, FS011, FS026]}
+  FS016: {title: Benchmarks adapter (id-list + typed membership/snapshot exclusions), scope_basis: EA WP9; ruling N3; D-020(f); D-021, lifecycle: BLOCKED, dependencies: [FS010, FS011, FS026]}
   FS017: {title: Fundamentals PIT gate (WP5 12-step + adversarial; HARD GATE), scope_basis: EA WP5; adjudication, lifecycle: BLOCKED, dependencies: [FS011, FS012]}
   FS018: {title: Metric profiling + feature register, scope_basis: EA §10; adjudication, lifecycle: BLOCKED, dependencies: [FS024, FS012, FS013, FS014, FS015, FS016]}
   FS019: {title: Model panel experiments (5 required arms), scope_basis: EA §12, lifecycle: BLOCKED, dependencies: [FS017, FS018, FS022]}
   FS020: {title: E2E slice + notebook completion + purchase memo, scope_basis: EA §13/§18/§20, lifecycle: BLOCKED, dependencies: [FS019, FS023, FS021]}
-  FS022: {title: Deterministic samples + predeclared split, scope_basis: EA §6/§11.1, lifecycle: BLOCKED, dependencies: [FS011, FS016, FS024]}
+  FS022: {title: Deterministic samples + predeclared split + explicit-cohort/PIT-screen fallback, scope_basis: EA §6/§11.1; D-021, lifecycle: BLOCKED, dependencies: [FS011, FS013, FS024, FS026, explicit seed source]}
   FS023: {title: DQ battery + temporal-honesty gates, scope_basis: EA §9; ruling N3, lifecycle: BLOCKED, dependencies: [FS011, FS012, FS013, FS014, FS015, FS016]}
   FS025:
     title: Portability control plane + cold-start recovery gate
@@ -89,8 +90,26 @@ goals:
     lifecycle: VERIFIED  # rerun verdict RECOVERABLE (1e0e0b0); residuals R2-1..4 + CS-2 fixed at revision 5; invariant ACTIVE
     owned_paths: ["coordination/factset_trial/ORCHESTRATOR_BOOTSTRAP.md", "coordination/factset_trial/TRIAL_STATE.yaml", "coordination/factset_trial/CURRENT_STATE.md", "coordination/factset_trial/TAKEOVER.md", "coordination/factset_trial/lanes/README.md", "audit report: docs/verification/FS025_cold_start_audit.md (auditor-owned, audit branch)"]
     next_action: merge audit branch to main (docs-only); then ongoing invariant maintenance
+  FS026:
+    title: FactSet access-plan registry + zero-call subscription-gap guards
+    scope_basis: explicit user directive 2026-08-18; D-021; F-019
+    lifecycle: DISPATCH_RECORDED
+    dependencies: [FS010 MERGED, FS024 MERGED]
+    branch: agent/fs-implementer/FS026-access-policy
+    worktree: .worktrees/FS026
+    owned_paths: [src/lasr/data/providers/factset/capabilities.py, src/lasr/data/providers/factset/config.py, src/lasr/data/providers/factset/run_manifest.py, src/lasr/data/providers/factset/transport.py, configs/factset/trial.yaml, tests/unit/test_factset_capabilities.py, tests/unit/test_factset_config.py, tests/unit/test_factset_run_manifest.py, tests/unit/test_factset_transport.py, docs/factset/capability/MANIFEST.md, docs/factset/capability/manifest.json, docs/factset/entitlements.md, docs/architecture/factset_integration.md]
+    lanes:
+      FS026-IMPLEMENT-01: {state: DISPATCH_RECORDED, role: implementer, start_sha: 8398f7c, acceptance: versioned variant-level access plan; evidence/policy separation; zero-call exclusions even force_refresh; 401 abort; later-success conflict; run-manifest hash/snapshot; initial six D-021 capabilities; full gates; no live calls}
+    next_action: implement + checkpoint, then fresh verifier and red-team before merge
 
 blockers:
+  SUBSCRIPTION-GAPS:
+    status: ACCEPTED_LIMITATION
+    what: Six request capabilities are ASSUMED_NOT_PROVISIONED by explicit D-021 user policy; no global trial stop
+    blocks: []
+    affects: [FS011 limited-current identity, FS016 no vendor membership/snapshot, FS022 explicit cohort/screen fallback, FS019 diagnostic-only performance]
+    evidence: docs/factset/subscription_gaps.md; F-019
+    operational_rule: zero-call typed exclusion; unknown stays unknown; no fabricated aliases/membership/delistings; purchase memo separates API quality from licensed coverage
   VENDOR-1:
     status: RESOLVED_INTERMITTENT
     what: Historical FactSet authorization failure (F-009); cause unproven; exact request restored to HTTP 200 in F-010

@@ -293,24 +293,38 @@ class SymbologyAdapter:
                 parsed = _validate_historical_rows(
                     scheme, chunk, output_symbol_types, parsed
                 )
-                rows.extend(parsed)
                 by_id: dict[str, list[HistoricalResolutionRow]] = {}
                 for row in parsed:
                     by_id.setdefault(row.request_id, []).append(row)
+                accepted_rows: list[HistoricalResolutionRow] = []
                 for value in chunk:
                     key = f"{scheme.value}:{value}"
                     matched = by_id.get(value, [])
+                    unusable = [
+                        m
+                        for m in matched
+                        if m.output_type is None and m.value is not None
+                    ]
                     dated = [
                         m
                         for m in matched
                         if m.output_type is not None and m.value is not None
                     ]
-                    if dated:
+                    if unusable:
+                        accounting.assign(
+                            key,
+                            AccountingCategory.VENDOR_API_FAILURE,
+                            "historical response carried value(s) without"
+                            " outputType; no row for this requestId is usable"
+                            " for hydration (VF-FS011-1)",
+                        )
+                    elif dated:
                         accounting.assign(
                             key,
                             AccountingCategory.SUCCESSFULLY_RETRIEVED,
                             f"{len(dated)} dated identifier interval(s)",
                         )
+                        accepted_rows.extend(matched)
                     elif matched:
                         accounting.assign(
                             key,
@@ -318,6 +332,7 @@ class SymbologyAdapter:
                             "id echoed with no interval values (explicit"
                             " empty history)",
                         )
+                        accepted_rows.extend(matched)
                     else:
                         accounting.assign(
                             key,
@@ -325,6 +340,7 @@ class SymbologyAdapter:
                             "no historical rows echoed (no-match shape is"
                             " U-8 UNRESOLVED; absence recorded verbatim)",
                         )
+                rows.extend(accepted_rows)
         accounting.verify_complete()
         return HistoricalResolution(
             rows=tuple(rows), accounting=accounting, requests_executed=requests
@@ -614,11 +630,10 @@ def _validate_historical_rows(
     for row in rows:
         _check_echoed_input_scheme(scheme, row.input_symbol_type, row.request_id)
         if row.output_type is None:
-            if row.value is not None:
-                raise FactSetIdentityError(
-                    f"historical row for {row.request_id!r} carries a value"
-                    " without outputType; unusable identity evidence"
-                )
+            # A non-null value without a declared output level cannot be
+            # normalized or hydrated. Keep the row long enough for
+            # resolve_historical to account the whole requestId as a typed
+            # VENDOR_API_FAILURE; it is then excluded from returned rows.
             validated.append(row)
             continue
         canonical_output = requested.get(row.output_type.lower())

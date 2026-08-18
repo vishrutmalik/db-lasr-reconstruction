@@ -538,7 +538,7 @@ def test_resolve_historical_validly_empty_vs_not_covered(tmp_path: Path) -> None
     assert acc.category_of("fsymSecurityId:BBBBBB-S") is AccountingCategory.NOT_COVERED
 
 
-def test_resolve_historical_refuses_unusable_value_without_output_type(
+def test_resolve_historical_accounts_unusable_value_without_output_type(
     tmp_path: Path,
 ) -> None:
     transport = _transport(tmp_path)
@@ -561,11 +561,14 @@ def test_resolve_historical_refuses_unusable_value_without_output_type(
             ]
         },
     )
-    with pytest.raises(FactSetIdentityError, match="without outputType"):
-        SymbologyAdapter(transport).resolve_historical(
-            [TypedIdentifier(IdentifierScheme.FSYM_SECURITY, "AAAAAA-S")],
-            output_symbol_types=("tickerRegion",),
-        )
+    identifier = TypedIdentifier(IdentifierScheme.FSYM_SECURITY, "AAAAAA-S")
+    result = SymbologyAdapter(transport).resolve_historical(
+        [identifier], output_symbol_types=("tickerRegion",)
+    )
+    key = account_key(identifier)
+    assert result.accounting.category_of(key) is AccountingCategory.VENDOR_API_FAILURE
+    assert "without outputType" in result.accounting.reason_of(key)
+    assert result.rows == ()
 
 
 def test_resolve_historical_validates_echo_output_and_normalizes_value(

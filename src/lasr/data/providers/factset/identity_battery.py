@@ -355,7 +355,7 @@ def run_identity_battery(
             [*seeds_active, *seeds_inactive], force_refresh=force_refresh
         )
         accountings.append(hydrate_accounting)
-        checks.append(_check_identity_map(identity_map))
+        checks.append(_check_identity_map(identity_map, hydrate_accounting))
     except (DuplicateIdentityError, FactSetIdentityError) as exc:
         checks.append(
             CheckResult(
@@ -614,19 +614,30 @@ def _check_join_consistency(
     )
 
 
-def _check_identity_map(identity_map: IdentityMap) -> CheckResult:
+def _check_identity_map(
+    identity_map: IdentityMap, hydration_accounting: IdAccounting
+) -> CheckResult:
+    hydration_summary = hydration_accounting.summary()
+    historical_not_entitled = hydration_summary[AccountingCategory.NOT_ENTITLED.value]
     open_ended = sum(1 for i in identity_map.intervals if i.end_date_raw is None)
     return CheckResult(
         name="no_silent_duplicate_identities",
-        status="PASS",  # DuplicateIdentityError would have raised
+        # Current fsym seeds were still checked for duplicate ownership, but
+        # an endpoint-level historical entitlement refusal leaves the dated
+        # outward claims unobserved. That is an evidence gap, not a content
+        # mismatch and therefore cannot honestly be called either PASS or
+        # FAIL (F-010 follow-up live evidence, 2026-08-18).
+        status="UNRESOLVED" if historical_not_entitled else "PASS",
         detail={
             "securities_seeded": len(identity_map.seeds),
             "identifier_intervals": len(identity_map.intervals),
             "open_ended_intervals_verbatim": open_ended,
+            "historical_hydration_accounting": hydration_summary,
             "note": (
                 "map build raises DuplicateIdentityError on overlapping"
                 " claims; open endDate stored verbatim (U-7c, no closure"
-                " convention guessed)"
+                " convention guessed); endpoint-level not_entitled leaves"
+                " the historical duplicate check UNRESOLVED"
             ),
         },
     )
@@ -671,6 +682,7 @@ def _run_ticker_change_probe(
 
     accountings: list[IdAccounting] = []
     as_of_values: dict[str, list[str]] = {}
+    as_of_categories: dict[str, str] = {}
     for as_of in (probe.as_of_old, probe.as_of_new):
         result = adapter.resolve_historical(
             [fsym],
@@ -679,9 +691,28 @@ def _run_ticker_change_probe(
             force_refresh=force_refresh,
         )
         accountings.append(result.accounting)
+        category = result.accounting.category_of(account_key(fsym))
+        as_of_categories[as_of.isoformat()] = category.value
         as_of_values[as_of.isoformat()] = [
             r.value for r in result.intervals_for(fsym) if r.value is not None
         ]
+
+    if AccountingCategory.NOT_ENTITLED.value in as_of_categories.values():
+        return (
+            CheckResult(
+                name=f"historical_ticker_change_{probe.current_ticker_region}",
+                status="UNRESOLVED",
+                detail={
+                    "reason": (
+                        "historical endpoint not entitled; ticker-change"
+                        " content was not assessed"
+                    ),
+                    "as_of_accounting": as_of_categories,
+                    "content_assessed": False,
+                },
+            ),
+            accountings,
+        )
 
     old_in_history = probe.old_ticker_region in history_values
     new_in_history = probe.current_ticker_region in history_values

@@ -22,7 +22,7 @@ from lasr.data.providers.factset.errors import (
     FactSetCacheMissError,
     FactSetConfigError,
 )
-from lasr.data.providers.factset.http import HttpResponse
+from lasr.data.providers.factset.http import HttpResponse, HttpSender
 from lasr.data.providers.factset.identity_battery import (
     DEFAULT_BATTERY_SPEC,
     MAX_BATTERY_LIVE_REQUESTS,
@@ -310,8 +310,67 @@ class _ForbiddenSender:
         return HttpResponse(status=403, body=b"User Authorization Failed", headers={})
 
 
+class _CurrentEntitledHistoricalForbiddenSender:
+    """Current resolution succeeds while the historical endpoint refuses.
+
+    This is the per-endpoint entitlement split observed live on 2026-08-18.
+    The battery must preserve it as UNRESOLVED evidence, not fabricate a
+    ticker-history content mismatch.
+    """
+
+    def __init__(self) -> None:
+        self.calls = 0
+        self.current_calls = 0
+        self.historical_calls = 0
+
+    def send(
+        self,
+        *,
+        method: str,
+        url: str,
+        params: dict[str, str] | None,
+        json_body: object | None,
+        timeout_seconds: float,
+    ) -> HttpResponse:
+        self.calls += 1
+        if url.endswith("/historical-identifier-resolution"):
+            self.historical_calls += 1
+            return HttpResponse(
+                status=403, body=b"User Authorization Failed", headers={}
+            )
+
+        self.current_calls += 1
+        assert isinstance(json_body, dict)
+        ids = json_body["ids"]
+        scheme = json_body["inputSymbolType"]
+        assert isinstance(ids, list)
+        assert isinstance(scheme, str)
+        if scheme == "tickerRegion":
+            rows = [_row(str(identifier)) for identifier in ids]
+        else:
+            market = {
+                "CUSIP": {"037833100": "AAPL01-S", "594918104": "MSFT01-S"},
+                "ISIN": {
+                    "US0378331005": "AAPL01-S",
+                    "US5949181045": "MSFT01-S",
+                },
+                "SEDOL": {"2046251": "AAPL01-S", "2588173": "MSFT01-S"},
+            }
+            rows = [
+                {
+                    "requestId": str(identifier),
+                    "inputSymbolType": scheme,
+                    "fsymSecurityId": market[scheme][str(identifier)],
+                }
+                for identifier in ids
+            ]
+        return HttpResponse(
+            status=200, body=json.dumps({"data": rows}).encode(), headers={}
+        )
+
+
 def _live_run(
-    data_root: Path, sender: _ForbiddenSender, *, force_refresh: bool
+    data_root: Path, sender: HttpSender, *, force_refresh: bool
 ) -> dict[str, object]:
     data_root.mkdir(parents=True, exist_ok=True)
     environ = {
@@ -326,7 +385,7 @@ def _live_run(
         repo_root=_REPO_ROOT,
         code_revision="test-rev",
         now=_T0,
-        sender=sender,  # type: ignore[arg-type]
+        sender=sender,
         force_refresh=force_refresh,
     )
 
@@ -356,6 +415,38 @@ def test_battery_force_refresh_reattempts_cached_entitlement_evidence(
     refreshed = _live_run(data_root, third, force_refresh=True)
     assert third.calls == 5  # force_refresh reached every request path
     assert refreshed["seven_way_accounting"] == seven
+
+
+def test_battery_keeps_historical_endpoint_entitlement_gap_unresolved(
+    tmp_path: Path,
+) -> None:
+    sender = _CurrentEntitledHistoricalForbiddenSender()
+    report = _live_run(tmp_path / "trialroot", sender, force_refresh=True)
+
+    assert sender.calls == 8
+    assert sender.current_calls == 5
+    assert sender.historical_calls == 3
+    checks = {c["name"]: c for c in report["checks"]}  # type: ignore[union-attr,index]
+    assert checks["active_universe_resolves_to_fsym"]["status"] == "PASS"
+    duplicate_check = checks["no_silent_duplicate_identities"]
+    assert duplicate_check["status"] == "UNRESOLVED"
+    assert (
+        duplicate_check["detail"]["historical_hydration_accounting"]["not_entitled"]
+        == 11
+    )
+    ticker_check = checks["historical_ticker_change_META-US"]
+    assert ticker_check["status"] == "UNRESOLVED"
+    assert ticker_check["detail"] == {
+        "reason": (
+            "historical endpoint not entitled; ticker-change content was not assessed"
+        ),
+        "as_of_accounting": {
+            "2021-06-30": "not_entitled",
+            "2023-06-30": "not_entitled",
+        },
+        "content_assessed": False,
+    }
+    assert report["overall"] == "PASS_WITH_UNRESOLVED"
 
 
 def test_battery_replay_incomplete_cache_is_typed_miss(tmp_path: Path) -> None:

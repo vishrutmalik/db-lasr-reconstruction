@@ -175,8 +175,8 @@ reverification are mandatory.
 
 ## F-016 (2026-08-18, PROVEN — FS011 red-team round 2) — casefold response-key collision
 At exact remediation checkpoint `0cf711c`, red-team checkpoint `17b66d4`
-recorded an expanded independent suite of
-suite ran 28 cases: 26 passed and two deliberate attacks still succeeded.
+recorded an expanded independent suite of 28 cases: 26 passed and two
+deliberate attacks still succeeded.
 RT-FS011-09 proves the response parser silently applies last-wins semantics when
 two keys differ only by case but carry conflicting values, including both
 non-null/non-null and null/non-null variants (for example canonical and
@@ -188,3 +188,16 @@ checkpoint `400f28a` (code `10073f4`) with permanent conflicting/equivalent
 casefold keepers; independent rechecks remain in progress. The historical live-
 content 403 is tracked separately and remains an independent FS011 acceptance
 blocker.
+
+## F-017 (2026-08-18, PROVEN — FS011 fresh dual review) — code passes; historical content remains blocked
+Both independent reviews pinned exact implementation checkpoint `400f28a`.
+Verifier commit `f7b12d1` closed VF-FS011-1..5 and RT-FS011-06/07/09; red-team
+commit `49631a8` passed 29/29 adversarial keepers and closed RT-FS011-01..09.
+The combined verifier run passed 138/138 keepers, the full suite passed 2923
+with 23 skipped and 22 xfailed, and Ruff plus strict mypy were clean. Neither
+review made live calls or read credentials. This is a code-integrity PASS, not
+an overall FS011 acceptance PASS: the unchanged charter requires live historical
+identifier/ticker-change content, while the historical endpoint remains HTTP
+403 and content is unassessed. PR #86 and FS011 dependents therefore remain
+blocked pending entitlement restoration and a bounded historical acceptance
+rerun; no charter weakening or causal vendor claim is inferred.

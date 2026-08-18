@@ -4,10 +4,10 @@
 # Lifecycle + ownership + recovery rules: ORCHESTRATOR_BOOTSTRAP.md.
 meta:
   schema_version: 1
-  state_revision: 13
+  state_revision: 14
   orchestration_generation: 2  # OpenAI Codex GPT-5 takeover, session 2026-08-18
-  last_reconciled_main: 832b0fd  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
-  last_reconciled_at: 2026-08-18T10:32:21+04:00
+  last_reconciled_main: 887cfef  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
+  last_reconciled_at: 2026-08-18T10:40:19+04:00
   charter_source: fs_goals.md (durable charters) + external_analysis.md (local requirements doc)
 
 goals:
@@ -43,7 +43,7 @@ goals:
   FS011:
     title: Symbology adapter + identity spine (fsym-seeded, typed resolution)
     scope_basis: EA WP2; D-020(b); MANIFEST identity_semantics
-    lifecycle: REVERIFYING  # RT-FS011-09 remediated at immutable checkpoint 400f28a; red-team reattack running and fresh verifier queued; historical entitlement gate remains separate
+    lifecycle: BLOCKED  # code gates PASS at exact 400f28a (verifier f7b12d1 + red-team 49631a8); unchanged live-content acceptance remains blocked solely by historical endpoint 403
     dependencies: [FS010 MERGED]
     branch: agent/fs-implementer/FS011-identity
     worktree: .worktrees/FS011
@@ -54,9 +54,9 @@ goals:
       FS011-VERIFY-01: {state: VERDICT_FAIL, reviewed_sha: e149a9815ce02e9ef8b220826b5f86b708d1b4f8, verdict_sha: 47d4bd93a5bfcd69cfcf28c502134b6b874a0973, report: docs/verification/FS011.md, findings: [VF-FS011-1, VF-FS011-2, VF-FS011-3, VF-FS011-4, VF-FS011-5], tests: 74 FS011 pass; full 2903/23/22; PR CI 8/8}
       FS011-REMEDIATE-01: {state: REMEDIATED_IDLE, start_sha: 47d4bd93a5bfcd69cfcf28c502134b6b874a0973, code_shas: [b1ac80cd1a81d876a8bc3642407e908a1adda17e, 5f5033765f16f0107a01f30bdc2deb039696e6f1, c9ad858ce55c997860d1fd30f0f1a20448a1d439], checkpoint_sha: 0cf711c71dc369158bc08a18d2a104079222e3b6, fixed: [VF-FS011-1, VF-FS011-2, VF-FS011-3, VF-FS011-4, VF-FS011-5, RT-FS011-06, RT-FS011-07, RT-FS011-08 hardening], tests: 90 focused pass; full 2919/23/22; ruff/mypy clean}
       FS011-REMEDIATE-02: {state: REMEDIATED_IDLE, role: implementer remediation, scope_basis: red-team round-2 finding RT-FS011-09 at 0cf711c, branch: agent/fs-implementer/FS011-identity, worktree: .worktrees/FS011, start_sha: 0cf711c71dc369158bc08a18d2a104079222e3b6, code_sha: 10073f4d8c5beeb86a9e1dc0f47034e30a252267, checkpoint_sha: 400f28a36701db76fc7954654487e3a2390c421f, evidence: conflicting non-null/non-null and null/non-null casefold keys fail closed; equivalent values collapse safely; 109 focused pass; full 2923/23/22; ruff/mypy clean; no live calls}
-      FS011-REVERIFY-01: {state: DISPATCH_RECORDED_WAITING_WORKER, role: fresh verifier remediation recheck, reviewed_sha: 400f28a36701db76fc7954654487e3a2390c421f, scope_basis: prior verifier report 47d4bd9 + FS011 charter + RT-FS011-09, branch: agent/fs-implementer/FS011-identity, worktree: .worktrees/FS011, owned_paths: [docs/verification/FS011.md, coordination/factset_trial/lanes/FS011-REVERIFY-01.md], acceptance: independently re-probe VF-FS011-1..5 + RT-FS011-06/07/09 and keeper integrity at exact 400f28a; full gates; explicit code verdict and separate historical-content gate verdict}
-      FS011-REDTEAM-01: {state: ROUND3_RUNNING, round1_verdict: FAIL, round1_sha: 312bd31047981ad09c8182017a8fb0eb3874de3d, findings: [RT-FS011-01, RT-FS011-02, RT-FS011-03, RT-FS011-04, RT-FS011-05, RT-FS011-06, RT-FS011-07, RT-FS011-08 nonblocking, RT-FS011-09], round2_target: 0cf711c71dc369158bc08a18d2a104079222e3b6, round2_verdict_sha: 17b66d448d8e2052aa0817c51bd9c63ab2fb3903, round2_tests: 28 cases/26 pass/2 expected attack failures, round3_target: 400f28a36701db76fc7954654487e3a2390c421f, branch: agent/fs-redteam/FS011-identity, worktree: .worktrees/FS011-redteam, owned_paths: [docs/red_team/FS011.md, tests/leakage/test_red_team_fs011_identity_attacks.py, coordination/factset_trial/lanes/FS011-REDTEAM-01.md], acceptance: re-attack exact 400f28a including both RT-FS011-09 collision variants; append fresh verdict; distinguish code gate from historical entitlement gate}
-    next_action: collect red-team round 3 and dispatch fresh verifier at exact 400f28a; code may advance only on dual PASS, but historical endpoint 403 remains an acceptance blocker absent entitlement restoration or explicit charter amendment; do not merge PR 86
+      FS011-REVERIFY-01: {state: VERDICT_CODE_PASS_OVERALL_BLOCKED, role: fresh verifier remediation recheck, reviewed_sha: 400f28a36701db76fc7954654487e3a2390c421f, verdict_sha: f7b12d1dbf2c5e6b0f093817724aaf43c87b3816, closed: [VF-FS011-1, VF-FS011-2, VF-FS011-3, VF-FS011-4, VF-FS011-5, RT-FS011-06, RT-FS011-07, RT-FS011-09], tests: 109 FS011 + 29 red-team = 138 combined; full 2923/23/22; ruff/mypy clean; no live calls, external_gate: historical live-content unassessed because endpoint 403}
+      FS011-REDTEAM-01: {state: VERDICT_CODE_PASS_OVERALL_BLOCKED, round1_verdict: FAIL, round1_sha: 312bd31047981ad09c8182017a8fb0eb3874de3d, findings: [RT-FS011-01, RT-FS011-02, RT-FS011-03, RT-FS011-04, RT-FS011-05, RT-FS011-06, RT-FS011-07, RT-FS011-08 nonblocking, RT-FS011-09], round2_target: 0cf711c71dc369158bc08a18d2a104079222e3b6, round2_verdict_sha: 17b66d448d8e2052aa0817c51bd9c63ab2fb3903, round3_target: 400f28a36701db76fc7954654487e3a2390c421f, round3_verdict_sha: 49631a84b466409e09c75c07aa4ef9e36491a543, round3_tests: 29/29 adversarial + 109 focused + full 2923/23/22; ruff/mypy clean; no live calls, external_gate: historical live-content unassessed because endpoint 403}
+    next_action: obtain/confirm entitlement for POST /symbology/v3/historical-identifier-resolution, then rerun the bounded historical battery and fresh acceptance-only reviews; do not merge PR 86 or unblock dependents while the unchanged live-content gate remains unsatisfied
   FS024:
     title: Live metric-catalog + entitlement discovery + notebook scaffold (sections 1-4)
     scope_basis: EA WP3 + §6.1; adjudication (FS018 split)

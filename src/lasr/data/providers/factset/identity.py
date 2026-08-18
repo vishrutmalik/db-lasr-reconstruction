@@ -134,6 +134,15 @@ CE2_ID_SCHEME: Mapping[IdentifierScheme, str] = {
     IdentifierScheme.TICKER_EXCHANGE: "ticker",
 }
 
+# Historical Symbology outputs are stored in the provider-neutral CE-2
+# vocabulary, but validation still uses the declared FactSet wire scheme.
+_INTERVAL_IDENTIFIER_SCHEME: Mapping[str, IdentifierScheme] = {
+    "ticker": IdentifierScheme.TICKER_REGION,
+    "cusip": IdentifierScheme.CUSIP,
+    "isin": IdentifierScheme.ISIN,
+    "sedol": IdentifierScheme.SEDOL,
+}
+
 _CUSIP_RE = re.compile(r"^[A-Z0-9]{9}$")
 _ISIN_RE = re.compile(r"^[A-Z]{2}[A-Z0-9]{9}[0-9]$")
 _SEDOL_RE = re.compile(r"^[A-Z0-9]{7}$")
@@ -310,11 +319,29 @@ class IdentifierInterval:
     source: str
 
     def __post_init__(self) -> None:
+        scheme_key = self.id_scheme.strip().lower()
+        declared_scheme = _INTERVAL_IDENTIFIER_SCHEME.get(scheme_key)
+        if declared_scheme is None:
+            raise FactSetIdentityError(
+                f"historical identifier scheme {self.id_scheme!r} is not"
+                " one of ticker/cusip/isin/sedol (F-004)"
+            )
+        normalized_value = normalize_identifier_value(self.id_value)
+        _validate_value(declared_scheme, normalized_value)
+        object.__setattr__(self, "id_scheme", scheme_key)
+        object.__setattr__(self, "id_value", normalized_value)
+
         # Eager parse check: raw strings are stored VERBATIM, but a vendor
         # date that is not ISO-8601 is quarantined at construction, never
         # discovered lazily mid-join.
-        _parse_iso(self.start_date_raw)
-        _parse_iso(self.end_date_raw)
+        start = _parse_iso(self.start_date_raw)
+        end = _parse_iso(self.end_date_raw)
+        if start is not None and end is not None and start > end:
+            raise FactSetIdentityError(
+                f"vendor interval is inverted: startDate"
+                f" {self.start_date_raw!r} is after endDate"
+                f" {self.end_date_raw!r}; quarantine, never repair"
+            )
 
     def parsed_start(self) -> date | None:
         return _parse_iso(self.start_date_raw)
@@ -370,12 +397,23 @@ class IdentityMap:
     # ── seeding ─────────────────────────────────────────────────────────
 
     def seed(self, seed: SecuritySeed) -> SecurityId:
-        """Register one fsym-resolved security; idempotent per fsym id."""
+        """Register one fsym-resolved security.
+
+        An exactly equivalent reassertion is idempotent. The same fsym with
+        any different entity/regional/listing or enrichment claim is a typed
+        refusal: first-write-wins would silently erase cross-API evidence.
+        """
         fsym = normalize_identifier_value(seed.fsym_security_id)
         security_id = seed.security_id
         existing = self._seeds.get(fsym)
         if existing is not None:
-            return existing.security_id
+            if existing == seed:
+                return existing.security_id
+            raise DuplicateIdentityError(
+                f"conflicting re-seed for fsym {fsym!r}: the existing and"
+                " repeated SecuritySeed claims are not exactly equivalent;"
+                " refusing first-write-wins identity loss (WP2)"
+            )
         claimed = self._by_security.get(security_id)
         if claimed is not None and claimed != fsym:
             raise DuplicateIdentityError(

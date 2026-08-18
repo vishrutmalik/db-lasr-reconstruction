@@ -167,6 +167,24 @@ def test_seed_mints_v2_and_is_idempotent() -> None:
     assert len(imap.seeds) == 1
 
 
+def test_conflicting_reseed_is_typed_refusal() -> None:
+    imap = IdentityMap()
+    imap.seed(_seed("DDDDDD-S"))
+    with pytest.raises(DuplicateIdentityError, match="conflicting re-seed"):
+        imap.seed(
+            SecuritySeed(
+                fsym_security_id="DDDDDD-S",
+                fsym_entity_id="BBBBBB-E",
+                fsym_regional_id="DDDDDD-R",
+                fsym_listing_id="DDDDDD-L",
+                name="Conflicting Corp",
+                fref_listing_exchange="NAS",
+                currency="USD",
+            )
+        )
+    assert imap.seeds == (_seed("DDDDDD-S"),)
+
+
 def test_seed_normalizes_fsym_casing() -> None:
     imap = IdentityMap()
     sid = imap.seed(SecuritySeed(fsym_security_id="mh33d6-s"))
@@ -276,6 +294,58 @@ def test_identical_reassertion_is_idempotent() -> None:
     assert len(imap.intervals) == 1
 
 
+def test_historical_identifier_normalizes_before_collision_check() -> None:
+    imap = IdentityMap()
+    first = imap.seed(_seed("AAAAAA-S"))
+    second = imap.seed(_seed("BBBBBB-S"))
+    imap.hydrate(
+        IdentifierInterval(
+            security_id=first,
+            id_scheme="ticker",
+            id_value="meta-us",
+            start_date_raw="2012-05-18",
+            end_date_raw=None,
+            source="historical-identifier-resolution",
+        )
+    )
+    assert imap.intervals[0].id_value == "META-US"
+    with pytest.raises(DuplicateIdentityError, match="overlapping"):
+        imap.hydrate(
+            IdentifierInterval(
+                security_id=second,
+                id_scheme="TICKER",
+                id_value="META-US",
+                start_date_raw="2020-01-01",
+                end_date_raw=None,
+                source="historical-identifier-resolution",
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    ("scheme", "value"),
+    [
+        ("ticker", "NO_REGION"),
+        ("cusip", "123"),
+        ("isin", "US037833100X"),
+        ("sedol", "TOO-LONG"),
+        ("unknown", "AAPL-US"),
+    ],
+)
+def test_historical_identifier_scheme_and_value_are_validated(
+    scheme: str, value: str
+) -> None:
+    with pytest.raises(FactSetIdentityError):
+        IdentifierInterval(
+            security_id="SEC-000000000000",
+            id_scheme=scheme,
+            id_value=value,
+            start_date_raw="2010-01-01",
+            end_date_raw=None,
+            source="historical-identifier-resolution",
+        )
+
+
 def test_malformed_vendor_date_is_quarantined_not_repaired() -> None:
     # Eager at interval construction: verbatim storage, but a non-ISO
     # vendor date refuses immediately (quarantine, never repair).
@@ -286,6 +356,18 @@ def test_malformed_vendor_date_is_quarantined_not_repaired() -> None:
             id_value="EXMP-US",
             start_date_raw="31/05/2012",  # not ISO-8601
             end_date_raw=None,
+            source="historical-identifier-resolution",
+        )
+
+
+def test_inverted_vendor_interval_is_quarantined() -> None:
+    with pytest.raises(FactSetIdentityError, match="inverted"):
+        IdentifierInterval(
+            security_id="SEC-000000000000",
+            id_scheme="ticker",
+            id_value="EXMP-US",
+            start_date_raw="2025-01-01",
+            end_date_raw="2020-01-01",
             source="historical-identifier-resolution",
         )
 

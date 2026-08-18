@@ -263,6 +263,35 @@ def test_resolve_current_accounts_missing_and_null_rows(tmp_path: Path) -> None:
     acc.verify_complete()
 
 
+def test_seed_accounting_uses_actual_fsym_security_outcome(tmp_path: Path) -> None:
+    transport = _transport(tmp_path)
+    request = _current_request(["ENTITY-US"], list(FSYM_OUTPUT_TYPES))
+    _seed_cache(
+        transport,
+        request,
+        {
+            "data": [
+                {
+                    "requestId": "ENTITY-US",
+                    "inputSymbolType": "tickerRegion",
+                    "fsymEntityId": "AAAAAA-E",
+                    "fsymSecurityId": None,
+                    "fsymRegionalId": None,
+                    "fsymListingId": None,
+                }
+            ]
+        },
+    )
+    seeds, resolution = SymbologyAdapter(transport).seed_securities(
+        [TypedIdentifier(IdentifierScheme.TICKER_REGION, "ENTITY-US")]
+    )
+    assert seeds == ()
+    key = "tickerRegion:ENTITY-US"
+    assert resolution.accounting.category_of(key) is AccountingCategory.NOT_COVERED
+    assert "not seeded" in resolution.accounting.reason_of(key)
+    resolution.accounting.verify_complete()
+
+
 def test_resolve_current_one_request_per_scheme(tmp_path: Path) -> None:
     transport = _transport(tmp_path)
     ticker_req = _current_request(["AAPL-US"], ["fsymSecurityId"])
@@ -270,12 +299,28 @@ def test_resolve_current_one_request_per_scheme(tmp_path: Path) -> None:
     _seed_cache(
         transport,
         ticker_req,
-        {"data": [{"requestId": "AAPL-US", "fsymSecurityId": "AAAAAA-S"}]},
+        {
+            "data": [
+                {
+                    "requestId": "AAPL-US",
+                    "inputSymbolType": "tickerRegion",
+                    "fsymSecurityId": "AAAAAA-S",
+                }
+            ]
+        },
     )
     _seed_cache(
         transport,
         cusip_req,
-        {"data": [{"requestId": "037833100", "fsymSecurityId": "AAAAAA-S"}]},
+        {
+            "data": [
+                {
+                    "requestId": "037833100",
+                    "inputSymbolType": "CUSIP",
+                    "fsymSecurityId": "AAAAAA-S",
+                }
+            ]
+        },
     )
     adapter = SymbologyAdapter(transport)
     result = adapter.resolve_current(
@@ -300,8 +345,16 @@ def test_resolve_current_refuses_ambiguous_rows(tmp_path: Path) -> None:
         request,
         {
             "data": [
-                {"requestId": "DUAL-US", "fsymSecurityId": "AAAAAA-S"},
-                {"requestId": "DUAL-US", "fsymSecurityId": "BBBBBB-S"},
+                {
+                    "requestId": "DUAL-US",
+                    "inputSymbolType": "tickerRegion",
+                    "fsymSecurityId": "AAAAAA-S",
+                },
+                {
+                    "requestId": "DUAL-US",
+                    "inputSymbolType": "tickerRegion",
+                    "fsymSecurityId": "BBBBBB-S",
+                },
             ]
         },
     )
@@ -313,13 +366,81 @@ def test_resolve_current_refuses_ambiguous_rows(tmp_path: Path) -> None:
         )
 
 
+def test_resolve_current_dedupes_exact_duplicate_payload(tmp_path: Path) -> None:
+    transport = _transport(tmp_path)
+    request = _current_request(["SAME-US"], ["fsymSecurityId"])
+    row = {
+        "requestId": "SAME-US",
+        "inputSymbolType": "tickerRegion",
+        "fsymSecurityId": "AAAAAA-S",
+    }
+    _seed_cache(transport, request, {"data": [row, dict(row)]})
+    result = SymbologyAdapter(transport).resolve_current(
+        [TypedIdentifier(IdentifierScheme.TICKER_REGION, "SAME-US")],
+        output_symbol_types=("fsymSecurityId",),
+    )
+    assert len(result.rows) == 1
+    assert result.accounting.summary()["successfully_retrieved"] == 1
+
+
+@pytest.mark.parametrize("echoed_scheme", [None, "CUSIP"])
+def test_resolve_current_refuses_missing_or_mismatched_scheme_echo(
+    tmp_path: Path, echoed_scheme: str | None
+) -> None:
+    transport = _transport(tmp_path)
+    request = _current_request(["AAPL-US"], ["fsymSecurityId"])
+    row: dict[str, Any] = {
+        "requestId": "AAPL-US",
+        "fsymSecurityId": "AAAAAA-S",
+    }
+    if echoed_scheme is not None:
+        row["inputSymbolType"] = echoed_scheme
+    _seed_cache(transport, request, {"data": [row]})
+    with pytest.raises(FactSetIdentityError, match="inputSymbolType"):
+        SymbologyAdapter(transport).resolve_current(
+            [TypedIdentifier(IdentifierScheme.TICKER_REGION, "AAPL-US")],
+            output_symbol_types=("fsymSecurityId",),
+        )
+
+
+def test_resolve_current_refuses_wrong_fsym_output_level(tmp_path: Path) -> None:
+    transport = _transport(tmp_path)
+    request = _current_request(["AAPL-US"], ["fsymSecurityId"])
+    _seed_cache(
+        transport,
+        request,
+        {
+            "data": [
+                {
+                    "requestId": "AAPL-US",
+                    "inputSymbolType": "tickerRegion",
+                    "fsymSecurityId": "AAAAAA-R",
+                }
+            ]
+        },
+    )
+    with pytest.raises(FactSetIdentityError, match="level marker mismatch"):
+        SymbologyAdapter(transport).resolve_current(
+            [TypedIdentifier(IdentifierScheme.TICKER_REGION, "AAPL-US")],
+            output_symbol_types=("fsymSecurityId",),
+        )
+
+
 def test_resolve_current_refuses_unrequested_echo(tmp_path: Path) -> None:
     transport = _transport(tmp_path)
     request = _current_request(["AAPL-US"], ["fsymSecurityId"])
     _seed_cache(
         transport,
         request,
-        {"data": [{"requestId": "EVIL-US", "fsymSecurityId": "CCCCCC-S"}]},
+        {
+            "data": [
+                {
+                    "requestId": "EVIL-US",
+                    "inputSymbolType": "tickerRegion",
+                    "fsymSecurityId": "CCCCCC-S",
+                }
+            ]
+        },
     )
     adapter = SymbologyAdapter(transport)
     with pytest.raises(FactSetIdentityError, match="never requested"):
@@ -417,6 +538,110 @@ def test_resolve_historical_validly_empty_vs_not_covered(tmp_path: Path) -> None
     assert acc.category_of("fsymSecurityId:BBBBBB-S") is AccountingCategory.NOT_COVERED
 
 
+def test_resolve_historical_refuses_unusable_value_without_output_type(
+    tmp_path: Path,
+) -> None:
+    transport = _transport(tmp_path)
+    request = build_historical_resolution_request(
+        ids=["AAAAAA-S"],
+        input_symbol_type="fsymSecurityId",
+        output_symbol_types=["tickerRegion"],
+    )
+    _seed_cache(
+        transport,
+        request,
+        {
+            "data": [
+                {
+                    "requestId": "AAAAAA-S",
+                    "inputSymbolType": "fsymSecurityId",
+                    "outputType": None,
+                    "value": "AAPL-US",
+                }
+            ]
+        },
+    )
+    with pytest.raises(FactSetIdentityError, match="without outputType"):
+        SymbologyAdapter(transport).resolve_historical(
+            [TypedIdentifier(IdentifierScheme.FSYM_SECURITY, "AAAAAA-S")],
+            output_symbol_types=("tickerRegion",),
+        )
+
+
+def test_resolve_historical_validates_echo_output_and_normalizes_value(
+    tmp_path: Path,
+) -> None:
+    fsym = TypedIdentifier(IdentifierScheme.FSYM_SECURITY, "AAAAAA-S")
+
+    normalized_transport = _transport(tmp_path / "normalized")
+    request = build_historical_resolution_request(
+        ids=["AAAAAA-S"],
+        input_symbol_type="fsymSecurityId",
+        output_symbol_types=["tickerRegion"],
+    )
+    _seed_cache(
+        normalized_transport,
+        request,
+        {
+            "data": [
+                {
+                    "requestId": "AAAAAA-S",
+                    "inputSymbolType": "fsymSecurityId",
+                    "outputType": "tickerregion",
+                    "value": " meta-us ",
+                    "startDate": "2012-05-18",
+                    "endDate": None,
+                }
+            ]
+        },
+    )
+    result = SymbologyAdapter(normalized_transport).resolve_historical(
+        [fsym], output_symbol_types=("tickerRegion",)
+    )
+    assert result.rows[0].output_type == "tickerRegion"
+    assert result.rows[0].value == "META-US"
+
+    wrong_echo_transport = _transport(tmp_path / "wrong-echo")
+    _seed_cache(
+        wrong_echo_transport,
+        request,
+        {
+            "data": [
+                {
+                    "requestId": "AAAAAA-S",
+                    "inputSymbolType": "CUSIP",
+                    "outputType": "tickerRegion",
+                    "value": "META-US",
+                }
+            ]
+        },
+    )
+    with pytest.raises(FactSetIdentityError, match="inputSymbolType"):
+        SymbologyAdapter(wrong_echo_transport).resolve_historical(
+            [fsym], output_symbol_types=("tickerRegion",)
+        )
+
+    wrong_output_transport = _transport(tmp_path / "wrong-output")
+    _seed_cache(
+        wrong_output_transport,
+        request,
+        {
+            "data": [
+                {
+                    "requestId": "AAAAAA-S",
+                    "inputSymbolType": "fsymSecurityId",
+                    "outputType": "CUSIP",
+                    "value": "037833100",
+                }
+            ]
+        },
+    )
+    with pytest.raises(FactSetIdentityError, match="not requested"):
+        SymbologyAdapter(wrong_output_transport).resolve_historical(
+            [fsym], output_symbol_types=("tickerRegion",)
+        )
+
+
 def test_build_identity_map_seeds_and_hydrates(tmp_path: Path) -> None:
     transport = _transport(tmp_path)
     current = _current_request(["GOOG-US", "GOOGL-US"], list(FSYM_OUTPUT_TYPES))
@@ -444,6 +669,7 @@ def test_build_identity_map_seeds_and_hydrates(tmp_path: Path) -> None:
             "data": [
                 {
                     "requestId": "CCCCCC-S",
+                    "inputSymbolType": "fsymSecurityId",
                     "outputType": "tickerRegion",
                     "value": "GOOG-US",
                     "startDate": "2014-04-03",
@@ -451,6 +677,7 @@ def test_build_identity_map_seeds_and_hydrates(tmp_path: Path) -> None:
                 },
                 {
                     "requestId": "DDDDDD-S",
+                    "inputSymbolType": "fsymSecurityId",
                     "outputType": "tickerRegion",
                     "value": "GOOGL-US",
                     "startDate": "2014-04-03",
@@ -458,6 +685,7 @@ def test_build_identity_map_seeds_and_hydrates(tmp_path: Path) -> None:
                 },
                 {
                     "requestId": "DDDDDD-S",
+                    "inputSymbolType": "fsymSecurityId",
                     "outputType": "CUSIP",
                     "value": "02079K305",
                     "startDate": "2014-04-03",
@@ -547,7 +775,15 @@ def test_bridge_legacy_security_end_to_end(tmp_path: Path) -> None:
     _seed_cache(
         transport,
         current,
-        {"data": [{"requestId": "EXMP-NAS", "fsymSecurityId": "EEEEEE-S"}]},
+        {
+            "data": [
+                {
+                    "requestId": "EXMP-NAS",
+                    "inputSymbolType": "tickerExchange",
+                    "fsymSecurityId": "EEEEEE-S",
+                }
+            ]
+        },
     )
     historical = build_historical_resolution_request(
         ids=["EEEEEE-S"],
@@ -561,6 +797,7 @@ def test_bridge_legacy_security_end_to_end(tmp_path: Path) -> None:
             "data": [
                 {
                     "requestId": "EEEEEE-S",
+                    "inputSymbolType": "fsymSecurityId",
                     "outputType": "tickerRegion",
                     "value": "EXMP-US",
                     "startDate": "2012-05-31",

@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 
 from lasr.data.providers.base import ProviderError
@@ -99,6 +99,10 @@ _HISTORICAL_SCHEME: Mapping[str, str] = {
     "sedol": "sedol",
 }
 
+_OUTPUT_IDENTIFIER_SCHEME: Mapping[str, IdentifierScheme] = {
+    scheme.value.lower(): scheme for scheme in IdentifierScheme
+}
+
 
 class AmbiguousResolutionError(ProviderError):
     """One requestId came back with conflicting rows: a one-to-many
@@ -122,7 +126,10 @@ class CurrentResolution:
 
     def outputs_for(self, identifier: TypedIdentifier) -> Mapping[str, str | None]:
         for row in self.rows:
-            if row.request_id == identifier.value:
+            if (
+                row.request_id == identifier.value
+                and row.input_symbol_type == identifier.scheme.value
+            ):
                 return row.outputs
         raise FactSetIdentityError(
             f"no resolution row for {account_key(identifier)} (its accounting"
@@ -141,7 +148,12 @@ class HistoricalResolution:
     def intervals_for(
         self, identifier: TypedIdentifier
     ) -> tuple[HistoricalResolutionRow, ...]:
-        return tuple(r for r in self.rows if r.request_id == identifier.value)
+        return tuple(
+            r
+            for r in self.rows
+            if r.request_id == identifier.value
+            and r.input_symbol_type == identifier.scheme.value
+        )
 
 
 @dataclass(frozen=True)
@@ -202,8 +214,8 @@ class SymbologyAdapter:
                 parsed = parse_identifier_resolution_response(
                     response.body, requested_output_types=list(output_symbol_types)
                 )
-                _check_unrequested(scheme, chunk, [r.request_id for r in parsed])
-                _refuse_ambiguous_current(parsed)
+                parsed = _validate_current_rows(scheme, chunk, parsed)
+                parsed = _refuse_ambiguous_current(parsed)
                 rows.extend(parsed)
                 returned = {r.request_id for r in parsed}
                 for value in chunk:
@@ -278,7 +290,9 @@ class SymbologyAdapter:
                     _account_chunk_failure(accounting, scheme, chunk, exc)
                     continue
                 parsed = parse_historical_resolution_response(response.body)
-                _check_unrequested(scheme, chunk, [r.request_id for r in parsed])
+                parsed = _validate_historical_rows(
+                    scheme, chunk, output_symbol_types, parsed
+                )
                 rows.extend(parsed)
                 by_id: dict[str, list[HistoricalResolutionRow]] = {}
                 for row in parsed:
@@ -286,7 +300,11 @@ class SymbologyAdapter:
                 for value in chunk:
                     key = f"{scheme.value}:{value}"
                     matched = by_id.get(value, [])
-                    dated = [m for m in matched if m.value is not None]
+                    dated = [
+                        m
+                        for m in matched
+                        if m.output_type is not None and m.value is not None
+                    ]
                     if dated:
                         accounting.assign(
                             key,
@@ -336,6 +354,7 @@ class SymbologyAdapter:
             force_refresh=force_refresh,
         )
         seeds: list[SecuritySeed] = []
+        seed_by_key: dict[str, SecuritySeed] = {}
         for row in resolution.rows:
             outputs = _fold_outputs(row.outputs)
             fsym_security = outputs.get("fsymsecurityid")
@@ -346,18 +365,46 @@ class SymbologyAdapter:
                     row.request_id,
                 )
                 continue
-            seeds.append(
-                SecuritySeed(
-                    fsym_security_id=fsym_security,
-                    fsym_entity_id=outputs.get("fsymentityid"),
-                    fsym_regional_id=outputs.get("fsymregionalid"),
-                    fsym_listing_id=outputs.get("fsymlistingid"),
-                    name=row.name,
-                    fref_listing_exchange=row.fref_listing_exchange,
-                    currency=row.currency,
-                )
+            seed = SecuritySeed(
+                fsym_security_id=fsym_security,
+                fsym_entity_id=outputs.get("fsymentityid"),
+                fsym_regional_id=outputs.get("fsymregionalid"),
+                fsym_listing_id=outputs.get("fsymlistingid"),
+                name=row.name,
+                fref_listing_exchange=row.fref_listing_exchange,
+                currency=row.currency,
             )
-        return tuple(seeds), resolution
+            seeds.append(seed)
+            seed_by_key[f"{row.input_symbol_type}:{row.request_id}"] = seed
+
+        # The generic current resolver accounts any requested non-null output
+        # as retrieved. Seeding has a stricter usable outcome: fsymSecurityId
+        # must exist and validate. Re-account this operation so a row carrying
+        # only entity/regional/listing data cannot silently disappear while
+        # the mapped-or-explained ledger claims success (VF-FS011-1).
+        seed_accounting = IdAccounting(requested=resolution.accounting.requested)
+        for key in seed_accounting.requested:
+            prior = resolution.accounting.category_of(key)
+            if prior is not AccountingCategory.SUCCESSFULLY_RETRIEVED:
+                seed_accounting.assign(key, prior, resolution.accounting.reason_of(key))
+            elif key in seed_by_key:
+                seed_accounting.assign(
+                    key,
+                    AccountingCategory.SUCCESSFULLY_RETRIEVED,
+                    "identity spine seeded from a validated fsymSecurityId",
+                )
+            else:
+                seed_accounting.assign(
+                    key,
+                    AccountingCategory.NOT_COVERED,
+                    "response carried no usable fsymSecurityId; identity spine"
+                    " was not seeded (mapped-or-explained, VF-FS011-1)",
+                )
+        seed_accounting.verify_complete()
+        return (
+            tuple(seeds),
+            replace(resolution, accounting=seed_accounting),
+        )
 
     def hydrate_identity_map(
         self,
@@ -511,18 +558,106 @@ def _fold_outputs(outputs: Mapping[str, str | None]) -> dict[str, str | None]:
     return {k.lower(): v for k, v in outputs.items()}
 
 
-def _refuse_ambiguous_current(rows: Sequence[ResolutionRow]) -> None:
+def _refuse_ambiguous_current(
+    rows: Sequence[ResolutionRow],
+) -> tuple[ResolutionRow, ...]:
     seen: dict[str, ResolutionRow] = {}
+    unique: list[ResolutionRow] = []
     for row in rows:
         prior = seen.get(row.request_id)
-        if prior is not None and prior.outputs != row.outputs:
+        if prior is not None and prior != row:
             raise AmbiguousResolutionError(
                 f"requestId {row.request_id!r} resolved to multiple"
                 f" conflicting candidates: {dict(prior.outputs)!r} vs"
                 f" {dict(row.outputs)!r}; refusing to pick silently"
                 " (D-017 spirit; record as U-6 evidence)"
             )
+        if prior is not None:
+            continue  # exact duplicate payload: one output grain
         seen[row.request_id] = row
+        unique.append(row)
+    return tuple(unique)
+
+
+def _validate_current_rows(
+    scheme: IdentifierScheme,
+    chunk: Sequence[str],
+    rows: Sequence[ResolutionRow],
+) -> tuple[ResolutionRow, ...]:
+    """Validate typed response echoes and normalize supported outputs."""
+    _check_unrequested(scheme, chunk, [row.request_id for row in rows])
+    validated: list[ResolutionRow] = []
+    for row in rows:
+        _check_echoed_input_scheme(scheme, row.input_symbol_type, row.request_id)
+        outputs: dict[str, str | None] = {}
+        for output_type, value in row.outputs.items():
+            declared = _OUTPUT_IDENTIFIER_SCHEME.get(output_type.lower())
+            outputs[output_type] = (
+                TypedIdentifier(declared, value).value
+                if declared is not None and value is not None
+                else value
+            )
+        validated.append(replace(row, outputs=outputs))
+    return tuple(validated)
+
+
+def _validate_historical_rows(
+    scheme: IdentifierScheme,
+    chunk: Sequence[str],
+    requested_output_types: Sequence[str],
+    rows: Sequence[HistoricalResolutionRow],
+) -> tuple[HistoricalResolutionRow, ...]:
+    """Validate typed echoes/output levels and canonicalize interval ids."""
+    _check_unrequested(scheme, chunk, [row.request_id for row in rows])
+    requested = {output.lower(): output for output in requested_output_types}
+    validated: list[HistoricalResolutionRow] = []
+    for row in rows:
+        _check_echoed_input_scheme(scheme, row.input_symbol_type, row.request_id)
+        if row.output_type is None:
+            if row.value is not None:
+                raise FactSetIdentityError(
+                    f"historical row for {row.request_id!r} carries a value"
+                    " without outputType; unusable identity evidence"
+                )
+            validated.append(row)
+            continue
+        canonical_output = requested.get(row.output_type.lower())
+        if canonical_output is None:
+            raise FactSetIdentityError(
+                f"historical row for {row.request_id!r} returned outputType"
+                f" {row.output_type!r} that was not requested"
+            )
+        declared = _OUTPUT_IDENTIFIER_SCHEME.get(canonical_output.lower())
+        if declared is None:
+            raise FactSetIdentityError(
+                f"historical outputType {canonical_output!r} has no typed"
+                " identity validator (F-004)"
+            )
+        normalized_value = (
+            TypedIdentifier(declared, row.value).value
+            if row.value is not None
+            else None
+        )
+        validated.append(
+            replace(
+                row,
+                output_type=canonical_output,
+                value=normalized_value,
+            )
+        )
+    return tuple(validated)
+
+
+def _check_echoed_input_scheme(
+    requested: IdentifierScheme, echoed: str, request_id: str
+) -> None:
+    if echoed != requested.value:
+        rendered = echoed if echoed else "<missing>"
+        raise FactSetIdentityError(
+            f"response row for {request_id!r} echoed inputSymbolType"
+            f" {rendered!r}, expected declared scheme {requested.value!r};"
+            " typed resolution refuses response scheme confusion"
+        )
 
 
 def _check_unrequested(

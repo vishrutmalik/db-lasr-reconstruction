@@ -65,7 +65,7 @@ storage:
 # are flagged in telemetry (FS002 §6.4). Family enables are EXCLUSIVELY
 # owned by FS024 (TRIAL_STATE owned_paths): all six families are enabled
 # for the FS024 entitlement probes + metric catalogs, with tight
-# per-endpoint live budgets (sum 59 << 150 daily). Async-batch endpoints
+# per-endpoint live budgets (sum 82 < 150 daily). Async-batch endpoints
 # (/point-in-time, /periods, batch-*) are DELIBERATELY absent: batch
 # live is prohibited until FS012 fixes VF-FS010-3.
 families:
@@ -83,9 +83,9 @@ families:
     endpoints:
       - endpoint: /identifier-resolution
         verb: POST
-        max_live_requests: 20        # shared-ledger headroom: 17 documented FS010/FS011
-                                      # calls preceded FS024; exact smoke replays + one
-                                      # gated-types probe + retry headroom (sum still 74)
+        max_live_requests: 24        # shared ledger has 18 completed calls;
+                                      # three distinct FS-VQ-02 type probes
+                                      # plus bounded headroom (policy sum 82)
       - endpoint: /historical-identifier-resolution
         verb: POST
         max_live_requests: 8         # 4 shared-ledger calls preceded FS024;

@@ -62,6 +62,7 @@ from lasr.data.providers.factset.discovery_requests import (
     build_rbics_structure_probe_request,
 )
 from lasr.data.providers.factset.errors import (
+    FactSetAuthError,
     FactSetCacheMissError,
     FactSetClientError,
     FactSetConfigError,
@@ -274,20 +275,25 @@ def build_probe_plan(config: FactSetTrialConfig) -> tuple[ProbeSpec, ...]:
             ),
             vq_refs=("FS-VQ-01",),
         ),
-        ProbeSpec(
-            probe_id="symbology-identifier-resolution-gated-types",
-            family="symbology",
-            endpoint="/identifier-resolution",
-            verb="POST",
-            request=build_identifier_resolution_request(
-                ids=list(smoke.ids),
-                output_symbol_types=list(_GATED_OUTPUT_TYPES),
-            ),
-            description=(
-                "subscription-flagged output types CUSIP/ISIN/SEDOL on the"
-                " F-005-proven ids (entitlement + dynamic-key casing pin)"
-            ),
-            vq_refs=("FS-VQ-02", "FS-VQ-26"),
+        *(
+            ProbeSpec(
+                probe_id=(
+                    f"symbology-identifier-resolution-{output_symbol_type.lower()}"
+                ),
+                family="symbology",
+                endpoint="/identifier-resolution",
+                verb="POST",
+                request=build_identifier_resolution_request(
+                    ids=list(smoke.ids),
+                    output_symbol_types=[output_symbol_type],
+                ),
+                description=(
+                    f"subscription-flagged {output_symbol_type} output on the"
+                    " F-005-proven ids (FS-VQ-02 one-type evidence)"
+                ),
+                vq_refs=("FS-VQ-02", "FS-VQ-26"),
+            )
+            for output_symbol_type in _GATED_OUTPUT_TYPES
         ),
         ProbeSpec(
             probe_id="symbology-historical-identifier-resolution",
@@ -497,7 +503,7 @@ def _error_evidence(
 
 def _classify_error_status(status: int | None) -> EndpointClassification:
     """Map a captured error HTTP status to the EA vocabulary."""
-    if status in (401, 403):
+    if status == 403:
         return EndpointClassification.UNAUTHORIZED
     if status == 404 or (status is not None and status >= 500):
         return EndpointClassification.UNAVAILABLE
@@ -523,6 +529,13 @@ def _execute_probe(
         # entitlement matrix displays): classify from the latest error
         # capture when one exists; otherwise this is an honest absence.
         status, capture_id, retrieved = _error_evidence(evidence_cache, spec.request)
+        if status == 401:
+            raise FactSetAuthError(
+                "cached account authentication failure (HTTP 401, capture"
+                f" {capture_id}) invalidates FS024 entitlement discovery;"
+                " endpoint and family entitlement claims are suppressed"
+                " until account authentication is restored"
+            ) from None
         if status is not None:
             return ProbeResult(
                 spec=spec,
@@ -666,6 +679,8 @@ def run_discovery(
 
     sanitizer = Sanitizer(())
     data_root = validate_trial_data_root(environ, repo_root=repo_root, require=live)
+    if write_outputs and data_root is not None:
+        _require_unused_run_id(data_root=data_root, run_id=run_id)
     if live:
         sanitizer = resolve_auth(environ).sanitizer()
         if data_root is None:  # pragma: no cover - require=True raises
@@ -742,21 +757,90 @@ def run_discovery(
     )
 
     if write_outputs and data_root is not None:
-        manifest = build_run_manifest(
-            run_id=run_id,
-            config=config,
-            code_revision=code_revision,
-            stats=transport.stats,
-            environ=environ,
-            started=now,
-            finished=now,
-            notes=(
-                "FS024 entitlement discovery; "
-                + "; ".join(f"{r.spec.probe_id}={r.classification}" for r in results)
-            ),
+        manifest = dict(
+            build_run_manifest(
+                run_id=run_id,
+                config=config,
+                code_revision=code_revision,
+                stats=transport.stats,
+                environ=environ,
+                started=now,
+                finished=now,
+                notes=(
+                    "FS024 entitlement discovery; "
+                    + "; ".join(
+                        f"{r.spec.probe_id}={r.classification}" for r in results
+                    )
+                ),
+            )
         )
-        write_run_manifest(manifest, runs_root=data_root / "runs", sanitizer=sanitizer)
+        manifest["execution_mode"] = "live_cache_first" if live else "replay"
+        manifest["probe_evidence"] = [
+            {
+                "probe_id": r.spec.probe_id,
+                "api_family": r.spec.family,
+                "endpoint": r.spec.endpoint,
+                "verb": r.spec.verb,
+                "classification": r.classification.value,
+                "http_status": r.http_status,
+                "from_cache": r.from_cache,
+                "request_hash": r.request_hash,
+                "capture_id": r.capture_id,
+                "retrieval_time": r.retrieval_time,
+            }
+            for r in results
+        ]
+        manifest["entitlement_results"] = {
+            r.spec.probe_id: r.classification.value for r in results
+        }
+        manifest["raw_capture_sha256"] = list(
+            dict.fromkeys(r.capture_id for r in results if r.capture_id is not None)
+        )
+        _write_discovery_manifest_immutable(
+            manifest, data_root=data_root, sanitizer=sanitizer
+        )
     return report
+
+
+def _run_directory(*, data_root: Path, run_id: str) -> Path:
+    if not run_id.strip() or Path(run_id).name != run_id or run_id in (".", ".."):
+        raise FactSetConfigError(
+            f"run_id must be one non-empty path component, got {run_id!r}"
+        )
+    return data_root / "runs" / run_id
+
+
+def _require_unused_run_id(*, data_root: Path, run_id: str) -> None:
+    """Refuse an existing run id before any probe can spend live quota."""
+    directory = _run_directory(data_root=data_root, run_id=run_id)
+    if directory.exists():
+        raise FactSetConfigError(
+            f"immutable FS024 run id {run_id!r} already exists under"
+            f" {directory.parent}; choose a distinct acquisition/replay run id"
+        )
+
+
+def _write_discovery_manifest_immutable(
+    manifest: Mapping[str, object], *, data_root: Path, sanitizer: Sanitizer
+) -> Path:
+    """Persist one FS024 manifest exactly once.
+
+    The final mkdir is exclusive, so even two processes that passed the
+    preflight check cannot overwrite one another.  A failed/partial directory
+    is deliberately retained and its run id cannot be reused.
+    """
+    run_id = manifest.get("run_id")
+    if not isinstance(run_id, str):
+        raise FactSetConfigError("FS024 run manifest lacks a string run_id")
+    directory = _run_directory(data_root=data_root, run_id=run_id)
+    directory.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        directory.mkdir()
+    except FileExistsError as exc:
+        raise FactSetConfigError(
+            f"immutable FS024 run id {run_id!r} already exists; refusing overwrite"
+        ) from exc
+    return write_run_manifest(manifest, runs_root=directory.parent, sanitizer=sanitizer)
 
 
 def _build_catalogs(
@@ -873,7 +957,7 @@ def _family_verdict(results: Sequence[ProbeResult], family: str) -> str:
         EndpointClassification.WORKING not in classes
         and EndpointClassification.PARTIALLY_WORKING not in classes
     ):
-        return "Unauthorized"
+        return "All sampled probes unauthorized — unprobed ops unknown"
     if EndpointClassification.NOT_CAPTURED in classes and len(classes) == 1:
         return "Not captured"
     return "Mixed — see rows"
@@ -984,7 +1068,7 @@ def render_entitlements_markdown(
                 else "."
             )
             + " Completion path: ONE bounded live re-run of"
-            " `run_discovery(live=True, force_refresh=True)` (15 probes,"
+            " `run_discovery(live=True, force_refresh=True)` (17 probes,"
             " <=150 budget) after authorization is restored; the PIT and"
             " NON-PIT Fundamentals dictionaries are pulled SEPARATELY"
             " (`pitDataItems=true`/`false`) plus the Estimates catalog,"

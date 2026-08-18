@@ -23,7 +23,7 @@ from lasr.data.providers.factset.discovery import (
     render_entitlements_markdown,
     run_discovery,
 )
-from lasr.data.providers.factset.errors import FactSetConfigError
+from lasr.data.providers.factset.errors import FactSetAuthError, FactSetConfigError
 from lasr.data.providers.factset.http import HttpResponse
 from lasr.data.providers.factset.ledger import LiveCallLedger
 from lasr.data.providers.factset.request_norm import request_hash
@@ -82,12 +82,16 @@ def _error_body(message: str) -> bytes:
     return json.dumps({"status": "ERROR", "message": message}).encode()
 
 
-#: Scripted live responses in EXACT probe-plan order (15 probes).
+#: Scripted live responses in EXACT probe-plan order (17 probes).
 def _scripted_responses() -> list[HttpResponse]:
     ok = {"headers": {}}
     return [
         HttpResponse(status=200, body=_data_body(5), **ok),  # sym current
-        HttpResponse(status=200, body=_data_body(5), **ok),  # sym gated types
+        HttpResponse(  # CUSIP denial must not classify ISIN/SEDOL
+            status=403, body=_error_body("CUSIP not authorized"), **ok
+        ),
+        HttpResponse(status=200, body=_data_body(5), **ok),  # ISIN
+        HttpResponse(status=200, body=_data_body(5), **ok),  # SEDOL
         HttpResponse(status=200, body=_data_body(4), **ok),  # sym historical
         HttpResponse(  # fundamentals /metrics non-PIT: 3 metrics
             status=200,
@@ -166,7 +170,7 @@ class TestProbePlan:
         config = load_trial_config(TRIAL_YAML)
         plan_a = build_probe_plan(config)
         plan_b = build_probe_plan(config)
-        assert len(plan_a) == 15
+        assert len(plan_a) == 17
         families = {spec.family for spec in plan_a}
         assert families == set(FAMILY_OPERATION_TOTALS)
         # identical plans hash identically (deterministic replay identity)
@@ -176,6 +180,26 @@ class TestProbePlan:
         # every request identity is unique — no probe shadows another
         hashes = [request_hash(s.request) for s in plan_a]
         assert len(set(hashes)) == len(hashes)
+
+    def test_gated_output_types_are_three_distinct_one_type_probes(self) -> None:
+        plan = build_probe_plan(load_trial_config(TRIAL_YAML))
+        gated = [spec for spec in plan if "identifier-resolution-" in spec.probe_id]
+        gated = [
+            spec
+            for spec in gated
+            if spec.probe_id.rsplit("-", 1)[-1] in {"cusip", "isin", "sedol"}
+        ]
+        assert [spec.probe_id for spec in gated] == [
+            "symbology-identifier-resolution-cusip",
+            "symbology-identifier-resolution-isin",
+            "symbology-identifier-resolution-sedol",
+        ]
+        assert [spec.request.params["outputSymbolTypes"] for spec in gated] == [
+            ["CUSIP"],
+            ["ISIN"],
+            ["SEDOL"],
+        ]
+        assert len({request_hash(spec.request) for spec in gated}) == 3
 
     def test_smoke_probe_reuses_the_f005_request_identity(self) -> None:
         """The first symbology probe re-issues the FS010 smoke request
@@ -234,7 +258,7 @@ class TestTrialConfigBudgets:
     @pytest.mark.parametrize(
         ("endpoint", "prior_calls", "expected_limit"),
         [
-            ("/identifier-resolution", 17, 20),
+            ("/identifier-resolution", 18, 24),
             ("/historical-identifier-resolution", 4, 8),
         ],
     )
@@ -247,9 +271,9 @@ class TestTrialConfigBudgets:
     ) -> None:
         """The append-only ledger is shared with FS010/FS011.
 
-        Seventeen documented current-day identifier-resolution calls
-        preceded the FS024 run.  Its endpoint policy must accommodate
-        those immutable units plus the one unique gated-types probe;
+        Eighteen completed current-day identifier-resolution calls
+        precede remediation.  Its endpoint policy must accommodate
+        those immutable units plus all three unique one-type probes;
         resetting or deleting ledger evidence is never an option.
         """
         config = load_trial_config(TRIAL_YAML)
@@ -272,14 +296,23 @@ class TestTrialConfigBudgets:
                 reservation_id=reservation_id,
             )
 
-        reservation_id = ledger.reserve_live_call(
-            api_family="symbology",
-            endpoint=endpoint,
-            request_hash="f" * 64,
-            max_live_calls_per_day=config.transport.max_live_calls_per_day,
-            max_endpoint_requests=policy.max_live_requests,
-        )
-        assert reservation_id
+        new_probe_count = 3 if endpoint == "/identifier-resolution" else 1
+        for offset in range(new_probe_count):
+            reservation_id = ledger.reserve_live_call(
+                api_family="symbology",
+                endpoint=endpoint,
+                request_hash=f"{prior_calls + offset:064x}",
+                max_live_calls_per_day=config.transport.max_live_calls_per_day,
+                max_endpoint_requests=policy.max_live_requests,
+            )
+            assert reservation_id
+            ledger.record_live_call(
+                api_family="symbology",
+                endpoint=endpoint,
+                request_hash=f"{prior_calls + offset:064x}",
+                http_status=403,
+                reservation_id=reservation_id,
+            )
         assert policy.max_live_requests == expected_limit
 
     def test_async_batch_endpoints_are_never_live_enabled(self) -> None:
@@ -411,6 +444,18 @@ class TestLiveMode:
             is EndpointClassification.WORKING
         )
         assert (
+            by_id["symbology-identifier-resolution-cusip"].classification
+            is EndpointClassification.UNAUTHORIZED
+        )
+        assert (
+            by_id["symbology-identifier-resolution-isin"].classification
+            is EndpointClassification.WORKING
+        )
+        assert (
+            by_id["symbology-identifier-resolution-sedol"].classification
+            is EndpointClassification.WORKING
+        )
+        assert (
             by_id["estimates-fixed-consensus"].classification
             is EndpointClassification.PARTIALLY_WORKING
         )
@@ -429,11 +474,11 @@ class TestLiveMode:
             by_id["benchmarks-index-snapshot"].classification
             is EndpointClassification.REQUIRES_CLARIFICATION
         )
-        assert len(sender.calls) == 15  # one wire call per probe, none extra
+        assert len(sender.calls) == 17  # one wire call per probe, none extra
 
     def test_budget_and_catalog_accounting(self, tmp_path: Path) -> None:
         report, _, environ = self._run(tmp_path)
-        assert report.live_calls == 15  # <= charter budget by two orders
+        assert report.live_calls == 17  # <= charter budget by nearly one order
         assert report.overlap is not None
         assert report.overlap.pit_total == 2
         assert report.overlap.non_pit_total == 3
@@ -458,7 +503,52 @@ class TestLiveMode:
             )
         )
         assert manifest["code_revision"] == "deadbeef"
-        assert manifest["entitlement_results"]["rbics:/entity-focus"] == "FORBIDDEN"
+        assert manifest["execution_mode"] == "live_cache_first"
+        assert len(manifest["probe_evidence"]) == 17
+        assert manifest["entitlement_results"]["rbics-entity-focus"] == ("Unauthorized")
+        expected_captures = {
+            result.capture_id for result in report.probes if result.capture_id
+        }
+        assert set(manifest["raw_capture_sha256"]) == expected_captures
+
+    def test_run_ids_are_immutable_and_replay_uses_a_distinct_manifest(
+        self, tmp_path: Path
+    ) -> None:
+        report1, _, environ = self._run(tmp_path)
+        data_root = Path(environ[ENV_TRIAL_DATA_ROOT])
+        acquisition = data_root / "runs" / "fs024-discovery" / "manifest.json"
+        original = acquisition.read_bytes()
+
+        with pytest.raises(FactSetConfigError, match="immutable FS024 run id"):
+            run_discovery(
+                config_path=TRIAL_YAML,
+                environ=environ,
+                repo_root=REPO_ROOT,
+                code_revision="deadbeef",
+                now=_T0,
+                run_id="fs024-discovery",
+                live=True,
+                sender=FakeSender([]),
+            )
+        assert acquisition.read_bytes() == original
+
+        replay = run_discovery(
+            config_path=TRIAL_YAML,
+            environ={ENV_TRIAL_DATA_ROOT: str(data_root)},
+            repo_root=REPO_ROOT,
+            code_revision="deadbeef",
+            now=_T0,
+            run_id="fs024-discovery-replay",
+            live=False,
+        )
+        replay_path = data_root / "runs" / "fs024-discovery-replay" / "manifest.json"
+        replay_manifest = json.loads(replay_path.read_text(encoding="utf-8"))
+        assert replay.live_calls == 0
+        assert replay_manifest["execution_mode"] == "replay"
+        assert len(replay_manifest["probe_evidence"]) == 17
+        assert set(replay_manifest["raw_capture_sha256"]) == {
+            result.capture_id for result in report1.probes if result.capture_id
+        }
 
     def test_rerun_is_cache_first_minimal_new_quota(self, tmp_path: Path) -> None:
         """Cached SUCCESSES re-serve free; the cached 403 is blocked by
@@ -482,6 +572,7 @@ class TestLiveMode:
             repo_root=REPO_ROOT,
             code_revision="deadbeef",
             now=_T0,
+            run_id="fs024-discovery-cache-first-rerun",
             live=True,
             sender=sender,
         )
@@ -520,6 +611,7 @@ class TestMarkdownRendering:
             repo_root=REPO_ROOT,
             code_revision="deadbeef",
             now=_T0,
+            run_id="fs024-discovery-markdown-render",
             live=True,
             sender=sender,
         )
@@ -570,6 +662,31 @@ class TestReplayErrorEvidence:
         assert result.capture_id is not None
         assert "never replayed as success" in result.detail
         assert report.live_calls == 0
+
+    def test_cached_401_aborts_as_account_auth_not_endpoint_entitlement(
+        self, tmp_path: Path
+    ) -> None:
+        cache_root = tmp_path / "raw"
+        cache = ResponseCache(cache_root)
+        spec = build_probe_plan(load_trial_config(TRIAL_YAML))[0]
+        cache.store(
+            spec.request,
+            b"Account authentication failed",
+            http_status=401,
+            retrieval_time=_T0,
+        )
+        with pytest.raises(
+            FactSetAuthError, match=r"account authentication failure.*HTTP 401"
+        ):
+            run_discovery(
+                config_path=TRIAL_YAML,
+                environ={},
+                repo_root=REPO_ROOT,
+                code_revision="deadbeef",
+                now=_T0,
+                cache_root=cache_root,
+                write_outputs=False,
+            )
 
     def test_cached_5xx_classifies_unavailable_in_replay(self, tmp_path: Path) -> None:
         cache_root = tmp_path / "raw"
@@ -626,7 +743,7 @@ class TestForceRefreshRerun:
     def test_force_refresh_reissues_every_probe_live(self, tmp_path: Path) -> None:
         """The post-restoration single bounded re-run (F-009/VENDOR-1):
         force_refresh bypasses success cache AND the error-cache block,
-        so all 15 probes go back to the wire exactly once."""
+        so all 17 probes go back to the wire exactly once."""
         environ = _live_environ(tmp_path)
         first = FakeSender(_scripted_responses())
         run_discovery(
@@ -652,12 +769,13 @@ class TestForceRefreshRerun:
             repo_root=REPO_ROOT,
             code_revision="deadbeef",
             now=_T0,
+            run_id="fs024-discovery-force-refresh",
             live=True,
             sender=second,
             force_refresh=True,
         )
-        assert len(second.calls) == 15
-        assert report.live_calls == 15
+        assert len(second.calls) == 17
+        assert report.live_calls == 17
         assert all(
             r.classification
             in (

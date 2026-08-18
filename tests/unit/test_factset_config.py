@@ -162,7 +162,7 @@ class TestCommittedTrialYaml:
         # the endpoint cap includes that evidence plus bounded probe headroom.
         config = load_trial_config(TRIAL_YAML)
         policy = config.endpoint_policy("symbology", "/identifier-resolution")
-        assert policy.max_live_requests == 20
+        assert policy.max_live_requests == 24
         assert policy.max_live_requests <= config.transport.max_live_calls_per_day
         historical = config.endpoint_policy(
             "symbology", "/historical-identifier-resolution"

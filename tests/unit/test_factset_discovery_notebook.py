@@ -53,4 +53,4 @@ def test_code_cells_execute_top_to_bottom_in_empty_replay(
 
     report = namespace["REPORT"]
     assert report.live_calls == 0  # type: ignore[union-attr]
-    assert len(report.probes) == 15  # type: ignore[union-attr]
+    assert len(report.probes) == 17  # type: ignore[union-attr]

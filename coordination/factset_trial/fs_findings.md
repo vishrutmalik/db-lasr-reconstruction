@@ -99,3 +99,16 @@ trial data root; raw capture remains outside git. VENDOR-1 is cleared as a
 current blocker. The complete observed sequence is 200 -> 403 -> 200, so every
 entitlement claim remains timestamped and per-family entitlement must still be
 measured; the cause of the transient failure remains UNRESOLVED.
+
+## F-011 (2026-08-18, OBSERVED_LIVE) — Symbology entitlement is endpoint-split
+FS011's single planned post-restoration battery used 8 live calls at
+2026-08-18T05:33:24Z. Five current `/identifier-resolution` calls returned
+HTTP 200: 8/8 active ids resolved; GOOG/GOOGL remained distinguishable; 2/3
+inactive ids resolved with AABA explicitly `not_covered`; and all declared
+CUSIP/ISIN/SEDOL joins were consistent. Three
+`/historical-identifier-resolution` calls (full history and two as-of probes)
+returned HTTP 403. Therefore current typed resolution is ENTITLED at that
+timestamp, while historical identity intervals/ticker-change evidence remain
+UNRESOLVED/not-entitled. This is per-endpoint evidence, not a cause claim and
+not evidence about other FactSet families. External run:
+`fs011-identity-battery-restoration-20260818`; raw responses remain outside git.

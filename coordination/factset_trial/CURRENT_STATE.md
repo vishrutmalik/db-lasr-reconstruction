@@ -1,6 +1,6 @@
 # FactSet Trial — Current State (materialized view; canonical = TRIAL_STATE.yaml)
 
-- state_revision: 7 · generation 2 · reconciled 2026-08-18 after targeted
+- state_revision: 8 · generation 2 · reconciled 2026-08-18 after targeted
   unclean takeover at main `ad4df3f`
 - PHASE: live-data phase (identity + discovery wave)
 - MERGED (11): FS001-FS010, FS021 — docs/design phase + the shared transport
@@ -10,8 +10,11 @@
 - ACTIVE (write-ahead recorded): FS011 identity spine is IMPLEMENTED at
   `43e3b4f` with PR #86 and CI 8/8 green; its old verifier/red-team dispatches
   produced no durable checkpoint and are INTERRUPTED. The implementation lane
-  is resuming only the bounded post-restoration live battery before replacement
-  dual review. FS024 resumes from proven branch tip `9549755` (substantial
+  completed its bounded remediation at `e149a98`: the current endpoint is
+  entitled while the historical endpoint is forbidden; the typed classifier
+  now preserves this as `PASS_WITH_UNRESOLVED`. Replacement verifier and
+  red-team lanes are pinned to that SHA. FS024 resumes from proven branch tip
+  `9549755` (substantial
   discovery runner/tests + offline hardening; lane checkpoint itself is stale)
   to complete live entitlement/catalog evidence, docs, notebook, and gates.
 - NEXT on FS011+FS024: adapters FS012/13/14/15/16 in parallel (disjoint
@@ -24,5 +27,6 @@
   intermittent authorization condition. All captures remain request-hash
   addressed under $FACTSET_TRIAL_DATA_ROOT.
 - Vendor questions: FS-VQ-01..75 (register in docs/factset/capability/
-  MANIFEST.md). Current blockers: none external; FS011 dual review waits only
-  for the revised battery checkpoint.
+  MANIFEST.md). Current blockers: no global external blocker; the historical
+  Symbology endpoint is currently not entitled and its impact is under FS011
+  dual review.

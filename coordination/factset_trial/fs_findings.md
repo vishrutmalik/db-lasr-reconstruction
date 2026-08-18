@@ -130,3 +130,19 @@ not imply entitlement, endpoint failures are not promoted to family-wide
 causes, and async-batch surfaces remained untouched. The live Estimates
 catalog legitimately repeats metric codes across distinct rows; FS024 now
 preserves composite row identity rather than silently collapsing them.
+
+## F-013 (2026-08-18, PROVEN — independent FS011 verification) — five blocking identity-integrity defects
+Fresh verifier report `docs/verification/FS011.md` at commit `47d4bd9`
+reviewed pinned implementation `e149a98` and returned FAIL. Blocking findings:
+VF-FS011-1 seven-way accounting may claim success while emitting no usable
+security seed/historical interval; VF-FS011-2 missing or mismatched echoed
+`inputSymbolType` is accepted; VF-FS011-3 historical identifier values bypass
+scheme normalization/validation so case variants can evade collision checks;
+VF-FS011-4 inverted validity intervals are accepted; VF-FS011-5 conflicting
+entity/regional/listing re-seeds for one fsym are silently ignored. Existing
+gates remained green (74 FS011 tests; full 2903 passed / 23 skipped / 22
+xfailed; PR CI 8/8), demonstrating missing test teeth rather than a noisy
+baseline. The verifier separately confirmed `ad12800` classifier logic but
+ruled the historical 403 leaves the unchanged live-content acceptance arm
+unsatisfied. Remediation and fresh reverification are mandatory; PR #86 is
+not merge-ready.

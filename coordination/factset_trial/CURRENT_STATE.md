@@ -1,6 +1,6 @@
 # FactSet Trial — Current State (materialized view; canonical = TRIAL_STATE.yaml)
 
-- state_revision: 9 · generation 2 · reconciled 2026-08-18 after targeted
+- state_revision: 11 · generation 2 · reconciled 2026-08-18 after targeted
   unclean takeover at main `ad4df3f`
 - PHASE: live-data phase (identity + discovery wave)
 - MERGED (11): FS001-FS010, FS021 — docs/design phase + the shared transport
@@ -12,14 +12,15 @@
   produced no durable checkpoint and are INTERRUPTED. The implementation lane
   completed its bounded remediation at `e149a98`: the current endpoint is
   entitled while the historical endpoint is forbidden; the typed classifier
-  now preserves this as `PASS_WITH_UNRESOLVED`. The replacement verifier is
-  running at that SHA. Red-team write-ahead is pinned there too, but runtime
-  launch hit the child-thread limit; the independent FS024 worker will take
-  that mandatory lane as a new task immediately after FS024 completion. FS024
-  has reached pushed tip `b9aec45`: bounded discovery and deterministic replay
-  fold-in are complete, with entitlement docs/catalogs committed. Its lane
-  checkpoint itself is still stale; notebook sections 1-4, replay execution,
-  final gates, and PR remain.
+  now preserves this as `PASS_WITH_UNRESOLVED`. Fresh verification at that SHA
+  returned FAIL with five blocking identity-integrity findings (F-013), so PR
+  #86 must not merge. Remediation is dispatched from verifier commit `47d4bd9`.
+  An independent replacement red-team is now dispatched on a separate branch/
+  worktree to avoid colliding with remediation; it will re-attack the remediated
+  SHA before its final gate. FS024 implementation is complete at `3f15d04`,
+  checkpointed at `087edc6`, and open as PR #87. Notebook sections 1-4 replayed
+  top-to-bottom from real captures with zero live calls; full gates are green.
+  Independent FS024 verification is dispatched (no red-team required by charter).
 - NEXT on FS011+FS024: adapters FS012/13/14/15/16 in parallel (disjoint
   paths), then gates FS017 (PIT, HARD) + FS023 (DQ), FS022 samples, FS018
   features, FS019 models, FS020 close-out. LASR wave stays PAUSED.
@@ -38,3 +39,6 @@
   mixed. Metric catalogs: Fundamentals non-PIT 2246 / PIT 439 / overlap 422;
   Estimates 710 rows / 692 unique codes. Four endpoint-specific 403s are
   preserved without family-wide or causal inference (F-012).
+- FS011 blockers: VF-FS011-1..5 require code remediation + fresh reverification;
+  historical Symbology content remains unverified because the endpoint is 403,
+  which the verifier ruled does not satisfy the unchanged FS011 charter.

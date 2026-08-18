@@ -5,7 +5,9 @@
 - **Start SHA:** `47d4bd93a5bfcd69cfcf28c502134b6b874a0973`
 - **Remediation code SHAs:** `b1ac80cd1a81d876a8bc3642407e908a1adda17e`
   (VF-FS011-1..5 + duplicate hardening),
-  `5f5033765f16f0107a01f30bdc2deb039696e6f1` (RT-FS011-07)
+  `5f5033765f16f0107a01f30bdc2deb039696e6f1` (RT-FS011-07),
+  `c9ad858ce55c997860d1fd30f0f1a20448a1d439` (VF-FS011-1 seven-way
+  alignment after independent keeper comparison)
 - **State:** REMEDIATED — focused and full gates green; ready for fresh
   independent reverification + red-team reattack
 - **PR:** #86
@@ -25,7 +27,8 @@ not waive or relabel that acceptance blocker.
    now returns operation-specific accounting: a response that lacks a usable,
    validated `fsymSecurityId` produces zero seeds and `NOT_COVERED`, never
    `SUCCESSFULLY_RETRIEVED`. A historical row with a non-null value but no
-   `outputType` is a typed integrity refusal rather than successful hydration.
+   `outputType` accounts the requestId as `VENDOR_API_FAILURE` and excludes
+   all of that requestId's rows from hydration rather than claiming success.
 2. **VF-FS011-2 — typed response boundary.** Current and historical rows
    must echo the exact declared `inputSymbolType`; missing/mismatched echoes
    refuse. Supported current outputs are normalized and structurally validated
@@ -60,11 +63,11 @@ not waive or relabel that acceptance blocker.
   entity-only/no-security seed, wrong/missing scheme echo, wrong fsym level,
   lower/upper historical ticker collision, malformed scheme/value, inverted
   interval, conflicting re-seed, and exact duplicate payload cases.
-- Focused gates at `5f50337`: ruff clean; strict mypy clean; FS011 unit suite
+- Focused gates at `c9ad858`: ruff clean; strict mypy clean; FS011 unit suite
   **90 passed**.
-- Full gates at `5f50337`: ruff format check **330 files**, ruff check clean,
+- Full gates at `c9ad858`: ruff format check **330 files**, ruff check clean,
   strict mypy **171 source files**, `CI=1 pytest -q` **2,919 passed / 23
-  skipped / 22 xfailed** in 38.94s.
+  skipped / 22 xfailed** in 34.30s.
 
 ## Remaining / next atomic action
 

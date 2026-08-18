@@ -58,7 +58,7 @@ performance claim may be fabricated from a fallback. Governing report:
 | FS022 | Deterministic samples + D-021 explicit cohort/PIT screen fallback; original sample-size shortfall remains a declared limitation | implementer | FS011,FS013,FS024,FS026,explicit seed source | BLOCKED |
 | FS023 | FactSet DQ battery (ext §9: 20 checks + 7-way accounting) + benchmark/RBICS temporal-honesty gates (effective!=knowledge policy) | implementer | FS011-16 | BLOCKED |
 | FS024 | Live metric-catalog + entitlement discovery (PIT and non-PIT dictionaries SEPARATELY; entitlement matrix; ALL endpoint families sampled per the 3-tier rule; notebook scaffold + sections 1-4) | implementer | FS010 | DONE (PR #87; reverify PASS) |
-| FS026 | FactSet access-plan registry + zero-call fail-soft guards + run-manifest binding (D-021) | implementer | FS010,FS024 | READY |
+| FS026 | FactSet access-plan registry + zero-call fail-soft guards + run-manifest binding (D-021) | implementer | FS010,FS024 | IMPLEMENTATION CHECKPOINTED (HANDOFF) |
 
 ## Requirements reconciliation (external_analysis.md, arrived 2026-08-13 after wave-1 launch)
 Authoritative requirements input: /Users/admin/Documents/factset_api_resources/
@@ -189,3 +189,10 @@ transport modules, `configs/factset/trial.yaml`, focused tests, MANIFEST/
 entitlements/architecture planning overlays. No live calls. Gates: focused +
 full + Ruff + strict mypy + verifier + red-team (access-policy state is
 quantitatively sensitive).
+
+Controlled handoff checkpoint (2026-08-18): code
+`96881ce9f8ac34d7befc267d22898b42ae691293`, branch checkpoint
+`c0ce6edd00b9ee6e2289fda8097f5f1ea663a09b`. Focused 112 tests, focused Ruff,
+changed-module strict mypy and manifest/diff checks pass; no live calls. Full
+repository gates and fresh verifier/red-team remain. Exact next action is in
+`lanes/FS026-IMPLEMENT-01.md`.

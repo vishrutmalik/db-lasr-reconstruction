@@ -15,6 +15,17 @@ shared-interface dependencies, and conflicts requiring orchestrator resolution.
 ## Shared-interface dependencies
 - (none)
 
+## FactSet trial handoff queue (quiesced; not dispatched)
+- FS026 access-plan implementation is checkpointed at code `96881ce`, branch
+  checkpoint `c0ce6ed`. Next: full repository pytest, repository-wide Ruff and
+  strict mypy; then fresh verifier and red-team against the same immutable code
+  SHA. No review lane is currently running.
+- FS011 PR #86 remains open at `f7b12d1`; its code-integrity gates PASS at
+  reviewed code `400f28a`, but D-021 amended acceptance waits for FS026 merge,
+  limited-current zero-call amendments, and fresh dual review.
+- Merge order: FS026 dual PASS/merge → FS011 amendment dual PASS/merge →
+  parallel FS012/FS013/FS014/FS015/FS016 adapter wave.
+
 ## Deferred doc cleanup (non-blocking verifier findings)
 - RESOLVED by G042 (PR #56, verified): CI-046 /mo reconcile (N-10), PENDING_G011
   sweep, clipped->clamp, embargo quantification, equal-count restatement,

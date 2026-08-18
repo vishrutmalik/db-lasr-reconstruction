@@ -9,7 +9,7 @@ without conversational history.
 
 ## Checkpoint anchors
 - Pause taken at main == origin/main == `5263b53` (the commit adding this file
-  supersedes it); working tree clean; **0 open PRs**; 37 goals MERGED
+  supersedes it); working tree clean; **0 open PRs**; 35 goals MERGED
   (M0–M6 complete: research, methodology, architecture, toolchain, data layer,
   features/targets, models, validation, portfolio L1/2/3, costs, reporting,
   end-to-end vertical slice — every quantitatively sensitive goal dual-gated

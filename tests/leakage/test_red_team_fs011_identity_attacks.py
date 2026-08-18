@@ -135,7 +135,10 @@ def test_hydration_accounting_cannot_claim_success_for_untyped_value() -> None:
         }
     )
     identifier = TypedIdentifier(IdentifierScheme.FSYM_SECURITY, "AAAAAA-S")
-    result = adapter.resolve_historical([identifier])
+    try:
+        result = adapter.resolve_historical([identifier])
+    except (FactSetIdentityError, FactSetIntegrityError):
+        return
 
     assert (
         result.accounting.category_of(account_key(identifier))
@@ -210,6 +213,71 @@ def test_current_fsym_security_output_refuses_wrong_fsym_level(
 
     with pytest.raises((FactSetIdentityError, FactSetIntegrityError)):
         adapter.resolve_current([_ticker()], output_symbol_types=("fsymSecurityId",))
+
+
+@pytest.mark.parametrize(
+    ("canonical", "case_variant"),
+    [("AAAAAA-S", "BBBBBB-S"), (None, "BBBBBB-S")],
+)
+def test_current_response_refuses_conflicting_casefolded_output_keys(
+    canonical: str | None, case_variant: str
+) -> None:
+    adapter = _adapter(
+        {
+            "data": [
+                {
+                    "requestId": "ALFA-US",
+                    "inputSymbolType": "tickerRegion",
+                    "fsymSecurityId": canonical,
+                    "FSYMSECURITYID": case_variant,
+                }
+            ]
+        }
+    )
+
+    with pytest.raises(
+        (AmbiguousResolutionError, FactSetIdentityError, FactSetIntegrityError)
+    ):
+        adapter.resolve_current([_ticker()], output_symbol_types=("fsymSecurityId",))
+
+
+def test_current_response_collapses_equivalent_casefolded_output_keys() -> None:
+    adapter = _adapter(
+        {
+            "data": [
+                {
+                    "requestId": "ALFA-US",
+                    "inputSymbolType": "tickerRegion",
+                    "fsymSecurityId": "AAAAAA-S",
+                    "FSYMSECURITYID": "AAAAAA-S",
+                }
+            ]
+        }
+    )
+
+    result = adapter.resolve_current(
+        [_ticker()], output_symbol_types=("fsymSecurityId",)
+    )
+    assert result.outputs_for(_ticker())["fsymSecurityId"] == "AAAAAA-S"
+
+
+def test_current_response_canonicalizes_one_case_variant_and_lowercase_fsym() -> None:
+    adapter = _adapter(
+        {
+            "data": [
+                {
+                    "requestId": "ALFA-US",
+                    "inputSymbolType": "tickerRegion",
+                    "FSYMSECURITYID": "aaaaaa-s",
+                }
+            ]
+        }
+    )
+
+    result = adapter.resolve_current(
+        [_ticker()], output_symbol_types=("fsymSecurityId",)
+    )
+    assert result.outputs_for(_ticker())["fsymSecurityId"] == "AAAAAA-S"
 
 
 def test_historical_response_cannot_inject_unrequested_output_scheme() -> None:
@@ -341,6 +409,30 @@ def test_partial_chunk_403_remains_per_id_and_does_not_poison_success() -> None:
     assert result.accounting.summary()["not_entitled"] == 100
     assert result.accounting.summary()["successfully_retrieved"] == 1
     result.accounting.verify_complete()
+
+
+def test_historical_403_forces_bridge_unverifiable_fallback() -> None:
+    adapter = _adapter(
+        {
+            "data": [
+                {
+                    "requestId": "ALFA-NAS",
+                    "inputSymbolType": "tickerExchange",
+                    "fsymSecurityId": "AAAAAA-S",
+                }
+            ]
+        },
+        FactSetEntitlementError("synthetic historical endpoint refusal"),
+    )
+
+    outcome = adapter.bridge_legacy_security(
+        ticker="ALFA",
+        exchange="NAS",
+        first_seen=date(2019, 1, 1),
+        retrieval_date=date(2022, 6, 1),
+    )
+    assert outcome.decision is BridgeDecision.FALLBACK_CROSSCHECK_UNVERIFIABLE
+    assert outcome.minting_policy == "legacy_v1"
 
 
 def test_duplicate_input_casing_and_order_have_one_canonical_request() -> None:

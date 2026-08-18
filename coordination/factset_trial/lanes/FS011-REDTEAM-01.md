@@ -5,7 +5,7 @@
   `.worktrees/FS011-redteam`
 - **Pinned round-one implementation:**
   `47d4bd93a5bfcd69cfcf28c502134b6b874a0973`
-- **Status:** ROUND1_FAIL; remediation re-attack pending
+- **Status:** ROUND2_FAIL; RT-FS011-09 remediation/re-attack pending
 - **Owned paths:**
   `tests/leakage/test_red_team_fs011_identity_attacks.py`,
   `docs/red_team/FS011.md`, and this checkpoint
@@ -39,8 +39,15 @@ blocker under the unchanged charter: historical content was not assessed.
 
 ## Next atomic action
 
-Checkpoint these owned artifacts, send the immutable red-team commit and new
-blockers to the orchestrator/implementer, then wait for the implementer to
-publish a remediated immutable SHA. Re-attack that code in a separate
-worktree, append exact round-two evidence and verdict to both reports, and
-only then issue the final gate. Do not edit the central board or PR #86.
+Round two ran against exact detached target
+`0cf711c71dc369158bc08a18d2a104079222e3b6`: the keeper audit plus new variants
+produced 26 passes and 2 failures across 28 cases. Both failures are
+RT-FS011-09: conflicting
+case variants of one current output key are silently last-wins before typed
+validation. All RT-FS011-01..08 cases now pass.
+
+Next, the implementer must refuse conflicting case-insensitive logical output
+keys and publish a new immutable SHA. Re-run all 28 keepers plus fresh variants
+against that exact source in the detached worktree, append the final code
+verdict, and keep the still-blocked historical live-content gate distinct. Do
+not edit the central board or PR #86.

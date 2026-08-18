@@ -261,6 +261,26 @@ def test_current_response_collapses_equivalent_casefolded_output_keys() -> None:
     assert result.outputs_for(_ticker())["fsymSecurityId"] == "AAAAAA-S"
 
 
+def test_current_response_refuses_conflicting_casefolded_market_id_keys() -> None:
+    adapter = _adapter(
+        {
+            "data": [
+                {
+                    "requestId": "ALFA-US",
+                    "inputSymbolType": "tickerRegion",
+                    "CUSIP": "123456789",
+                    "cusip": "987654321",
+                }
+            ]
+        }
+    )
+
+    with pytest.raises(
+        (AmbiguousResolutionError, FactSetIdentityError, FactSetIntegrityError)
+    ):
+        adapter.resolve_current([_ticker()], output_symbol_types=("CUSIP",))
+
+
 def test_current_response_canonicalizes_one_case_variant_and_lowercase_fsym() -> None:
     adapter = _adapter(
         {

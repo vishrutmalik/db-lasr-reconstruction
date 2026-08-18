@@ -5,7 +5,7 @@
   `.worktrees/FS011-redteam`
 - **Pinned round-one implementation:**
   `47d4bd93a5bfcd69cfcf28c502134b6b874a0973`
-- **Status:** ROUND2_FAIL; RT-FS011-09 remediation/re-attack pending
+- **Status:** ROUND3_CODE_PASS; historical live-content gate BLOCKED
 - **Owned paths:**
   `tests/leakage/test_red_team_fs011_identity_attacks.py`,
   `docs/red_team/FS011.md`, and this checkpoint
@@ -37,7 +37,7 @@ observed 403 is an honest `not_entitled` state but remains an acceptance
 blocker under the unchanged charter: historical content was not assessed.
 `PASS_WITH_UNRESOLVED` cannot satisfy FS011's historical acceptance arm.
 
-## Next atomic action
+## Round-two checkpoint
 
 Round two ran against exact detached target
 `0cf711c71dc369158bc08a18d2a104079222e3b6`: the keeper audit plus new variants
@@ -46,8 +46,25 @@ RT-FS011-09: conflicting
 case variants of one current output key are silently last-wins before typed
 validation. All RT-FS011-01..08 cases now pass.
 
-Next, the implementer must refuse conflicting case-insensitive logical output
-keys and publish a new immutable SHA. Re-run all 28 keepers plus fresh variants
-against that exact source in the detached worktree, append the final code
-verdict, and keep the still-blocked historical live-content gate distinct. Do
-not edit the central board or PR #86.
+The implementer then refused conflicting case-insensitive logical output keys
+and published the round-three target below.
+
+## Round-three final gate
+
+Re-attacked exact detached target
+`400f28a36701db76fc7954654487e3a2390c421f` with the 28 prior cases plus a
+fresh generic CUSIP/cusip collision variant: **29 passed**. Focused FS011 units
+are **109 passed**; full suite is **2,923 passed / 23 skipped / 22 xfailed**;
+Ruff formatting/lint and strict mypy across 171 source modules are green. No
+live calls or credential reads occurred.
+
+Final split verdict:
+
+- code-integrity/red-team gate **PASS**; RT-FS011-01..09 closed;
+- historical live-content gate **BLOCKED** because the observed historical
+  HTTP 403 leaves the charter's content arm unassessed.
+
+No further code remediation is required by this lane. Orchestrator must still
+withhold overall FS011 acceptance/merge until entitled historical evidence is
+green or the charter is explicitly amended. Do not edit the central board or
+PR #86 from this lane.

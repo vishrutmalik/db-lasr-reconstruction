@@ -1,6 +1,6 @@
 # FactSet Trial — Current State (materialized view; canonical = TRIAL_STATE.yaml)
 
-- state_revision: 11 · generation 2 · reconciled 2026-08-18 after targeted
+- state_revision: 12 · generation 2 · reconciled 2026-08-18 after targeted
   unclean takeover at main `ad4df3f`
 - PHASE: live-data phase (identity + discovery wave)
 - MERGED (11): FS001-FS010, FS021 — docs/design phase + the shared transport
@@ -14,13 +14,15 @@
   entitled while the historical endpoint is forbidden; the typed classifier
   now preserves this as `PASS_WITH_UNRESOLVED`. Fresh verification at that SHA
   returned FAIL with five blocking identity-integrity findings (F-013), so PR
-  #86 must not merge. Remediation is dispatched from verifier commit `47d4bd9`.
-  An independent replacement red-team is now dispatched on a separate branch/
-  worktree to avoid colliding with remediation; it will re-attack the remediated
-  SHA before its final gate. FS024 implementation is complete at `3f15d04`,
+  #86 must not merge. Remediation of verifier and red-team round-1 findings is
+  complete at checkpoint `0cf711c`, but red-team round 2 found RT-FS011-09:
+  conflicting response keys that differ only by case are silently last-wins.
+  A narrow second remediation is dispatched before fresh dual rechecks. FS024
+  implementation is complete at `3f15d04`,
   checkpointed at `087edc6`, and open as PR #87. Notebook sections 1-4 replayed
   top-to-bottom from real captures with zero live calls; full gates are green.
-  Independent FS024 verification is dispatched (no red-team required by charter).
+  Independent FS024 verification returned FAIL at `0c0ae86` with three evidence-
+  integrity blockers; remediation is dispatched (no red-team required by charter).
 - NEXT on FS011+FS024: adapters FS012/13/14/15/16 in parallel (disjoint
   paths), then gates FS017 (PIT, HARD) + FS023 (DQ), FS022 samples, FS018
   features, FS019 models, FS020 close-out. LASR wave stays PAUSED.
@@ -40,5 +42,9 @@
   Estimates 710 rows / 692 unique codes. Four endpoint-specific 403s are
   preserved without family-wide or causal inference (F-012).
 - FS011 blockers: VF-FS011-1..5 require code remediation + fresh reverification;
-  historical Symbology content remains unverified because the endpoint is 403,
-  which the verifier ruled does not satisfy the unchanged FS011 charter.
+  RT-FS011-01..07 were independently attacked; code remediation is now under
+  second-round repair for RT-FS011-09 before dual recheck. Historical Symbology content remains unverified because the
+  endpoint is 403, which both reviews rule does not satisfy the unchanged charter.
+- FS024 blockers: gated CUSIP/ISIN/SEDOL evidence must be separated; cached
+  HTTP 401 must remain an account-auth abort; the acquisition manifest must be
+  immutable and distinct from zero-live replay output (F-015).

@@ -146,3 +146,41 @@ baseline. The verifier separately confirmed `ad12800` classifier logic but
 ruled the historical 403 leaves the unchanged live-content acceptance arm
 unsatisfied. Remediation and fresh reverification are mandatory; PR #86 is
 not merge-ready.
+
+## F-014 (2026-08-18, PROVEN — independent FS011 red-team round 1) — seven blockers plus one hardening item
+Independent red-team commit `312bd31` attacked the same vulnerable code from a
+separate branch/worktree with 23 synthetic cases (18 expected failures / 5
+controls passing). RT-FS011-01..05 independently corroborated VF-FS011-1..5.
+New blockers: RT-FS011-06 allowed a historical response to inject a globally
+documented but unrequested output type under the request's cache identity;
+RT-FS011-07 allowed a favorable covering ticker interval to authorize a bridge
+despite a contradictory interval covering the same date. RT-FS011-08 exact
+duplicate current rows was nonblocking hardening. Controls held for forced mint
+collision, mixed chunk 403/success accounting, canonical duplicate inputs,
+incomplete/double accounting refusal, and 403-to-UNRESOLVED classification.
+Remediation is pushed at checkpoint `0cf711c`; round-2 reattack is required.
+
+## F-015 (2026-08-18, PROVEN — independent FS024 verification) — three evidence-integrity blockers
+Verifier commit `0c0ae86` reviewed FS024 checkpoint `087edc6` and returned
+FAIL. VF-FS024-1: one bundled CUSIP/ISIN/SEDOL request returned 403, but docs
+and MANIFEST overclaimed each type individually unauthorized; FS-VQ-02 requires
+separate probes. VF-FS024-2: cached HTTP 401 is rendered as endpoint
+Unauthorized rather than an account-authentication abort. VF-FS024-3: the
+zero-live fold reused the acquisition run id and overwrote its external run
+manifest, erasing the 14-live-call metrics, entitlement results, and capture
+lineage. Positive controls held: 73 targeted tests; full 2886/23/22; static
+gates and PR CI 8/8; notebook replay 15 probes/0 live/14 hits with catalog
+counts 2246/439/710. PR #87 is not merge-ready; remediation and fresh
+reverification are mandatory.
+
+## F-016 (2026-08-18, PROVEN — FS011 red-team round 2) — casefold response-key collision
+At exact remediation checkpoint `0cf711c`, the expanded independent red-team
+suite ran 28 cases: 26 passed and two deliberate attacks still succeeded.
+RT-FS011-09 proves the response parser silently applies last-wins semantics when
+two keys differ only by case but carry conflicting values, including both
+non-null/non-null and null/non-null variants (for example canonical and
+upper-case forms of `fsymSecurityId`). Equivalent case variants collapse
+safely. The code gate remains FAIL pending a narrow fail-closed collision check,
+permanent keepers, a new immutable implementation checkpoint, and fresh dual
+verification. The historical live-content 403 is tracked separately and remains
+an independent FS011 acceptance blocker.

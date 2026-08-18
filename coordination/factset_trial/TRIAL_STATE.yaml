@@ -4,10 +4,10 @@
 # Lifecycle + ownership + recovery rules: ORCHESTRATOR_BOOTSTRAP.md.
 meta:
   schema_version: 1
-  state_revision: 11
+  state_revision: 12
   orchestration_generation: 2  # OpenAI Codex GPT-5 takeover, session 2026-08-18
-  last_reconciled_main: 2ea823c  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
-  last_reconciled_at: 2026-08-18T10:00:00+04:00
+  last_reconciled_main: bd2bb48  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
+  last_reconciled_at: 2026-08-18T10:22:00+04:00
   charter_source: fs_goals.md (durable charters) + external_analysis.md (local requirements doc)
 
 goals:
@@ -43,7 +43,7 @@ goals:
   FS011:
     title: Symbology adapter + identity spine (fsym-seeded, typed resolution)
     scope_basis: EA WP2; D-020(b); MANIFEST identity_semantics
-    lifecycle: FAILED_VERIFICATION  # verifier FAIL 47d4bd9 at pinned e149a98; five blocking identity-integrity findings; PR 86 remains blocked
+    lifecycle: REMEDIATING  # verifier + red-team r1 findings remediated at 0cf711c; red-team r2 exposed RT-FS011-09, so dual rechecks await one narrow parser fix; historical entitlement gate remains separate
     dependencies: [FS010 MERGED]
     branch: agent/fs-implementer/FS011-identity
     worktree: .worktrees/FS011
@@ -52,13 +52,15 @@ goals:
     lanes:
       FS011-IMPLEMENT-01: {state: IMPLEMENTED_IDLE, latest_sha: e149a9815ce02e9ef8b220826b5f86b708d1b4f8, remediation_sha: ad128000aaa2b05cae3452b9791c043aab82d615, checkpoint: lanes/FS011-IMPLEMENT-01.md on branch, evidence: restored battery 8 live calls -> 5 current 200 + 3 historical 403; typed classifier fixed; keeper suite 74 pass}
       FS011-VERIFY-01: {state: VERDICT_FAIL, reviewed_sha: e149a9815ce02e9ef8b220826b5f86b708d1b4f8, verdict_sha: 47d4bd93a5bfcd69cfcf28c502134b6b874a0973, report: docs/verification/FS011.md, findings: [VF-FS011-1, VF-FS011-2, VF-FS011-3, VF-FS011-4, VF-FS011-5], tests: 74 FS011 pass; full 2903/23/22; PR CI 8/8}
-      FS011-REMEDIATE-01: {state: DISPATCHED, role: implementer remediation, scope_basis: verifier findings VF-FS011-1..5 at 47d4bd9, branch: agent/fs-implementer/FS011-identity, worktree: .worktrees/FS011, start_sha: 47d4bd93a5bfcd69cfcf28c502134b6b874a0973, owned_paths: [src/lasr/data/providers/factset/identity*.py, src/lasr/data/providers/factset/symbology_adapter*.py, tests/unit/test_factset_identity*.py, coordination/factset_trial/lanes/FS011-REMEDIATE-01.md], acceptance: keeper per finding + full gates + coherent checkpoint; no live calls required}
-      FS011-REDTEAM-01: {state: DISPATCHED_REPLACEMENT, reviewed_code_sha: e149a9815ce02e9ef8b220826b5f86b708d1b4f8, branch_start_sha: 47d4bd93a5bfcd69cfcf28c502134b6b874a0973, role: adversarial red-team, scope_basis: FS011 charter + identity/PIT/leakage gates, branch: agent/fs-redteam/FS011-identity, worktree: .worktrees/FS011-redteam, writes: docs/red_team/FS011.md + keepers + lane checkpoint, owned_paths: [docs/red_team/FS011.md, tests/leakage/test_red_team_fs011_identity_attacks.py, coordination/factset_trial/lanes/FS011-REDTEAM-01.md], acceptance: independent attack of full implementation and verifier-adjacent surfaces; commit report/keepers; after remediation re-attack remediated SHA before gate completion}
-    next_action: remediate VF-FS011-1..5 and checkpoint new SHA; run fresh verifier reverification + mandatory independent red-team on that SHA; separately historical entitlement remains an acceptance blocker absent a charter amendment; do not merge PR 86
+      FS011-REMEDIATE-01: {state: REMEDIATED_IDLE, start_sha: 47d4bd93a5bfcd69cfcf28c502134b6b874a0973, code_shas: [b1ac80cd1a81d876a8bc3642407e908a1adda17e, 5f5033765f16f0107a01f30bdc2deb039696e6f1, c9ad858ce55c997860d1fd30f0f1a20448a1d439], checkpoint_sha: 0cf711c71dc369158bc08a18d2a104079222e3b6, fixed: [VF-FS011-1, VF-FS011-2, VF-FS011-3, VF-FS011-4, VF-FS011-5, RT-FS011-06, RT-FS011-07, RT-FS011-08 hardening], tests: 90 focused pass; full 2919/23/22; ruff/mypy clean}
+      FS011-REMEDIATE-02: {state: DISPATCHED, role: implementer remediation, scope_basis: red-team round-2 finding RT-FS011-09 at 0cf711c, branch: agent/fs-implementer/FS011-identity, worktree: .worktrees/FS011, start_sha: 0cf711c71dc369158bc08a18d2a104079222e3b6, owned_paths: [src/lasr/data/providers/factset/identity*.py, src/lasr/data/providers/factset/symbology_adapter*.py, tests/unit/test_factset_identity*.py, coordination/factset_trial/lanes/FS011-REMEDIATE-02.md], acceptance: reject casefold-colliding response keys with conflicting values including null/non-null; equivalent variants may collapse safely; permanent keepers + full gates + immutable checkpoint; no live calls required}
+      FS011-REVERIFY-01: {state: DISPATCH_RECORDED_WAITING_FINAL_SHA, role: fresh verifier remediation recheck, prior_target: 0cf711c71dc369158bc08a18d2a104079222e3b6, scope_basis: prior verifier report 47d4bd9 + FS011 charter + RT-FS011-09, branch: agent/fs-implementer/FS011-identity, worktree: .worktrees/FS011, owned_paths: [docs/verification/FS011.md, coordination/factset_trial/lanes/FS011-REVERIFY-01.md], acceptance: independently re-probe VF-FS011-1..5 + RT-FS011-06/07/09 and keeper integrity at the new immutable remediation SHA; full gates; explicit code verdict and separate historical-content gate verdict}
+      FS011-REDTEAM-01: {state: ROUND2_FAIL_WAITING_REMEDIATION, round1_verdict: FAIL, round1_sha: 312bd31047981ad09c8182017a8fb0eb3874de3d, findings: [RT-FS011-01, RT-FS011-02, RT-FS011-03, RT-FS011-04, RT-FS011-05, RT-FS011-06, RT-FS011-07, RT-FS011-08 nonblocking, RT-FS011-09], round2_target: 0cf711c71dc369158bc08a18d2a104079222e3b6, round2_tests: 28 cases/26 pass/2 expected attack failures, branch: agent/fs-redteam/FS011-identity, worktree: .worktrees/FS011-redteam, owned_paths: [docs/red_team/FS011.md, tests/leakage/test_red_team_fs011_identity_attacks.py, coordination/factset_trial/lanes/FS011-REDTEAM-01.md], acceptance: re-attack new immutable remediation SHA including both RT-FS011-09 collision variants; append fresh verdict; distinguish code gate from historical entitlement gate}
+    next_action: fix RT-FS011-09 and checkpoint a new immutable SHA; then run fresh verifier + red-team reattack there; code may advance only on dual PASS, but historical endpoint 403 remains an acceptance blocker absent entitlement restoration or explicit charter amendment; do not merge PR 86
   FS024:
     title: Live metric-catalog + entitlement discovery + notebook scaffold (sections 1-4)
     scope_basis: EA WP3 + §6.1; adjudication (FS018 split)
-    lifecycle: VERIFYING  # implementation complete 3f15d04; durable checkpoint 087edc6; PR 87 OPEN/CLEAN; verifier write-ahead recorded
+    lifecycle: FAILED_VERIFICATION  # verifier FAIL 0c0ae86 at pinned 087edc6; three evidence-integrity blockers; PR 87 remains blocked
     dependencies: [FS010 MERGED]
     branch: agent/fs-implementer/FS024-discovery
     worktree: .worktrees/FS024
@@ -66,8 +68,9 @@ goals:
     pr: 87
     lanes:
       FS024-IMPLEMENT-01: {state: IMPLEMENTED_IDLE, implementation_sha: 3f15d04fa9e52e049a5dd80b6abe39ac881c54de, checkpoint_sha: 087edc61b4c8ce766d7180e2442fbe4423f9dd39, checkpoint: lanes/FS024-IMPLEMENT-01.md, evidence: bounded discovery 14 live + 1 hit; final fold 14 hits/0 live; notebook sections 1-4 replayed; ruff/mypy clean; full pytest 2886/23/22}
-      FS024-VERIFY-01: {state: DISPATCHED, reviewed_sha: 087edc61b4c8ce766d7180e2442fbe4423f9dd39, role: fresh-context verifier, scope_basis: FS024 charter + EA WP3 + §6.1 + §13 + MANIFEST lifecycle update rules, branch: agent/fs-implementer/FS024-discovery, worktree: .worktrees/FS024, start_sha: 087edc61b4c8ce766d7180e2442fbe4423f9dd39, owned_paths: [docs/verification/FS024.md, coordination/factset_trial/lanes/FS024-VERIFY-01.md], acceptance: independently verify request completeness/budgets/cache replay/catalog separation/entitlement evidence/notebook replay and gates; no live calls}
-    next_action: collect independent FS024 verifier; remediate/reverify findings if any; merge PR 87 only after PASS (red-team not required by charter)
+      FS024-VERIFY-01: {state: VERDICT_FAIL, reviewed_sha: 087edc61b4c8ce766d7180e2442fbe4423f9dd39, verdict_sha: 0c0ae8670cab681a0dedab155abc566a260d91e2, report: docs/verification/FS024.md, findings: [VF-FS024-1, VF-FS024-2, VF-FS024-3], tests: 73 targeted pass; full 2886/23/22; notebook replay 15 probes/0 live/14 hits; PR CI 8/8}
+      FS024-REMEDIATE-01: {state: DISPATCHED, role: implementer remediation, scope_basis: verifier findings VF-FS024-1..3 at 0c0ae86, branch: agent/fs-implementer/FS024-discovery, worktree: .worktrees/FS024, start_sha: 0c0ae8670cab681a0dedab155abc566a260d91e2, owned_paths: [src/lasr/data/providers/factset/discovery*.py, tests/unit/test_factset_discovery*.py, docs/factset/entitlements.md, docs/factset/capability/MANIFEST.md, docs/factset/capability/manifest.json, notebooks/factset_api_trial.ipynb, coordination/factset_trial/lanes/FS024-REMEDIATE-01.md], acceptance: probe gated output types separately and regenerate evidence with only supported claims; 401 account-auth abort distinct from entitlement; immutable acquisition and replay manifests use distinct run ids; focused/full gates; bounded live calls only if required after cache inspection}
+    next_action: remediate VF-FS024-1..3, checkpoint new SHA, fresh independent reverification; merge PR 87 only after PASS (red-team not required by charter)
   FS012: {title: Fundamentals adapter (standard+PIT arms), scope_basis: EA WP4+WP5; ruling N1, lifecycle: BLOCKED, dependencies: [FS010, FS011], note: must fix VF-FS010-3 batch-poll budget bypass before batch live}
   FS013: {title: Prices+CA adapter + reconciliation battery, scope_basis: EA WP7; F-001/F-002, lifecycle: BLOCKED, dependencies: [FS010, FS011]}
   FS014: {title: Estimates adapter (NON-PIT labeled), scope_basis: EA WP6; ruling N2, lifecycle: BLOCKED, dependencies: [FS010, FS011]}

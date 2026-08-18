@@ -93,14 +93,14 @@ goals:
   FS026:
     title: FactSet access-plan registry + zero-call subscription-gap guards
     scope_basis: explicit user directive 2026-08-18; D-021; F-019
-    lifecycle: DISPATCH_RECORDED
+    lifecycle: IMPLEMENTATION_CHECKPOINT_COMMITTED
     dependencies: [FS010 MERGED, FS024 MERGED]
     branch: agent/fs-implementer/FS026-access-policy
     worktree: .worktrees/FS026
     owned_paths: [src/lasr/data/providers/factset/capabilities.py, src/lasr/data/providers/factset/config.py, src/lasr/data/providers/factset/run_manifest.py, src/lasr/data/providers/factset/transport.py, configs/factset/trial.yaml, tests/unit/test_factset_capabilities.py, tests/unit/test_factset_config.py, tests/unit/test_factset_run_manifest.py, tests/unit/test_factset_transport.py, docs/factset/capability/MANIFEST.md, docs/factset/capability/manifest.json, docs/factset/entitlements.md, docs/architecture/factset_integration.md]
     lanes:
-      FS026-IMPLEMENT-01: {state: DISPATCH_RECORDED, role: implementer, start_sha: 8398f7c, acceptance: versioned variant-level access plan; evidence/policy separation; zero-call exclusions even force_refresh; 401 abort; later-success conflict; run-manifest hash/snapshot; initial six D-021 capabilities; full gates; no live calls}
-    next_action: implement + checkpoint, then fresh verifier and red-team before merge
+      FS026-IMPLEMENT-01: {state: CONTROLLED_HANDOFF_CHECKPOINT, role: implementer, start_sha: ae72d1ec1916446eb6d19a0ee74e4dc09f77146d, code_sha: 96881ce9f8ac34d7befc267d22898b42ae691293, acceptance: implementation complete; focused 112 + Ruff + changed-source strict mypy PASS; full repository gates and fresh verifier/red-team pending; no live calls}
+    next_action: run full pytest then repository-wide Ruff/strict mypy at immutable code_sha 96881ce9f8ac34d7befc267d22898b42ae691293; if green dispatch fresh verifier and red-team
 
 blockers:
   SUBSCRIPTION-GAPS:

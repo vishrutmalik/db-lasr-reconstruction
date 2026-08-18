@@ -2,8 +2,9 @@
 
 - **Lane id:** FS024-IMPLEMENT-01 (implementer, single-writer file)
 - **Branch / worktree:** `agent/fs-implementer/FS024-discovery` / `.worktrees/FS024`
-- **State:** IMPLEMENTING — live discovery and deliverables complete; full gates/PR remain
-- **Latest pushed implementation SHA:** `9027d99b85f0e3a7c736f9481ac90db0df9b745e`
+- **State:** IMPLEMENTED — full gates green; ready for independent verification
+- **Latest pushed implementation SHA (before this checkpoint):** `3f15d04fa9e52e049a5dd80b6abe39ac881c54de`
+- **Pull request:** #87 — `https://github.com/vishrutmalik/db-lasr-reconstruction/pull/87`
 - **Charter:** fs_goals.md "FS024 durable charter (dispatched 2026-08-17)"
 
 ## Done
@@ -58,12 +59,13 @@
 - Notebook + discovery: **24 passed**; notebook real-capture replay executed
   top-to-bottom with 0 live calls.
 - JSON validation and `git diff --check`: clean.
+- Full gates at `3f15d04`: ruff format check **332 files clean**; ruff check
+  **PASS**; strict mypy **171 source files clean**; deterministic full pytest
+  **2886 passed, 23 skipped, 22 xfailed** in 44.62s.
 
 ## Remaining
 
-- Run full repo gates: ruff format/check, strict mypy, deterministic full pytest.
-- Inspect/update PR #86 (or create if absent), push final checkpoint, and hand
-  off for independent verification.
+- Independent FS024 verification on PR #87. Implementer does not self-certify.
 
 ## Findings / constraints honored
 
@@ -78,5 +80,7 @@
 
 ## Next atomic action
 
-- Run the complete repository gate set at pushed tip `9027d99`, remediate only
-  FS024-owned failures, then update/push this checkpoint and the FS024 PR.
+- Dispatch an independent verifier against PR #87 / implementation tip
+  `3f15d04`; verify live evidence lineage from the external capture store,
+  catalog arithmetic, replay isolation, notebook top-to-bottom execution, and
+  full gates.

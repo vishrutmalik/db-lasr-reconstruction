@@ -16,9 +16,10 @@
   running at that SHA. Red-team write-ahead is pinned there too, but runtime
   launch hit the child-thread limit; the independent FS024 worker will take
   that mandatory lane as a new task immediately after FS024 completion. FS024
-  resumes from proven branch tip `9549755` (substantial
-  discovery runner/tests + offline hardening; lane checkpoint itself is stale)
-  to complete live entitlement/catalog evidence, docs, notebook, and gates.
+  has reached pushed tip `b9aec45`: bounded discovery and deterministic replay
+  fold-in are complete, with entitlement docs/catalogs committed. Its lane
+  checkpoint itself is still stale; notebook sections 1-4, replay execution,
+  final gates, and PR remain.
 - NEXT on FS011+FS024: adapters FS012/13/14/15/16 in parallel (disjoint
   paths), then gates FS017 (PIT, HARD) + FS023 (DQ), FS022 samples, FS018
   features, FS019 models, FS020 close-out. LASR wave stays PAUSED.
@@ -32,3 +33,8 @@
   MANIFEST.md). Current blockers: no global external blocker; the historical
   Symbology endpoint is currently not entitled and its impact is under FS011
   dual review.
+- FS024 entitlement snapshot (2026-08-18): Fundamentals, Global Prices,
+  Estimates, and RBICS working on bounded probes; Symbology and Benchmarks
+  mixed. Metric catalogs: Fundamentals non-PIT 2246 / PIT 439 / overlap 422;
+  Estimates 710 rows / 692 unique codes. Four endpoint-specific 403s are
+  preserved without family-wide or causal inference (F-012).

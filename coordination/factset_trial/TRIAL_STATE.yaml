@@ -4,10 +4,10 @@
 # Lifecycle + ownership + recovery rules: ORCHESTRATOR_BOOTSTRAP.md.
 meta:
   schema_version: 1
-  state_revision: 9
+  state_revision: 10
   orchestration_generation: 2  # OpenAI Codex GPT-5 takeover, session 2026-08-18
-  last_reconciled_main: a61b22f  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
-  last_reconciled_at: 2026-08-18T09:49:00+04:00
+  last_reconciled_main: a9f6694  # update EVERY revision; staleness tolerance: any drift => reconcile per bootstrap §8
+  last_reconciled_at: 2026-08-18T09:53:00+04:00
   charter_source: fs_goals.md (durable charters) + external_analysis.md (local requirements doc)
 
 goals:
@@ -62,8 +62,8 @@ goals:
     branch: agent/fs-implementer/FS024-discovery
     worktree: .worktrees/FS024
     owned_paths: ["src/lasr/data/providers/factset/discovery*.py", "tests/unit/test_factset_discovery*.py", "notebooks/factset_api_trial.ipynb", "docs/factset/entitlements.md", "configs/factset/trial.yaml (family enables — EXCLUSIVE)"]
-    lanes: {FS024-IMPLEMENT-01: {state: RESUME_DISPATCHED, checkpoint: lanes/FS024-IMPLEMENT-01.md on branch (stale at 37129f7; branch tip 9549755 wins), latest_proven_sha: 9549755, task: preserve offline hardening; complete bounded live entitlement/catalog discovery + notebook/docs/tests under restored access}}
-    next_action: resume from 9549755 (do not restart); inspect cache/manifests, execute bounded live discovery, finish docs/notebook, gates, checkpoint and PR
+    lanes: {FS024-IMPLEMENT-01: {state: IMPLEMENTING, checkpoint: lanes/FS024-IMPLEMENT-01.md on branch (still stale; branch commits win), latest_proven_sha: b9aec458165159f0304c1ed99c8d1846e6231027, completed: bounded discovery 14 live + 1 hit; deterministic fold-in 14 hits/0 live; entitlement docs/catalogs/MANIFEST fold-in pushed, remaining: notebook sections 1-4 + replay run + full gates + checkpoint + PR}}
+    next_action: finish notebook/replay/gates/checkpoint/PR from b9aec45; then independent verification (no red-team required by charter)
   FS012: {title: Fundamentals adapter (standard+PIT arms), scope_basis: EA WP4+WP5; ruling N1, lifecycle: BLOCKED, dependencies: [FS010, FS011], note: must fix VF-FS010-3 batch-poll budget bypass before batch live}
   FS013: {title: Prices+CA adapter + reconciliation battery, scope_basis: EA WP7; F-001/F-002, lifecycle: BLOCKED, dependencies: [FS010, FS011]}
   FS014: {title: Estimates adapter (NON-PIT labeled), scope_basis: EA WP6; ruling N2, lifecycle: BLOCKED, dependencies: [FS010, FS011]}

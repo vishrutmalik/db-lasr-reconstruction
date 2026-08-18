@@ -112,3 +112,21 @@ timestamp, while historical identity intervals/ticker-change evidence remain
 UNRESOLVED/not-entitled. This is per-endpoint evidence, not a cause claim and
 not evidence about other FactSet families. External run:
 `fs011-identity-battery-restoration-20260818`; raw responses remain outside git.
+
+## F-012 (2026-08-18, OBSERVED_LIVE) — bounded six-family entitlement/catalog snapshot
+FS024 completed one bounded live discovery run: 14 live calls plus one exact
+request success-cache hit; the deterministic fold-in replay used 14 success
+cache hits and zero live calls. OBSERVED at the run timestamp: Fundamentals
+WORKING (`/metrics`: 2246 non-PIT and 439 PIT rows; overlap 422, PIT-only 17,
+non-PIT-only 1824, union 2263; `/fundamentals`: 2 rows); Global Prices WORKING
+(`/prices`: 2 UNSPLIT rows; `/corporate-actions`: 8); Estimates WORKING
+(`/metrics`: 710 rows / 692 unique codes; `/fixed-consensus`: 2); RBICS
+WORKING (`/structure`: 14; `/entity-focus`: 2). Symbology was MIXED (current
+resolution success; gated identifier types and historical endpoint 403).
+Benchmarks was MIXED (`/id-list`: 11050 rows; `/constituents` and
+`/index-snapshot`: 403). Four probe-specific 403s are preserved with request
+hashes/timestamps in the external capture store. Authentication success does
+not imply entitlement, endpoint failures are not promoted to family-wide
+causes, and async-batch surfaces remained untouched. The live Estimates
+catalog legitimately repeats metric codes across distinct rows; FS024 now
+preserves composite row identity rather than silently collapsing them.

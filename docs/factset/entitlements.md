@@ -6,11 +6,20 @@ Classification vocabulary is the EA Step-1 exit condition (Working / Partially w
 
 D-021 adds a separate planning overlay; it does not rewrite the HTTP evidence
 classification below. Six request capabilities are
-`ASSUMED_NOT_PROVISIONED` and will be zero-call typed exclusions. Full scope,
+`ASSUMED_NOT_PROVISIONED` and are zero-call typed exclusions. Full scope,
 unknown/deferred inventory and downstream fallbacks:
 `docs/factset/subscription_gaps.md`. `Unauthorized` here means the sampled
 request returned authenticated HTTP 403; it does not mean account-auth failure
 or a family-wide denial.
+
+FS026 made that overlay executable as access plan `d021-fs026-1`, canonical
+snapshot SHA-256
+`741abdbaac8ccf9a5670d1868fa7bf9ced004957521d0aaac6290198628dee67`.
+Future discovery runs classify those six rows as `Policy excluded (zero call)`
+without consulting the historical captures; this committed matrix remains the
+immutable OBSERVED_LIVE evidence record that justified D-021. A later supplied
+success is a loud policy conflict requiring review, while another 403 leaves
+the plan unchanged and any 401 aborts the account-level run.
 
 ## 1. Family summary
 

@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from lasr.data.providers.factset.capabilities import (
+    access_plan_hash,
+    access_plan_snapshot,
+)
 from lasr.data.providers.factset.config import (
     FactSetTrialConfig,
     trial_config_hash,
@@ -103,6 +108,9 @@ class TestBuildRunManifest:
             finished=_T1,
         )
         assert manifest["config_hash"] == trial_config_hash(config)
+        assert manifest["access_plan_hash"] == access_plan_hash(config.access_plan)
+        assert manifest["access_plan"] == access_plan_snapshot(config.access_plan)
+        assert manifest["config"]["access_plan"] == manifest["access_plan"]
         assert manifest["code_revision"] == "deadbeef"
         assert manifest["endpoints_enabled"] == {
             "symbology": ["/identifier-resolution"]
@@ -174,4 +182,31 @@ class TestWriteRunManifest:
         with pytest.raises(FactSetConfigError, match="run_id"):
             write_run_manifest(
                 {"run_id": ""}, runs_root=tmp_path, sanitizer=Sanitizer(())
+            )
+
+    @pytest.mark.parametrize("tamper", ["snapshot", "hash", "config"])
+    def test_forged_access_plan_binding_is_refused(
+        self, tmp_path: Path, tamper: str
+    ) -> None:
+        manifest = build_run_manifest(
+            run_id=f"run-tamper-{tamper}",
+            config=_config(),
+            code_revision="deadbeef",
+            stats=_stats(),
+            environ={},
+            started=_T0,
+            finished=_T1,
+        )
+        forged = deepcopy(manifest)
+        if tamper == "snapshot":
+            forged["access_plan"]["version"] = "forged"
+        elif tamper == "hash":
+            forged["access_plan_hash"] = "0" * 64
+        else:
+            forged["config"]["access_plan"]["version"] = "forged"
+        with pytest.raises(FactSetConfigError, match="access-plan"):
+            write_run_manifest(
+                forged,
+                runs_root=tmp_path / "runs",
+                sanitizer=Sanitizer(()),
             )

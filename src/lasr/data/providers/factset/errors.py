@@ -17,10 +17,12 @@ from __future__ import annotations
 from lasr.data.providers.base import IntegrityError, ProviderError
 
 __all__ = [
+    "FactSetAccessPolicyConflictError",
     "FactSetAuthError",
     "FactSetBatchError",
     "FactSetBudgetExceededError",
     "FactSetCacheMissError",
+    "FactSetCapabilityExcludedError",
     "FactSetClientError",
     "FactSetConfigError",
     "FactSetDataRootError",
@@ -50,6 +52,24 @@ class FactSetCacheMissError(FactSetTransportError):
     An ABSENCE condition, not an empty result (FS002 §3.3): replay mode
     never constructs a network client, so a miss is a typed refusal.
     """
+
+
+class FactSetCapabilityExcludedError(FactSetTransportError):
+    """Reviewed access plan refused a request before any runtime evidence."""
+
+    def __init__(
+        self, identities: tuple[str, ...], evidence_refs: tuple[str, ...]
+    ) -> None:
+        self.identities = identities
+        self.evidence_refs = evidence_refs
+        super().__init__(
+            "FactSet access plan refused capability before cache/network: "
+            f"{', '.join(identities)}; reviewed references={list(evidence_refs)}"
+        )
+
+
+class FactSetAccessPolicyConflictError(FactSetTransportError):
+    """New evidence contradicts a reviewed access-plan disposition."""
 
 
 class FactSetKillSwitchError(FactSetTransportError):

@@ -34,6 +34,7 @@ from enum import StrEnum
 from pathlib import Path
 
 from lasr.data.providers.factset.cache import ResponseCache
+from lasr.data.providers.factset.capabilities import FactSetCapabilityExcludedError
 from lasr.data.providers.factset.config import (
     FactSetTrialConfig,
     SampleBlock,
@@ -134,6 +135,8 @@ class EndpointClassification(StrEnum):
     NOT_CAPTURED = "Not captured (replay miss)"
     #: Deliberately not probed (async batch, VF-FS010-3) — never silent.
     DEFERRED = "Deferred (not probed)"
+    #: Reviewed D-021 planning overlay; deliberately not HTTP evidence.
+    POLICY_EXCLUDED = "Policy excluded (zero call)"
 
 
 @dataclass(frozen=True)
@@ -524,6 +527,18 @@ def _execute_probe(
     live_before = transport.stats.live_calls
     try:
         response = transport.execute(spec.request, force_refresh=force_refresh)
+    except FactSetCapabilityExcludedError as exc:
+        return ProbeResult(
+            spec=spec,
+            classification=EndpointClassification.POLICY_EXCLUDED,
+            http_status=None,
+            row_count=None,
+            from_cache=False,
+            request_hash=rhash,
+            capture_id=None,
+            retrieval_time=None,
+            detail=sanitizer.clean(str(exc)),
+        )
     except FactSetCacheMissError:
         # Replay-mode miss. Error CAPTURES are still evidence (D-020(d):
         # never replayed as SUCCESS — but their status is exactly what an
@@ -1021,9 +1036,11 @@ def render_entitlements_markdown(
     lines.append(
         "Classification vocabulary is the EA Step-1 exit condition"
         " (Working / Partially working / Unauthorized / Unavailable /"
-        " Requires clarification), plus two honest non-answers:"
+        " Requires clarification), plus three honest non-answers:"
         " `Not captured` (replay miss — an absence, not evidence) and"
-        " `Deferred` (deliberately not probed, reason given). Evidence"
+        " `Deferred` (deliberately not probed, reason given), and `Policy"
+        " excluded` (reviewed D-021 zero-call planning, not HTTP evidence)."
+        " Evidence"
         " precedence: everything here is OBSERVED_LIVE against verbatim"
         " captures addressed by the full request hash + capture sha256"
         " under `$FACTSET_TRIAL_DATA_ROOT/raw/` (outside git). All"

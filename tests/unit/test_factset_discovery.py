@@ -82,17 +82,11 @@ def _error_body(message: str) -> bytes:
     return json.dumps({"status": "ERROR", "message": message}).encode()
 
 
-#: Scripted live responses in EXACT probe-plan order (17 probes).
+#: Scripted live responses for the 11 non-excluded probes, in plan order.
 def _scripted_responses() -> list[HttpResponse]:
     ok = {"headers": {}}
     return [
         HttpResponse(status=200, body=_data_body(5), **ok),  # sym current
-        HttpResponse(  # CUSIP denial must not classify ISIN/SEDOL
-            status=403, body=_error_body("CUSIP not authorized"), **ok
-        ),
-        HttpResponse(status=200, body=_data_body(5), **ok),  # ISIN
-        HttpResponse(status=200, body=_data_body(5), **ok),  # SEDOL
-        HttpResponse(status=200, body=_data_body(4), **ok),  # sym historical
         HttpResponse(  # fundamentals /metrics non-PIT: 3 metrics
             status=200,
             body=_fund_catalog_body(
@@ -123,12 +117,6 @@ def _scripted_responses() -> list[HttpResponse]:
             status=403, body=_error_body("User is not authorized"), **ok
         ),
         HttpResponse(status=200, body=_data_body(3), **ok),  # bm /id-list
-        HttpResponse(  # bm /constituents: route/id not found
-            status=404, body=_error_body("Not found"), **ok
-        ),
-        HttpResponse(  # bm /index-snapshot: ambiguous client error
-            status=400, body=_error_body("Bad request: unclear reason"), **ok
-        ),
     ]
 
 
@@ -362,10 +350,14 @@ class TestReplayMode:
             cache_root=tmp_path / "raw",
         )
         assert report.live_calls == 0
-        assert all(
+        assert sum(
+            r.classification is EndpointClassification.POLICY_EXCLUDED
+            for r in report.probes
+        ) == 6
+        assert sum(
             r.classification is EndpointClassification.NOT_CAPTURED
             for r in report.probes
-        )
+        ) == 11
         assert report.overlap is None
         markdown = render_entitlements_markdown(report)
         assert "Not captured" in markdown
@@ -457,15 +449,15 @@ class TestLiveMode:
         )
         assert (
             by_id["symbology-identifier-resolution-cusip"].classification
-            is EndpointClassification.UNAUTHORIZED
+            is EndpointClassification.POLICY_EXCLUDED
         )
         assert (
             by_id["symbology-identifier-resolution-isin"].classification
-            is EndpointClassification.WORKING
+            is EndpointClassification.POLICY_EXCLUDED
         )
         assert (
             by_id["symbology-identifier-resolution-sedol"].classification
-            is EndpointClassification.WORKING
+            is EndpointClassification.POLICY_EXCLUDED
         )
         assert (
             by_id["estimates-fixed-consensus"].classification
@@ -479,18 +471,18 @@ class TestLiveMode:
         assert by_id["rbics-entity-focus"].http_status == 403
         assert (
             by_id["benchmarks-constituents"].classification
-            is EndpointClassification.UNAVAILABLE
+            is EndpointClassification.POLICY_EXCLUDED
         )
-        assert by_id["benchmarks-constituents"].http_status == 404
+        assert by_id["benchmarks-constituents"].http_status is None
         assert (
             by_id["benchmarks-index-snapshot"].classification
-            is EndpointClassification.REQUIRES_CLARIFICATION
+            is EndpointClassification.POLICY_EXCLUDED
         )
-        assert len(sender.calls) == 17  # one wire call per probe, none extra
+        assert len(sender.calls) == 11
 
     def test_budget_and_catalog_accounting(self, tmp_path: Path) -> None:
         report, _, environ = self._run(tmp_path)
-        assert report.live_calls == 17  # <= charter budget by nearly one order
+        assert report.live_calls == 11
         assert report.overlap is not None
         assert report.overlap.pit_total == 2
         assert report.overlap.non_pit_total == 3
@@ -568,16 +560,7 @@ class TestLiveMode:
         404/400 CLIENT evidence never blocks (D-020(d): only auth/
         entitlement evidence blocks), so exactly those two re-attempt."""
         _report1, _, environ = self._run(tmp_path)
-        sender = FakeSender(
-            [
-                HttpResponse(status=404, body=_error_body("Not found"), headers={}),
-                HttpResponse(
-                    status=400,
-                    body=_error_body("Bad request: unclear reason"),
-                    headers={},
-                ),
-            ]
-        )
+        sender = FakeSender([])
         report2 = run_discovery(
             config_path=TRIAL_YAML,
             environ=environ,
@@ -588,8 +571,8 @@ class TestLiveMode:
             live=True,
             sender=sender,
         )
-        assert len(sender.calls) == 2  # ONLY the client-error probes re-issue
-        assert report2.live_calls == 2
+        assert len(sender.calls) == 0
+        assert report2.live_calls == 0
         by_id = {r.spec.probe_id: r for r in report2.probes}
         assert (
             by_id["rbics-entity-focus"].classification
@@ -632,6 +615,7 @@ class TestMarkdownRendering:
         assert "| symbology |" in markdown
         assert "**Working**" in markdown
         assert "**Unauthorized**" in markdown
+        assert "**Policy excluded (zero call)**" in markdown
         assert "PIT vs NON-PIT dictionary overlap" in markdown
         assert "| PIT dictionary size | 2 |" in markdown
         assert "| NON-PIT dictionary size | 3 |" in markdown
@@ -645,7 +629,9 @@ class TestReplayErrorEvidence:
     """F-009 offline shape: cached ERROR captures classify in replay —
     displayed as evidence, never replayed as success."""
 
-    def test_cached_403_classifies_unauthorized_in_replay(self, tmp_path: Path) -> None:
+    def test_policy_exclusion_precedes_cached_403_in_replay(
+        self, tmp_path: Path
+    ) -> None:
         cache_root = tmp_path / "raw"
         cache = ResponseCache(cache_root)
         config = load_trial_config(TRIAL_YAML)
@@ -668,11 +654,11 @@ class TestReplayErrorEvidence:
         )
         by_id = {r.spec.probe_id: r for r in report.probes}
         result = by_id["symbology-historical-identifier-resolution"]
-        assert result.classification is EndpointClassification.UNAUTHORIZED
-        assert result.http_status == 403
-        assert result.from_cache
-        assert result.capture_id is not None
-        assert "never replayed as success" in result.detail
+        assert result.classification is EndpointClassification.POLICY_EXCLUDED
+        assert result.http_status is None
+        assert not result.from_cache
+        assert result.capture_id is None
+        assert "before cache/network" in result.detail
         assert report.live_calls == 0
 
     def test_cached_401_aborts_as_account_auth_not_endpoint_entitlement(
@@ -722,12 +708,7 @@ class TestReplayErrorEvidence:
             http_status=401,
             retrieval_time=_T0,
         )
-        sender = FakeSender(
-            [
-                HttpResponse(status=403, body=_error_body(name), headers={})
-                for name in gated_ids
-            ]
-        )
+        sender = FakeSender([])
         report = run_discovery(
             config_path=TRIAL_YAML,
             environ=environ,
@@ -740,10 +721,10 @@ class TestReplayErrorEvidence:
             force_refresh_probe_ids=(cusip_id,),
             sender=sender,
         )
-        assert len(sender.calls) == report.live_calls == 3
+        assert len(sender.calls) == report.live_calls == 0
         assert len(report.probes) == 3
         assert all(
-            result.classification is EndpointClassification.UNAUTHORIZED
+            result.classification is EndpointClassification.POLICY_EXCLUDED
             for result in report.probes
         )
         manifest = json.loads(
@@ -752,7 +733,7 @@ class TestReplayErrorEvidence:
             ).read_text(encoding="utf-8")
         )
         assert len(manifest["probe_evidence"]) == 3
-        assert all(item["http_status"] == 403 for item in manifest["probe_evidence"])
+        assert all(item["http_status"] is None for item in manifest["probe_evidence"])
 
     def test_cached_5xx_classifies_unavailable_in_replay(self, tmp_path: Path) -> None:
         cache_root = tmp_path / "raw"
@@ -808,8 +789,8 @@ class TestReplayErrorEvidence:
 class TestForceRefreshRerun:
     def test_force_refresh_reissues_every_probe_live(self, tmp_path: Path) -> None:
         """The post-restoration single bounded re-run (F-009/VENDOR-1):
-        force_refresh bypasses success cache AND the error-cache block,
-        so all 17 probes go back to the wire exactly once."""
+        force_refresh bypasses success cache AND the error-cache block, while
+        the six reviewed exclusions still make zero calls."""
         environ = _live_environ(tmp_path)
         first = FakeSender(_scripted_responses())
         run_discovery(
@@ -840,16 +821,12 @@ class TestForceRefreshRerun:
             sender=second,
             force_refresh=True,
         )
-        assert len(second.calls) == 17
-        assert report.live_calls == 17
-        assert all(
-            r.classification
-            in (
-                EndpointClassification.WORKING,
-                EndpointClassification.PARTIALLY_WORKING,
-            )
+        assert len(second.calls) == 11
+        assert report.live_calls == 11
+        assert sum(
+            r.classification is EndpointClassification.POLICY_EXCLUDED
             for r in report.probes
-        )
+        ) == 6
 
 
 class TestAccountBlockRendering:

@@ -66,9 +66,13 @@ CUSIP/ISIN/SEDOL output variants, and the sampled SP50 constituents/snapshot
 POST variants. They become typed zero-call exclusions. Current typed market-ID
 **inputs** to fsym remain available; benchmark `/id-list` remains catalog-only.
 All unsampled GET twins and other operations remain `UNKNOWN`, not absent.
-Machine-executable access-plan state lands in FS026; the authoritative evidence
-inventory, fallback semantics and revalidation protocol are in
-`docs/factset/subscription_gaps.md`.
+FS026 implements that machine-executable state as access plan
+`d021-fs026-1` in `configs/factset/trial.yaml` (snapshot SHA-256
+`741abdbaac8ccf9a5670d1868fa7bf9ced004957521d0aaac6290198628dee67`).
+Every run manifest binds the canonical snapshot and hash. The transport checks
+it before cache, sender, ledger or telemetry, including force refresh; the
+authoritative evidence inventory, fallback semantics and revalidation protocol
+remain in `docs/factset/subscription_gaps.md`.
 
 ## 2. Capability matrix (per endpoint; full §3.3 detail per row in `manifest.json`)
 

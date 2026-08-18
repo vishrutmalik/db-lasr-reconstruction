@@ -40,6 +40,7 @@ from lasr.data.providers.factset.cache import (
     CaptureRecord,
     ResponseCache,
 )
+from lasr.data.providers.factset.capabilities import FactSetAccessPlan
 from lasr.data.providers.factset.config import FactSetTrialConfig
 from lasr.data.providers.factset.envelopes import (
     ErrorDetail,
@@ -178,6 +179,7 @@ class FactSetTransport:
         if live and sender is None:
             raise FactSetConfigError("live mode requires an HttpSender")
         self._config = config
+        self._access_plan: FactSetAccessPlan = config.access_plan
         self._cache = cache
         self._limiter = limiter
         self._ledger = ledger
@@ -214,6 +216,9 @@ class FactSetTransport:
         force_refresh: bool = False,
     ) -> CachedResponse:
         """Cache-first execution of one normalized request."""
+        # D-021/FS026: reviewed exclusions precede every side effect and every
+        # evidence lookup, including force refresh.
+        self._access_plan.preflight(request)
         rhash = request_hash(request)
         family = self._config.family(request.api_family)
         if not family.enabled:
@@ -221,7 +226,7 @@ class FactSetTransport:
                 f"api family {request.api_family!r} is not enabled in the trial config"
             )
         endpoint_policy = self._config.endpoint_policy(
-            request.api_family, request.endpoint
+            request.api_family, request.endpoint, request.verb
         )
 
         if not force_refresh:
@@ -365,6 +370,12 @@ class FactSetTransport:
                 http_status=response.status,
                 reservation_id=reservation_id,
             )
+            if 200 <= response.status < 300:
+                # Defensive invariant: an independently changed matcher must
+                # never let success silently contradict the reviewed overlay.
+                self._access_plan.reconcile_observed_status(
+                    request, response.status
+                )
             klass, detail = classify_response(
                 response.status, response.body, retryable_statuses=retryable
             )
@@ -534,6 +545,14 @@ class FactSetTransport:
         Poll calls are live-only status probes: never cached (a status is
         not vendor data), always ledger-counted.
         """
+        status_request = self._batch_probe_request(submission, status_endpoint)
+        result_request = self._batch_probe_request(submission, result_endpoint)
+        # Preflight the complete protocol before even a cached result lookup;
+        # this prevents submission, status, or result policies being bypassed
+        # by the batch convenience path.
+        self._access_plan.preflight(submission)
+        self._access_plan.preflight(status_request)
+        self._access_plan.preflight(result_request)
         result_key = submission.with_page(PageKey(index=0, cursor=None))
         rhash = request_hash(submission)
 
@@ -672,6 +691,8 @@ class FactSetTransport:
         The vendor batch id is volatile lineage: it appears in the wire
         query but NEVER in any cache identity (FS002 §3.2).
         """
+        probe_request = self._batch_probe_request(submission, endpoint)
+        self._access_plan.preflight(probe_request)
         if self._sender is None:  # pragma: no cover - guarded in __init__
             raise FactSetConfigError("live mode requires an HttpSender")
         family = self._config.family(submission.api_family)
@@ -711,6 +732,19 @@ class FactSetTransport:
         if klass in (ResponseClass.AUTH, ResponseClass.ENTITLEMENT):
             return self._raise_probe_error(submission, response, klass, detail)
         return response
+
+    @staticmethod
+    def _batch_probe_request(
+        submission: NormalizedRequest, endpoint: str
+    ) -> NormalizedRequest:
+        """Policy identity for a batch probe; vendor job id stays volatile."""
+        return NormalizedRequest(
+            api_family=submission.api_family,
+            api_version=submission.api_version,
+            endpoint=endpoint,
+            verb="GET",
+            params={},
+        )
 
     def _raise_probe_error(
         self,

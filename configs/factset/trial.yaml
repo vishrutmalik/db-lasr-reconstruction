@@ -15,7 +15,7 @@
 #                              (D-020(d)); all raw captures land under
 #                              <root>/raw, run manifests under <root>/runs.
 
-config_id: factset-trial-fs024-1
+config_id: factset-trial-fs026-1
 seed: 1729
 
 transport:
@@ -59,6 +59,98 @@ storage:
       contains_vendor_data: false
       retention: trial duration + audit
       disposal_owner: user
+
+# Reviewed D-021 execution overlay. This is planning state, not an HTTP
+# evidence table: a 403 never adds an entry and all unmatched request variants
+# remain UNASSESSED. The initial overlay contains exactly the six exclusions
+# accepted in docs/factset/subscription_gaps.md. In particular, the three
+# current-resolution selectors inspect OUTPUTS only, so CUSIP/ISIN/SEDOL
+# inputs may still seed a current fsym id.
+access_plan:
+  version: d021-fs026-1
+  default_disposition: UNASSESSED
+  entries:
+    - key:
+        family: symbology
+        verb: POST
+        path: /historical-identifier-resolution
+        request_variant:
+          name: historical_resolution.all
+          match: ALL
+      disposition: ASSUMED_NOT_PROVISIONED
+      criticality: ARM_REQUIRED
+      evidence_refs: [D-021, F-019, docs/factset/subscription_gaps.md]
+      rationale: Historical identifier-resolution POST is outside the accepted trial subscription.
+    - key:
+        family: symbology
+        verb: POST
+        path: /identifier-resolution
+        request_variant:
+          name: current_output.CUSIP
+          match: PARAM_LIST_CONTAINS
+          parameters:
+            - {name: outputSymbolTypes, expected: CUSIP}
+      disposition: ASSUMED_NOT_PROVISIONED
+      criticality: OPTIONAL
+      evidence_refs: [D-021, FS-VQ-02.CUSIP, docs/factset/subscription_gaps.md]
+      rationale: Current CUSIP output enrichment is excluded; CUSIP input to fsym is not.
+    - key:
+        family: symbology
+        verb: POST
+        path: /identifier-resolution
+        request_variant:
+          name: current_output.ISIN
+          match: PARAM_LIST_CONTAINS
+          parameters:
+            - {name: outputSymbolTypes, expected: ISIN}
+      disposition: ASSUMED_NOT_PROVISIONED
+      criticality: OPTIONAL
+      evidence_refs: [D-021, FS-VQ-02.ISIN, docs/factset/subscription_gaps.md]
+      rationale: Current ISIN output enrichment is excluded; ISIN input to fsym is not.
+    - key:
+        family: symbology
+        verb: POST
+        path: /identifier-resolution
+        request_variant:
+          name: current_output.SEDOL
+          match: PARAM_LIST_CONTAINS
+          parameters:
+            - {name: outputSymbolTypes, expected: SEDOL}
+      disposition: ASSUMED_NOT_PROVISIONED
+      criticality: OPTIONAL
+      evidence_refs: [D-021, FS-VQ-02.SEDOL, docs/factset/subscription_gaps.md]
+      rationale: Current SEDOL output enrichment is excluded; SEDOL input to fsym is not.
+    - key:
+        family: benchmarks
+        verb: POST
+        path: /constituents
+        request_variant:
+          name: SP50.2024-06-14.FIVEDAY
+          match: EXACT_PARAMS
+          parameters:
+            - {name: ids, expected: [SP50]}
+            - {name: date, expected: "2024-06-14"}
+            - {name: calendar, expected: FIVEDAY}
+      disposition: ASSUMED_NOT_PROVISIONED
+      criticality: ARM_REQUIRED
+      evidence_refs: [D-021, FS-VQ-06.SP50.2024-06-14, docs/factset/subscription_gaps.md]
+      rationale: Only the sampled SP50 constituent snapshot request is excluded.
+    - key:
+        family: benchmarks
+        verb: POST
+        path: /index-snapshot
+        request_variant:
+          name: SP50.2024-06-14.FIVEDAY.GROSS
+          match: EXACT_PARAMS
+          parameters:
+            - {name: ids, expected: [SP50]}
+            - {name: date, expected: "2024-06-14"}
+            - {name: calendar, expected: FIVEDAY}
+            - {name: returnType, expected: GROSS}
+      disposition: ASSUMED_NOT_PROVISIONED
+      criticality: OPTIONAL
+      evidence_refs: [D-021, FS-VQ-01.SP50.2024-06-14, docs/factset/subscription_gaps.md]
+      rationale: Only the sampled SP50 index-snapshot request is excluded.
 
 # Per-family transport facts. Limits are seeded from the capability
 # manifests; documented=false families run the conservative default and

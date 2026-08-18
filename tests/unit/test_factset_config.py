@@ -119,8 +119,10 @@ class TestCommittedTrialYaml:
 
     def test_loads_and_validates(self) -> None:
         config = load_trial_config(TRIAL_YAML)
-        # config revision bumped by FS024 (family enables + probe budgets)
-        assert config.config_id == "factset-trial-fs024-1"
+        # FS026 binds the reviewed D-021 overlay into the resolved config.
+        assert config.config_id == "factset-trial-fs026-1"
+        assert config.access_plan.version == "d021-fs026-1"
+        assert len(config.access_plan.entries) == 6
 
     def test_replay_is_the_committed_default(self) -> None:
         # A committed config alone can never go live (FS002 §6.1) — and
@@ -196,3 +198,8 @@ class TestCommittedTrialYaml:
             for line in text.splitlines():
                 if name in line:
                     assert "=" not in line.split(name, 1)[1][:2], line
+
+    def test_access_plan_default_does_not_invent_unknown_policy(self) -> None:
+        config = FactSetTrialConfig.model_validate(minimal_config())
+        assert config.access_plan.version == "unconfigured"
+        assert config.access_plan.entries == ()

@@ -44,6 +44,23 @@ claims, not engineering or purchase-decision completion. The precise six
 capabilities and downstream rules are in `docs/factset/subscription_gaps.md`;
 D-021 governs conflicts with the original sections below.
 
+FS026 implements the overlay as an immutable, validated request-capability key:
+family + uppercase HTTP verb + normalized spec path + named request-variant
+selector. Historical POST uses an all-variant selector; current CUSIP/ISIN/
+SEDOL exclusions match output-list containment (so input-to-fsym remains
+permitted); the two SP50 benchmark rules match the complete normalized
+parameter map and therefore do not generalize to another id, date, method or
+extra parameter. Absence resolves to `UNASSESSED`.
+
+The guard is the first operation in direct execution, pagination and all three
+batch phases. `ASSUMED_NOT_PROVISIONED`/`DEFERRED` raise a typed
+`FactSetCapabilityExcludedError` before cache, sender, ledger and telemetry,
+even under force refresh. Evidence reconciliation is a separate API: 403 is
+inert, 401 raises `FactSetAuthError`, and 2xx supplied for an excluded key
+raises `FactSetAccessPolicyConflictError`. Every run manifest contains the
+canonical access-plan snapshot and SHA-256 and refuses a mutated snapshot/hash/
+config triple at write time.
+
 ## 1. Topology ruling: D-018 RATIFIED, with three binding clarifications
 
 ### 1.1 The ruling

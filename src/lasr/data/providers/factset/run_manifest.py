@@ -19,6 +19,11 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from lasr.data.providers.factset.capabilities import (
+    FactSetAccessPlan,
+    access_plan_hash,
+    access_plan_snapshot,
+)
 from lasr.data.providers.factset.config import (
     FactSetTrialConfig,
     trial_config_hash,
@@ -55,6 +60,8 @@ def build_run_manifest(
         "finished": finished.astimezone(UTC).isoformat(),
         "code_revision": code_revision,
         "config_hash": trial_config_hash(config),
+        "access_plan_hash": access_plan_hash(config.access_plan),
+        "access_plan": access_plan_snapshot(config.access_plan),
         "config": config_dump,
         "credential_presence": credential_presence(environ),
         "endpoints_enabled": {
@@ -89,6 +96,7 @@ def write_run_manifest(
     run_id = manifest.get("run_id")
     if not isinstance(run_id, str) or not run_id.strip():
         raise FactSetConfigError("manifest lacks a run_id")
+    _validate_access_plan_binding(manifest)
     clean = sanitizer.clean_tree(dict(manifest))
     directory = runs_root / run_id
     directory.mkdir(parents=True, exist_ok=True)
@@ -103,3 +111,29 @@ def write_run_manifest(
 def _model_dump(model: BaseModel) -> dict[str, object]:
     dumped = model.model_dump(mode="json")
     return dict(dumped)
+
+
+def _validate_access_plan_binding(manifest: Mapping[str, object]) -> None:
+    """Refuse a forged or partially mutated plan/hash/config triple."""
+    snapshot = manifest.get("access_plan")
+    claimed_hash = manifest.get("access_plan_hash")
+    if snapshot is None and claimed_hash is None:
+        # Compatibility for legacy/ad-hoc manifests. Every manifest produced
+        # by build_run_manifest above carries the binding.
+        return
+    if not isinstance(snapshot, Mapping) or not isinstance(claimed_hash, str):
+        raise FactSetConfigError(
+            "manifest access-plan binding requires a snapshot and string hash"
+        )
+    try:
+        plan = FactSetAccessPlan.model_validate(snapshot)
+    except ValueError as exc:
+        raise FactSetConfigError("manifest access-plan snapshot is invalid") from exc
+    canonical_snapshot = access_plan_snapshot(plan)
+    if dict(snapshot) != canonical_snapshot:
+        raise FactSetConfigError("manifest access-plan snapshot is not canonical")
+    if access_plan_hash(plan) != claimed_hash:
+        raise FactSetConfigError("manifest access-plan snapshot/hash mismatch")
+    config = manifest.get("config")
+    if not isinstance(config, Mapping) or config.get("access_plan") != snapshot:
+        raise FactSetConfigError("manifest config/access-plan snapshot mismatch")

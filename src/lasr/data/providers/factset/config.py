@@ -30,11 +30,13 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from lasr.config.loader import config_hash as _config_hash
 from lasr.config.loader import load_yaml_mapping
+from lasr.data.providers.factset.capabilities import FactSetAccessPlan
 from lasr.data.providers.factset.errors import FactSetConfigError
 
 __all__ = [
     "BatchPollPolicy",
     "EndpointPolicy",
+    "FactSetAccessPlan",
     "FactSetTrialConfig",
     "FamilyConfig",
     "FamilyLimits",
@@ -176,6 +178,9 @@ class FactSetTrialConfig(_Frozen):
     retries: RetryPolicy
     batch_poll: BatchPollPolicy
     storage: StoragePolicy
+    access_plan: FactSetAccessPlan = Field(
+        default_factory=lambda: FactSetAccessPlan(version="unconfigured")
+    )
     families: dict[str, FamilyConfig]
     samples: dict[str, SampleBlock] = Field(default_factory=dict)
 
@@ -203,13 +208,16 @@ class FactSetTrialConfig(_Frozen):
                 f"api family {name!r} is not declared in the trial config"
             ) from None
 
-    def endpoint_policy(self, family: str, endpoint: str) -> EndpointPolicy:
+    def endpoint_policy(
+        self, family: str, endpoint: str, verb: str | None = None
+    ) -> EndpointPolicy:
         fam = self.family(family)
         for ep in fam.endpoints:
-            if ep.endpoint == endpoint:
+            if ep.endpoint == endpoint and (verb is None or ep.verb == verb):
                 return ep
+        operation = f"{verb} {endpoint}" if verb is not None else endpoint
         raise FactSetConfigError(
-            f"endpoint {endpoint!r} is not enabled for family {family!r}"
+            f"endpoint {operation!r} is not enabled for family {family!r}"
         )
 
 

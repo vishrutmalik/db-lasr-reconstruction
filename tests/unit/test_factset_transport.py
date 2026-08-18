@@ -17,12 +17,13 @@ from typing import Any
 import pytest
 
 from lasr.data.providers.factset.cache import ResponseCache
-from lasr.data.providers.factset.config import FactSetTrialConfig
+from lasr.data.providers.factset.config import FactSetTrialConfig, load_trial_config
 from lasr.data.providers.factset.errors import (
     FactSetAuthError,
     FactSetBatchError,
     FactSetBudgetExceededError,
     FactSetCacheMissError,
+    FactSetCapabilityExcludedError,
     FactSetClientError,
     FactSetConfigError,
     FactSetEntitlementError,
@@ -47,9 +48,13 @@ from lasr.data.providers.factset.sanitize import (
     ENV_USERNAME,
     Sanitizer,
 )
+from lasr.data.providers.factset.symbology_models import (
+    build_historical_resolution_request,
+)
 from lasr.data.providers.factset.telemetry import TelemetryWriter
 from lasr.data.providers.factset.transport import (
     FactSetTransport,
+    TransportStats,
     build_transport,
     live_gate_open,
 )
@@ -59,6 +64,7 @@ pytestmark = pytest.mark.unit
 _T0 = datetime(2026, 1, 5, 10, 0, tzinfo=UTC)
 _CANARY_USER = "CANARY-USER-1234567"
 _CANARY_KEY = "CANARY-KEY-abcdefghij"
+_TRIAL_YAML = Path(__file__).resolve().parents[2] / "configs/factset/trial.yaml"
 
 
 # ── deterministic fakes ─────────────────────────────────────────────────
@@ -228,6 +234,67 @@ def _transport(
         sleep=clock.sleep,
     )
     return transport, clock
+
+
+class TestAccessPlanPreflight:
+    def _excluded_transport(
+        self, tmp_path: Path, sender: FakeSender
+    ) -> FactSetTransport:
+        config = _config(live=True).model_copy(
+            update={"access_plan": load_trial_config(_TRIAL_YAML).access_plan}
+        )
+        transport, _ = _transport(
+            tmp_path, live=True, sender=sender, config=config
+        )
+        return transport
+
+    @staticmethod
+    def _excluded_request() -> NormalizedRequest:
+        return build_historical_resolution_request(
+            ids=["AAPL-US"],
+            input_symbol_type="tickerRegion",
+            output_symbol_types=["CUSIP"],
+        )
+
+    def test_exclusion_precedes_all_side_effects_even_force_refresh(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        sender = FakeSender([])
+        transport = self._excluded_transport(tmp_path, sender)
+
+        def unexpected(*args: object, **kwargs: object) -> None:
+            pytest.fail("excluded request reached a side-effect boundary")
+
+        monkeypatch.setattr(transport._cache, "latest_success", unexpected)
+        monkeypatch.setattr(transport._cache, "latest_error", unexpected)
+        monkeypatch.setattr(transport._cache, "replay", unexpected)
+        monkeypatch.setattr(transport._ledger, "reserve_live_call", unexpected)
+        monkeypatch.setattr(transport._ledger, "record_live_call", unexpected)
+        monkeypatch.setattr(transport._telemetry, "emit", unexpected)
+
+        with pytest.raises(FactSetCapabilityExcludedError):
+            transport.execute(self._excluded_request(), force_refresh=True)
+        assert sender.calls == []
+        assert transport.stats == TransportStats()
+
+    def test_paginate_and_batch_conveniences_cannot_bypass_preflight(
+        self, tmp_path: Path
+    ) -> None:
+        sender = FakeSender([])
+        transport = self._excluded_transport(tmp_path, sender)
+        request = self._excluded_request()
+        with pytest.raises(FactSetCapabilityExcludedError):
+            transport.paginate(request, next_cursor=lambda _: None, max_pages=1)
+        with pytest.raises(FactSetCapabilityExcludedError):
+            transport.run_batch(
+                request,
+                status_endpoint="/batch-status",
+                result_endpoint="/batch-result",
+                extract_batch_id=lambda _: "job",
+                extract_batch_status=lambda _: "done",
+            )
+        assert sender.calls == []
+        assert transport.stats == TransportStats()
 
 
 # ── live gate / kill switch ─────────────────────────────────────────────

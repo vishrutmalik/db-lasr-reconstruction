@@ -3,6 +3,15 @@
  "reconciled_by": "FS009",
  "generated": "2026-08-17",
  "note": "Reconciled SHARED capability manifest for the six FactSet API trial families. Human capability matrix + NORMATIVE design rulings: docs/factset/capability/MANIFEST.md. Verification: docs/verification/FS009.md. Bulk sub-blocks (schemas/enums/full parameter tables) are pointers into the per-family JSONs committed by PRs #75-#82; pointer targets are part of this manifest by reference.",
+ "access_plan_overlay": {
+  "version": "d021-fs026-1",
+  "sha256": "741abdbaac8ccf9a5670d1868fa7bf9ced004957521d0aaac6290198628dee67",
+  "source": "configs/factset/trial.yaml",
+  "policy_source": "D-021",
+  "default_disposition": "UNASSESSED",
+  "assumed_not_provisioned_count": 6,
+  "evidence_separation": "This planning overlay does not alter operation entitlement_status evidence. HTTP 403 never mutates policy; HTTP 401 aborts."
+ },
  "operations_total": 95,
  "entitlement_status_all_operations": "PARTIAL (FS024 sampled 13 operation shapes / 17 probes on 2026-08-18; unprobed operations remain UNKNOWN)",
  "cross_family_consistency": [
@@ -400,8 +409,8 @@
      "observed_live_refs": [
       "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
      ],
-     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
-     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024; ACCESS_GUARD_IMPLEMENTED_FS026",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024; POLICY_KEEPERS_FS026",
      "canonical_targets": [
       "securities",
       "identifier_map",
@@ -586,8 +595,8 @@
      "observed_live_refs": [
       "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
      ],
-     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
-     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024; ACCESS_GUARD_IMPLEMENTED_FS026",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024; POLICY_KEEPERS_FS026",
      "canonical_targets": [
       "securities",
       "identifier_map",
@@ -10685,8 +10694,8 @@
      "observed_live_refs": [
       "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
      ],
-     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
-     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024; ACCESS_GUARD_IMPLEMENTED_FS026",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024; POLICY_KEEPERS_FS026",
      "canonical_targets": [
       "universe_membership_intervals",
       "benchmark_levels (CE-4, auxiliary service per D-020a)"
@@ -11083,8 +11092,8 @@
      "observed_live_refs": [
       "docs/factset/entitlements.md#2-entitlement-matrix-probed-operations"
      ],
-     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024",
-     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024",
+     "implementation_status": "DISCOVERY_PROBE_IMPLEMENTED_FS024; ACCESS_GUARD_IMPLEMENTED_FS026",
+     "test_status": "MOCKED_AND_OBSERVED_LIVE_FS024; POLICY_KEEPERS_FS026",
      "canonical_targets": [
       "universe_membership_intervals",
       "benchmark_levels (CE-4, auxiliary service per D-020a)"

@@ -28,10 +28,24 @@
 
 ## Gates at this checkpoint
 
-- Focused discovery/config/notebook tests: **76 passed**.
+- Focused discovery/config/notebook tests: **78 passed** after the bounded
+  subset / targeted-refresh keepers.
 - Ruff on changed Python: clean.
 - Strict mypy on `discovery.py`: clean.
 - No live call or credential read yet.
+
+## First acquisition attempt — account abort preserved
+
+- The first missing CUSIP request spent **one** live call and returned HTTP
+  401. The new account-auth guard aborted immediately: ISIN and SEDOL were not
+  sent, and no entitlement document or run manifest was written.
+- Root cause was operator-side credential-file shape handling: the authorized
+  vendor demo parses `Username: ...` / `API Key: ...` labels, while the
+  temporary runner had treated the complete labeled lines as values. The 401
+  capture and ledger unit remain immutable evidence; neither is deleted.
+- A bounded-subset seam is being added so only the three FS-VQ-02 probes run,
+  with force-refresh limited to CUSIP to supersede that known malformed-auth
+  attempt. Corrected acquisition maximum: three additional live calls.
 
 ## Next atomic action
 

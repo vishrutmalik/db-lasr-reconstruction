@@ -655,6 +655,8 @@ def run_discovery(
     sender: HttpSender | None = None,
     write_outputs: bool = True,
     force_refresh: bool = False,
+    probe_ids: Sequence[str] | None = None,
+    force_refresh_probe_ids: Sequence[str] = (),
 ) -> DiscoveryReport:
     """Execute the FS024 probe plan + catalog pulls; return the report.
 
@@ -669,13 +671,39 @@ def run_discovery(
     validation, budgets, and storage caps all still apply through
     :func:`build_transport`. ``live=False`` replays from ``cache_root``
     (or ``<data_root>/raw``) and classifies misses as NOT_CAPTURED.
+
+    ``probe_ids`` is an explicit bounded-subset seam for evidence remediation;
+    the default remains the complete plan. ``force_refresh_probe_ids`` may
+    bypass fresh error evidence only for named probes in that selected plan.
+    Both arguments are identity-checked before transport construction.
     """
     config = load_trial_config(config_path)
     if live:
         config = config.model_copy(
             update={"transport": config.transport.model_copy(update={"live": True})}
         )
-    plan = build_probe_plan(config)
+    full_plan = build_probe_plan(config)
+    known_probe_ids = {spec.probe_id for spec in full_plan}
+    if probe_ids is None:
+        plan = full_plan
+    else:
+        selected = tuple(dict.fromkeys(probe_ids))
+        if not selected:
+            raise FactSetConfigError("probe_ids must be non-empty when provided")
+        unknown = sorted(set(selected) - known_probe_ids)
+        if unknown:
+            raise FactSetConfigError(f"unknown FS024 probe_ids: {unknown}")
+        selected_set = set(selected)
+        plan = tuple(spec for spec in full_plan if spec.probe_id in selected_set)
+    refresh_probe_ids = set(force_refresh_probe_ids)
+    unknown_refresh = sorted(refresh_probe_ids - {spec.probe_id for spec in plan})
+    if unknown_refresh:
+        raise FactSetConfigError(
+            f"force_refresh_probe_ids not present in the selected plan:"
+            f" {unknown_refresh}"
+        )
+    if refresh_probe_ids and not live:
+        raise FactSetConfigError("force_refresh_probe_ids requires live=True")
 
     sanitizer = Sanitizer(())
     data_root = validate_trial_data_root(environ, repo_root=repo_root, require=live)
@@ -716,7 +744,8 @@ def run_discovery(
             transport,
             evidence_cache,
             sanitizer,
-            force_refresh=force_refresh and live,
+            force_refresh=(force_refresh and live)
+            or spec.probe_id in refresh_probe_ids,
         )
         results.append(result)
         by_id[spec.probe_id] = result

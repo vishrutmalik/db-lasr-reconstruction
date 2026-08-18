@@ -240,6 +240,20 @@ class TestProbePlan:
         with pytest.raises(FactSetConfigError, match="fs024_discovery"):
             build_probe_plan(stripped)
 
+    def test_unknown_bounded_subset_is_refused_before_transport(
+        self, tmp_path: Path
+    ) -> None:
+        with pytest.raises(FactSetConfigError, match="unknown FS024 probe_ids"):
+            run_discovery(
+                config_path=TRIAL_YAML,
+                environ={},
+                repo_root=REPO_ROOT,
+                code_revision="deadbeef",
+                now=_T0,
+                cache_root=tmp_path / "raw",
+                probe_ids=("not-a-probe",),
+            )
+
 
 class TestTrialConfigBudgets:
     def test_all_families_enabled_with_bounded_budgets(self) -> None:
@@ -687,6 +701,60 @@ class TestReplayErrorEvidence:
                 cache_root=cache_root,
                 write_outputs=False,
             )
+
+    def test_bounded_live_subset_can_refresh_only_cached_401_probe(
+        self, tmp_path: Path
+    ) -> None:
+        environ = _live_environ(tmp_path)
+        data_root = Path(environ[ENV_TRIAL_DATA_ROOT])
+        cache = ResponseCache(data_root / "raw")
+        plan = {
+            spec.probe_id: spec
+            for spec in build_probe_plan(load_trial_config(TRIAL_YAML))
+        }
+        cusip_id = "symbology-identifier-resolution-cusip"
+        gated_ids = (
+            cusip_id,
+            "symbology-identifier-resolution-isin",
+            "symbology-identifier-resolution-sedol",
+        )
+        cache.store(
+            plan[cusip_id].request,
+            b"Account authentication failed",
+            http_status=401,
+            retrieval_time=_T0,
+        )
+        sender = FakeSender(
+            [
+                HttpResponse(status=403, body=_error_body(name), headers={})
+                for name in gated_ids
+            ]
+        )
+        report = run_discovery(
+            config_path=TRIAL_YAML,
+            environ=environ,
+            repo_root=REPO_ROOT,
+            code_revision="deadbeef",
+            now=_T0,
+            run_id="fs024-gated-type-remediation",
+            live=True,
+            probe_ids=gated_ids,
+            force_refresh_probe_ids=(cusip_id,),
+            sender=sender,
+        )
+        assert len(sender.calls) == report.live_calls == 3
+        assert len(report.probes) == 3
+        assert all(
+            result.classification is EndpointClassification.UNAUTHORIZED
+            for result in report.probes
+        )
+        manifest = json.loads(
+            (
+                data_root / "runs" / "fs024-gated-type-remediation" / "manifest.json"
+            ).read_text(encoding="utf-8")
+        )
+        assert len(manifest["probe_evidence"]) == 3
+        assert all(item["http_status"] == 403 for item in manifest["probe_evidence"])
 
     def test_cached_5xx_classifies_unavailable_in_replay(self, tmp_path: Path) -> None:
         cache_root = tmp_path / "raw"

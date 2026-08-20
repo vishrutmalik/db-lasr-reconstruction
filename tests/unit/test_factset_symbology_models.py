@@ -189,6 +189,52 @@ class TestCurrentResponseParsing:
             "SEDOL": None,  # U-8: absence preserved, never fabricated
         }
 
+    @pytest.mark.parametrize(
+        ("first", "second"),
+        [
+            ("AAAAAA-S", "BBBBBB-S"),
+            (None, "AAAAAA-S"),
+            ("AAAAAA-S", None),
+        ],
+    )
+    def test_casefold_duplicate_output_conflicts_are_integrity_violations(
+        self, first: str | None, second: str | None
+    ) -> None:
+        body = json.dumps(
+            {
+                "data": [
+                    {
+                        "requestId": "ALFA-US",
+                        "inputSymbolType": "tickerRegion",
+                        "fsymSecurityId": first,
+                        "FSYMSECURITYID": second,
+                    }
+                ]
+            }
+        ).encode()
+        with pytest.raises(FactSetIntegrityError, match="last-wins"):
+            parse_identifier_resolution_response(
+                body, requested_output_types=["fsymSecurityId"]
+            )
+
+    def test_casefold_equivalent_duplicate_output_collapses(self) -> None:
+        body = json.dumps(
+            {
+                "data": [
+                    {
+                        "requestId": "ALFA-US",
+                        "inputSymbolType": "tickerRegion",
+                        "fsymSecurityId": "AAAAAA-S",
+                        "FSYMSECURITYID": "AAAAAA-S",
+                    }
+                ]
+            }
+        ).encode()
+        rows = parse_identifier_resolution_response(
+            body, requested_output_types=["fsymSecurityId"]
+        )
+        assert rows[0].outputs == {"fsymSecurityId": "AAAAAA-S"}
+
     def test_missing_request_id_is_integrity_violation(self) -> None:
         body = json.dumps({"data": [{"name": "x"}]}).encode()
         with pytest.raises(FactSetIntegrityError, match="requestId"):

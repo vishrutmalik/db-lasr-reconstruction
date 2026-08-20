@@ -328,6 +328,33 @@ def _opt_str(row: Mapping[str, object], key: str) -> str | None:
     return value if isinstance(value, str) else None
 
 
+def _casefold_unique_dynamic_fields(
+    row: Mapping[str, object], *, row_index: int
+) -> dict[str, object]:
+    """Case-fold dynamic outputs without erasing conflicting evidence.
+
+    D-6/U-5 permits case variation in dynamic output keys, but it does not
+    permit two differently-cased spellings to claim different values. A plain
+    dict comprehension would silently last-win before the typed adapter sees
+    the conflict (RT-FS011-09). Equal duplicates are one logical output.
+    """
+    lowered: dict[str, object] = {}
+    spelling: dict[str, str] = {}
+    for key, value in row.items():
+        if key in _FIXED_ROW_FIELDS:
+            continue
+        logical_key = key.lower()
+        if logical_key in lowered and lowered[logical_key] != value:
+            raise FactSetIntegrityError(
+                f"data row {row_index} has conflicting case-insensitive"
+                f" duplicate output keys {spelling[logical_key]!r} and"
+                f" {key!r}; refusing last-wins identity ambiguity"
+            )
+        lowered[logical_key] = value
+        spelling.setdefault(logical_key, key)
+    return lowered
+
+
 def parse_identifier_resolution_response(
     body: bytes, *, requested_output_types: Sequence[str]
 ) -> tuple[ResolutionRow, ...]:
@@ -345,7 +372,7 @@ def parse_identifier_resolution_response(
             raise FactSetIntegrityError(
                 f"data row {i} lacks the non-nullable requestId join key"
             )
-        lowered = {k.lower(): v for k, v in row.items() if k not in _FIXED_ROW_FIELDS}
+        lowered = _casefold_unique_dynamic_fields(row, row_index=i)
         outputs: dict[str, str | None] = {}
         for requested in requested_output_types:
             value = lowered.get(requested.lower())
